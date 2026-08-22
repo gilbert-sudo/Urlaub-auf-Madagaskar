@@ -25,7 +25,7 @@ export function ClientsPage() {
       <Card className="overflow-hidden !p-0">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-gray-50/50 dark:bg-neutral-800/50 border-b border-gray-200 dark:border-neutral-800">
+            <tr className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-800">
               <th className="p-4 text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Client Name</th>
               <th className="p-4 text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Contact Info</th>
               <th className="p-4 text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Total Pax</th>
@@ -34,7 +34,7 @@ export function ClientsPage() {
           </thead>
           <tbody>
             {clients.map(client => (
-              <tr key={client._id} className="border-b border-gray-100 dark:border-neutral-800 hover:bg-gray-50/30 dark:hover:bg-white/5 transition-colors">
+              <tr key={client._id} className="border-b border-gray-100 dark:border-slate-800 hover:bg-gray-50/30 dark:hover:bg-slate-700/50 transition-colors">
                 <td className="p-4 font-bold">{client.name}</td>
                 <td className="p-4">
                   <div className="flex flex-col gap-1 text-sm text-gray-500">

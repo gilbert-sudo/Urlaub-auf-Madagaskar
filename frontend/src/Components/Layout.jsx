@@ -5,7 +5,7 @@ import { Header } from './Header';
 
 export function Layout() {
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-slate-900 font-sans text-gray-900 dark:text-slate-200 transition-colors duration-300">
       <Sidebar />
       <div className="flex-1 pl-64 flex flex-col">
         <Header />

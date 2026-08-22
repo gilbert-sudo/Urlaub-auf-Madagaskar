@@ -44,7 +44,7 @@ export function Dashboard() {
       </div>
 
       <Card>
-        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100 dark:border-neutral-800">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100 dark:border-slate-800">
           <h2 className="text-lg font-extrabold">Recent Trips</h2>
           <Button variant="primary">
             <Plus size={20} /> New Trip
@@ -53,7 +53,7 @@ export function Dashboard() {
         
         <div className="space-y-4">
           {trips.map((trip) => (
-            <div key={trip._id} className="flex justify-between items-center p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 rounded-2xl transition-colors">
+            <div key={trip._id} className="flex justify-between items-center p-4 hover:bg-gray-50/50 dark:hover:bg-slate-700/50 rounded-2xl transition-colors">
               <div>
                 <h3 className="text-sm font-bold">{trip.title}</h3>
                 <div className="flex gap-4 mt-2 text-xs font-bold text-gray-400">

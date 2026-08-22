@@ -1,5 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logout } from '../store/slices/authSlice';
 import { Home, Map, Calendar, Users, FileText, Settings, LogOut } from 'lucide-react';
 
 const menuItems = [
@@ -11,8 +13,14 @@ const menuItems = [
 ];
 
 export function Sidebar() {
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
   return (
-    <aside className="w-64 fixed inset-y-0 left-0 bg-white/80 backdrop-blur-3xl border-r border-gray-100/60 p-6 flex flex-col gap-10 z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+    <aside className="w-64 fixed inset-y-0 left-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border-r border-gray-100/60 dark:border-slate-800 p-6 flex flex-col gap-10 z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
       
       {/* Brand Logo - Interactive */}
       <div className="flex justify-center w-full group cursor-pointer px-2">
@@ -35,8 +43,8 @@ export function Sidebar() {
                 {({ isActive }) => (
                   <div className={`relative flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-500 font-extrabold group overflow-hidden ${
                     isActive 
-                      ? 'bg-brand-primary/5 text-brand-primary shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] ring-1 ring-brand-primary/10' 
-                      : 'text-gray-400 hover:bg-gray-50/80 hover:text-gray-900 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] ring-1 ring-transparent hover:ring-gray-100'
+                      ? 'bg-brand-primary/5 dark:bg-brand-primary/10 text-brand-primary shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] ring-1 ring-brand-primary/10 dark:ring-brand-primary/20' 
+                      : 'text-gray-400 dark:text-slate-400 hover:bg-gray-50/80 dark:hover:bg-slate-800/80 hover:text-gray-900 dark:hover:text-slate-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] ring-1 ring-transparent hover:ring-gray-100 dark:hover:ring-slate-700'
                   }`}>
                     
                     {/* Active vertical pill indicator */}
@@ -60,16 +68,19 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom Settings / Action Area */}
-      <div className="mt-auto pt-6 border-t border-gray-100">
+      <div className="mt-auto pt-6 border-t border-gray-100 dark:border-slate-800">
         <ul className="flex flex-col gap-2">
-          <li className="flex items-center gap-4 px-4 py-3 rounded-2xl font-extrabold text-gray-400 hover:text-gray-900 hover:bg-gray-50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] cursor-pointer transition-all duration-300 group ring-1 ring-transparent hover:ring-gray-100">
-            <div className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-90 text-gray-400 group-hover:text-gray-700">
+          <li className="flex items-center gap-4 px-4 py-3 rounded-2xl font-extrabold text-gray-400 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] cursor-pointer transition-all duration-300 group ring-1 ring-transparent hover:ring-gray-100 dark:hover:ring-slate-700">
+            <div className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-90 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-slate-300">
               <Settings size={22} />
             </div>
             <span className="text-[14px] group-hover:translate-x-1 transition-transform duration-300 tracking-wide">Settings</span>
           </li>
-          <li className="flex items-center gap-4 px-4 py-3 rounded-2xl font-extrabold text-gray-400 hover:text-rose-600 hover:bg-rose-50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] cursor-pointer transition-all duration-300 group ring-1 ring-transparent hover:ring-rose-100">
-            <div className="transition-transform duration-500 group-hover:scale-110 group-hover:-translate-x-1 text-gray-400 group-hover:text-rose-500">
+          <li 
+            onClick={handleLogout}
+            className="flex items-center gap-4 px-4 py-3 rounded-2xl font-extrabold text-gray-400 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] cursor-pointer transition-all duration-300 group ring-1 ring-transparent hover:ring-rose-100 dark:hover:ring-rose-500/20"
+          >
+            <div className="transition-transform duration-500 group-hover:scale-110 group-hover:-translate-x-1 text-gray-400 group-hover:text-rose-500 dark:group-hover:text-rose-400">
               <LogOut size={22} />
             </div>
             <span className="text-[14px] group-hover:translate-x-1 transition-transform duration-300 tracking-wide">Sign Out</span>

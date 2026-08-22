@@ -6,7 +6,7 @@ export function Button({ children, variant = 'primary', onClick, className = '' 
   
   const variants = {
     primary: 'bg-brand-primary text-white hover:bg-brand-secondary shadow-lg shadow-brand-primary/30',
-    secondary: 'bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-700',
+    secondary: 'bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 dark:hover:bg-slate-700',
     danger: 'bg-rose-50 text-rose-600 hover:bg-rose-100',
   };
 

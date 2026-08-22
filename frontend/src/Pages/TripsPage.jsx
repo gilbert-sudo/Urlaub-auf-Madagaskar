@@ -59,7 +59,7 @@ export function TripsPage() {
               </Badge>
             </div>
             
-            <div className="space-y-2 mt-4 pt-4 border-t border-gray-100 dark:border-neutral-800">
+            <div className="space-y-2 mt-4 pt-4 border-t border-gray-100 dark:border-slate-800">
               <div className="flex items-center gap-3 text-sm font-bold text-gray-500">
                 <Users size={16} /> <span>{trip.client?.name} ({trip.client?.paxAdults + trip.client?.paxChildren} Pax)</span>
               </div>

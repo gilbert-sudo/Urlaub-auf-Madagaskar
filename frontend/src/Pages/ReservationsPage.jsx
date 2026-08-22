@@ -36,7 +36,7 @@ export function ReservationsPage() {
               </Badge>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mt-2 pt-4 border-t border-gray-100 dark:border-neutral-800">
+            <div className="grid grid-cols-2 gap-4 mt-2 pt-4 border-t border-gray-100 dark:border-slate-800">
               <div>
                 <div className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Client</div>
                 <div className="text-sm font-bold">{res.client}</div>

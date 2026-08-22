@@ -76,15 +76,15 @@ export function DocumentsPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                 isActive 
-                  ? 'border-brand-primary bg-brand-primary/5 shadow-md transform scale-[1.02]' 
-                  : 'border-transparent bg-white shadow-sm hover:border-gray-200 hover:shadow-md'
+                  ? 'border-brand-primary bg-brand-primary/5 dark:bg-brand-primary/10 shadow-md transform scale-[1.02]' 
+                  : 'border-transparent bg-white dark:bg-slate-800 shadow-sm hover:border-gray-200 dark:hover:border-slate-700 hover:shadow-md'
               }`}
             >
               <div className="flex flex-col items-center text-center group">
-                <div className={`p-3 rounded-xl mb-3 ${isActive ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600 transition-colors'}`}>
+                <div className={`p-3 rounded-xl mb-3 ${isActive ? 'bg-brand-primary text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-400 group-hover:bg-gray-200 dark:group-hover:bg-slate-600 group-hover:text-gray-600 dark:group-hover:text-slate-200 transition-colors'}`}>
                   <Icon size={24} />
                 </div>
-                <h3 className={`font-black text-sm ${isActive ? 'text-brand-primary' : 'text-gray-700'}`}>{tab.label}</h3>
+                <h3 className={`font-black text-sm ${isActive ? 'text-brand-primary' : 'text-gray-700 dark:text-slate-300'}`}>{tab.label}</h3>
                 <p className="text-xs font-bold text-gray-400 mt-1">{tab.desc}</p>
               </div>
             </div>
@@ -93,7 +93,7 @@ export function DocumentsPage() {
       </div>
 
       {/* Preview Section */}
-      <div className="bg-gray-100 p-8 rounded-3xl border border-gray-200 overflow-x-auto shadow-inner relative flex justify-center">
+      <div className="bg-gray-100 dark:bg-slate-800 p-8 rounded-3xl border border-gray-200 dark:border-slate-700 overflow-x-auto shadow-inner relative flex justify-center">
         
         {/* Subtle decorative elements for the "desk" background */}
         <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
