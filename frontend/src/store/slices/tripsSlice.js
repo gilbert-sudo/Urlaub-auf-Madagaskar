@@ -2,12 +2,12 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 export const fetchTrips = createAsyncThunk('trips/fetchTrips', async () => {
-  const response = await axios.get('http://localhost:5000/api/trips');
+  const response = await axios.get('https://urlaub-auf-madagaskar.onrender.com/api/trips');
   return response.data;
 });
 
 export const fetchTripById = createAsyncThunk('trips/fetchTripById', async (id) => {
-  const response = await axios.get(`http://localhost:5000/api/trips/${id}`);
+  const response = await axios.get(`https://urlaub-auf-madagaskar.onrender.com/api/trips/${id}`);
   return response.data;
 });
 

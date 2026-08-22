@@ -3,7 +3,7 @@ import axios from 'axios';
 
 export const login = createAsyncThunk('auth/login', async ({ email, password }, { rejectWithValue }) => {
   try {
-    const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    const response = await axios.post('https://urlaub-auf-madagaskar.onrender.com/api/auth/login', { email, password });
     localStorage.setItem('token', response.data.token);
     return response.data;
   } catch (error) {

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 export const fetchDrivers = createAsyncThunk('drivers/fetchDrivers', async () => {
-  const response = await axios.get('http://localhost:5000/api/drivers');
+  const response = await axios.get('https://urlaub-auf-madagaskar.onrender.com/api/drivers');
   return response.data;
 });
 

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 export const fetchHotels = createAsyncThunk('hotels/fetchHotels', async () => {
-  const response = await axios.get('http://localhost:5000/api/hotels');
+  const response = await axios.get('https://urlaub-auf-madagaskar.onrender.com/api/hotels');
   return response.data;
 });
 
