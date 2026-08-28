@@ -1,7 +1,7 @@
-import React from 'react';
-import { Mail, Building, CheckCircle, Heart, Coffee } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mail, Building, CheckCircle, Heart, Coffee, Copy, Check } from 'lucide-react';
 
-export function ReservationsDoc({ data }) {
+export function ReservationsDoc({ data, isEditing }) {
   const docData = data || {
     title: "Reservation pour Herr Gruber Patrick",
     requests: [
@@ -50,36 +50,58 @@ export function ReservationsDoc({ data }) {
     ]
   };
 
+  const [copiedId, setCopiedId] = useState(null);
+
+  const handleCopyEmail = (req) => {
+    const emailText = `${req.greetings}\n\n${req.instruction.replace('+ envoyer la facture', '+ envoyer la facture')}\n\n${req.reservations.join('\n')}\n\nLes clients seront en ${req.tags.join(' et ')}.\n\nCordialement,`;
+    navigator.clipboard.writeText(emailText).then(() => {
+      setCopiedId(req.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
   return (
-    <div className="bg-white p-12 text-gray-900 rounded-2xl shadow-sm border border-gray-100 mx-auto font-sans" style={{ width: '100%', maxWidth: '850px', minHeight: '1100px' }}>
+    <div className={`bg-white p-12 text-gray-900 rounded-2xl shadow-sm border ${isEditing ? 'border-amber-300 ring-2 ring-amber-100' : 'border-gray-100'} mx-auto font-sans`} style={{ width: '100%', maxWidth: '850px', minHeight: '1100px' }}>
       
       {/* Header Section */}
       <div className="text-center pb-8 mb-8 border-b-2 border-brand-primary/20">
-        <h1 className="text-3xl font-black text-brand-primary tracking-tight">{docData.title}</h1>
+        <h1 className="text-3xl font-black text-brand-primary tracking-tight" contentEditable={isEditing} suppressContentEditableWarning>{docData.title}</h1>
         <p className="text-sm font-bold text-gray-500 mt-2 uppercase tracking-widest">Demandes de Réservation</p>
       </div>
 
       <div className="space-y-6">
         {docData.requests.map((req) => (
-          <div key={req.id} className="flex flex-col sm:flex-row bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div key={req.id} className="relative flex flex-col sm:flex-row bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
             
+            {/* Copy Email Button */}
+            {!isEditing && (
+              <button 
+                onClick={() => handleCopyEmail(req)}
+                className="absolute top-4 right-4 z-10 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 p-2 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-all flex items-center gap-2 text-sm font-bold"
+                title="Copy Email Text"
+              >
+                {copiedId === req.id ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                {copiedId === req.id ? <span className="text-green-500">Copied!</span> : "Copy Email"}
+              </button>
+            )}
+
             {/* Hotel Name Side */}
             <div className="bg-gray-50 p-6 flex flex-col justify-center items-center sm:w-48 border-b sm:border-b-0 sm:border-r border-gray-200 shrink-0">
               <Building className="w-8 h-8 text-gray-400 mb-3" />
-              <h2 className="text-center font-black text-gray-800 text-lg">{req.hotel}</h2>
+              <h2 className="text-center font-black text-gray-800 text-lg" contentEditable={isEditing} suppressContentEditableWarning>{req.hotel}</h2>
             </div>
             
             {/* Content Side */}
             <div className="p-6 flex-1">
-              <p className="font-black text-gray-900 mb-2">{req.greetings}</p>
+              <p className="font-black text-gray-900 mb-2" contentEditable={isEditing} suppressContentEditableWarning>{req.greetings}</p>
               
               <div className="mb-4">
-                <span className="text-sm text-gray-700 font-medium">
+                <span className="text-sm text-gray-700 font-medium" contentEditable={isEditing} suppressContentEditableWarning>
                   {req.instruction.split('+ envoyer la facture').map((part, i, arr) => 
                     i === arr.length - 1 ? part : (
                       <React.Fragment key={i}>
                         {part}
-                        <span className="bg-brand-primary/10 text-brand-primary font-bold px-1.5 py-0.5 rounded mx-1">+ envoyer la facture</span>
+                        <span className="bg-brand-primary/10 text-brand-primary font-bold px-1.5 py-0.5 rounded mx-1" contentEditable={false}>+ envoyer la facture</span>
                       </React.Fragment>
                     )
                   )}
@@ -91,11 +113,11 @@ export function ReservationsDoc({ data }) {
                   const parts = res.split(' - ');
                   return (
                     <div key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                      <span className="font-bold text-gray-900">{parts[0]}</span>
+                      <span className="font-bold text-gray-900" contentEditable={isEditing} suppressContentEditableWarning>{parts[0]}</span>
                       {parts.slice(1).map((part, j) => (
                         <React.Fragment key={j}>
                           <span className="text-gray-300">-</span>
-                          <span className="font-medium text-gray-700">{part}</span>
+                          <span className="font-medium text-gray-700" contentEditable={isEditing} suppressContentEditableWarning>{part}</span>
                         </React.Fragment>
                       ))}
                     </div>
@@ -108,7 +130,7 @@ export function ReservationsDoc({ data }) {
                 {req.tags.map((tag, i) => (
                   <React.Fragment key={i}>
                     {i > 0 && <span className="text-sm font-medium text-gray-700">et</span>}
-                    <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 font-bold text-xs px-2.5 py-1 rounded-md border border-amber-100">
+                    <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 font-bold text-xs px-2.5 py-1 rounded-md border border-amber-100" contentEditable={isEditing} suppressContentEditableWarning>
                       {tag.toLowerCase().includes('noce') ? <Heart className="w-3.5 h-3.5" /> : <Coffee className="w-3.5 h-3.5" />}
                       {tag}
                     </span>
@@ -117,7 +139,7 @@ export function ReservationsDoc({ data }) {
                 <span className="text-sm font-medium text-gray-700">.</span>
               </div>
               
-              <p className="font-bold text-gray-600 text-sm">Cordialement,</p>
+              <p className="font-bold text-gray-600 text-sm" contentEditable={isEditing} suppressContentEditableWarning>Cordialement,</p>
             </div>
           </div>
         ))}

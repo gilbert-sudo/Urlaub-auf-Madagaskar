@@ -20,10 +20,13 @@ export function TripDetailsPage() {
   
   const documentRef = useRef(null);
   const [activeTab, setActiveTab] = useState('overview'); // overview, client, driver, reservations, voucher
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchTripById(id));
-  }, [dispatch, id]);
+    if (!trip || trip._id !== id) {
+      dispatch(fetchTripById(id));
+    }
+  }, [dispatch, id, trip]);
 
   if (loading) return <div className="p-8">Loading trip details...</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
@@ -194,8 +197,8 @@ export function TripDetailsPage() {
               <Table size={16} /> <span className="hidden lg:inline">Excel</span>
             </button>
             <div className="w-px h-6 bg-gray-200 mx-2"></div>
-            <button onClick={() => alert("Edit mode coming soon!")} className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-brand-primary hover:bg-brand-secondary text-white transition-colors text-sm font-bold shadow-sm">
-              <Edit2 size={16} /> Edit Document
+            <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-2 px-4 py-1.5 rounded-xl transition-colors text-sm font-bold shadow-sm ${isEditing ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-brand-primary hover:bg-brand-secondary text-white'}`}>
+              <Edit2 size={16} /> {isEditing ? 'Done Editing' : 'Edit Document'}
             </button>
           </div>
         )}
@@ -303,10 +306,10 @@ export function TripDetailsPage() {
             className="relative z-10 transition-opacity duration-300"
             style={{ width: '100%', maxWidth: '850px' }}
           >
-            {activeTab === 'client' && <ClientItineraryDoc data={formattedClientDoc} />}
-            {activeTab === 'driver' && <DriverItineraryDoc data={formattedDriverDoc} />}
-            {activeTab === 'reservations' && <ReservationsDoc data={formattedReservationsDoc} />}
-            {activeTab === 'voucher' && <HotelVoucherDoc data={formattedVoucherDoc} />}
+            {activeTab === 'client' && <ClientItineraryDoc data={formattedClientDoc} isEditing={isEditing} />}
+            {activeTab === 'driver' && <DriverItineraryDoc data={formattedDriverDoc} isEditing={isEditing} />}
+            {activeTab === 'reservations' && <ReservationsDoc data={formattedReservationsDoc} isEditing={isEditing} />}
+            {activeTab === 'voucher' && <HotelVoucherDoc data={formattedVoucherDoc} isEditing={isEditing} />}
           </div>
         </div>
       )}

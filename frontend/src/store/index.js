@@ -1,8 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
-import tripReducer from './slices/tripSlice';
+import tripsReducer from './slices/tripsSlice';
+import clientsReducer from './slices/clientsSlice';
+import hotelsReducer from './slices/hotelsSlice';
+import driversReducer from './slices/driversSlice';
+import authReducer from './slices/authSlice';
 
 export const store = configureStore({
   reducer: {
-    trips: tripReducer
+    trips: tripsReducer,
+    clients: clientsReducer,
+    hotels: hotelsReducer,
+    drivers: driversReducer,
+    auth: authReducer
   },
 });

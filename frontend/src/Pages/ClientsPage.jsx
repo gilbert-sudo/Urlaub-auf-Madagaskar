@@ -7,11 +7,13 @@ import { Plus, Mail, Phone, MapPin } from 'lucide-react';
 
 export function ClientsPage() {
   const dispatch = useDispatch();
-  const clients = useSelector((state) => state.clients.items);
+  const { items: clients, status } = useSelector((state) => state.clients);
 
   useEffect(() => {
-    dispatch(fetchClients());
-  }, [dispatch]);
+    if (status === 'idle') {
+      dispatch(fetchClients());
+    }
+  }, [dispatch, status]);
 
   return (
     <div className="space-y-6">

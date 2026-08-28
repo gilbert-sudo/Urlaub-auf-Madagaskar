@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, Users, Clock, Plane, CheckCircle2, XCircle } from 'lucide-react';
 
-export function ClientItineraryDoc({ data }) {
+export function ClientItineraryDoc({ data, isEditing }) {
   // Use dummy data if none provided to show the preview
   const docData = data || {
     agency: "Reisebüro Geo Tours AG",
@@ -50,32 +50,32 @@ export function ClientItineraryDoc({ data }) {
   };
 
   return (
-    <div className="bg-white p-12 text-gray-900 rounded-2xl shadow-sm border border-gray-100 mx-auto font-sans" style={{ width: '100%', maxWidth: '850px', minHeight: '1100px' }}>
+    <div className={`bg-white p-12 text-gray-900 rounded-2xl shadow-sm border ${isEditing ? 'border-amber-300 ring-2 ring-amber-100' : 'border-gray-100'} mx-auto font-sans`} style={{ width: '100%', maxWidth: '850px', minHeight: '1100px' }}>
       
       {/* Header Section */}
       <div className="flex justify-between items-start border-b-2 border-brand-primary/20 pb-8 mb-8">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Reiseplanung</h1>
-          <p className="text-sm font-bold text-brand-primary mt-2 uppercase tracking-widest">{docData.agency}</p>
+          <p className="text-sm font-bold text-brand-primary mt-2 uppercase tracking-widest" contentEditable={isEditing} suppressContentEditableWarning>{docData.agency}</p>
           <div className="mt-6 space-y-2">
             <div className="flex items-center gap-3">
               <Users className="w-5 h-5 text-gray-400" />
               <span className="font-bold text-gray-700">Client:</span>
-              <span className="font-extrabold text-lg">{docData.client}</span>
-              <span className="text-sm text-gray-500 ml-2">({docData.guests})</span>
+              <span className="font-extrabold text-lg" contentEditable={isEditing} suppressContentEditableWarning>{docData.client}</span>
+              <span className="text-sm text-gray-500 ml-2" contentEditable={isEditing} suppressContentEditableWarning>({docData.guests})</span>
             </div>
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5 text-gray-400" />
               <span className="font-bold text-gray-700">Dauer:</span>
-              <span className="font-bold">{docData.duration}</span>
+              <span className="font-bold" contentEditable={isEditing} suppressContentEditableWarning>{docData.duration}</span>
             </div>
           </div>
         </div>
         <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 text-right min-w-[200px]">
           <div className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-1">Tour Leader</div>
-          <div className="font-black text-lg mb-4">{docData.tourLeader}</div>
+          <div className="font-black text-lg mb-4" contentEditable={isEditing} suppressContentEditableWarning>{docData.tourLeader}</div>
           <div className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-1">Fahrer</div>
-          <div className="font-black text-lg">{docData.driver}</div>
+          <div className="font-black text-lg" contentEditable={isEditing} suppressContentEditableWarning>{docData.driver}</div>
         </div>
       </div>
 
@@ -94,11 +94,11 @@ export function ClientItineraryDoc({ data }) {
           <tbody className="divide-y divide-gray-100">
             {docData.itinerary.map((row) => (
               <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="py-3 px-5 text-sm font-black text-gray-400">{row.id}</td>
-                <td className="py-3 px-5 text-sm font-bold text-gray-600">{row.date}</td>
-                <td className="py-3 px-5 text-sm font-bold">{row.activity}</td>
-                <td className="py-3 px-5 text-sm font-bold text-brand-primary">{row.hotel}</td>
-                <td className="py-3 px-5 text-sm font-medium text-gray-600">{row.driver}</td>
+                <td className="py-3 px-5 text-sm font-black text-gray-400" contentEditable={isEditing} suppressContentEditableWarning>{row.id}</td>
+                <td className="py-3 px-5 text-sm font-bold text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{row.date}</td>
+                <td className="py-3 px-5 text-sm font-bold" contentEditable={isEditing} suppressContentEditableWarning>{row.activity}</td>
+                <td className="py-3 px-5 text-sm font-bold text-brand-primary" contentEditable={isEditing} suppressContentEditableWarning>{row.hotel}</td>
+                <td className="py-3 px-5 text-sm font-medium text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{row.driver}</td>
               </tr>
             ))}
           </tbody>
@@ -107,9 +107,9 @@ export function ClientItineraryDoc({ data }) {
 
       {/* Pricing & Bed and Breakfast */}
       <div className="flex justify-between items-center bg-brand-primary/5 p-6 rounded-2xl mb-10 border border-brand-primary/10">
-        <div className="text-lg font-black text-gray-900">Bed & Breakfast</div>
+        <div className="text-lg font-black text-gray-900" contentEditable={isEditing} suppressContentEditableWarning>Bed & Breakfast</div>
         <div className="text-lg font-bold text-gray-700">
-          Preis laut Beschreibung: <span className="text-brand-primary font-black ml-2 text-2xl">{docData.price}</span>
+          Preis laut Beschreibung: <span className="text-brand-primary font-black ml-2 text-2xl" contentEditable={isEditing} suppressContentEditableWarning>{docData.price}</span>
         </div>
       </div>
 
@@ -132,10 +132,10 @@ export function ClientItineraryDoc({ data }) {
             <tbody className="divide-y divide-gray-100">
               {docData.flights.map((flight) => (
                 <tr key={flight.id}>
-                  <td className="py-3 px-5 text-sm font-bold text-gray-600">{flight.date}</td>
-                  <td className="py-3 px-5 text-sm font-bold">{flight.route}</td>
-                  <td className="py-3 px-5 text-sm font-medium text-gray-600">{flight.flightNo}</td>
-                  <td className="py-3 px-5 text-sm font-medium text-gray-600">{flight.details}</td>
+                  <td className="py-3 px-5 text-sm font-bold text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{flight.date}</td>
+                  <td className="py-3 px-5 text-sm font-bold" contentEditable={isEditing} suppressContentEditableWarning>{flight.route}</td>
+                  <td className="py-3 px-5 text-sm font-medium text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{flight.flightNo}</td>
+                  <td className="py-3 px-5 text-sm font-medium text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{flight.details}</td>
                 </tr>
               ))}
             </tbody>
@@ -154,7 +154,7 @@ export function ClientItineraryDoc({ data }) {
             {docData.inclusions.map((item, idx) => (
               <li key={idx} className="text-sm text-gray-700 font-medium flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
-                {item}
+                <span contentEditable={isEditing} suppressContentEditableWarning>{item}</span>
               </li>
             ))}
           </ul>
@@ -169,7 +169,7 @@ export function ClientItineraryDoc({ data }) {
             {docData.exclusions.map((item, idx) => (
               <li key={idx} className="text-sm text-gray-700 font-medium flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0" />
-                {item}
+                <span contentEditable={isEditing} suppressContentEditableWarning>{item}</span>
               </li>
             ))}
           </ul>

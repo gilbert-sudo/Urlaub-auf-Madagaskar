@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, Users, Clock, Plane, MapPin, Navigation } from 'lucide-react';
 
-export function DriverItineraryDoc({ data }) {
+export function DriverItineraryDoc({ data, isEditing }) {
   const docData = data || {
     agency: "Reisebüro Geo Tours AG",
     client: "Lea Henninger",
@@ -30,33 +30,33 @@ export function DriverItineraryDoc({ data }) {
   };
 
   return (
-    <div className="bg-white p-12 text-gray-900 rounded-2xl shadow-sm border border-gray-100 mx-auto font-sans" style={{ width: '100%', maxWidth: '850px', minHeight: '1100px' }}>
+    <div className={`bg-white p-12 text-gray-900 rounded-2xl shadow-sm border ${isEditing ? 'border-amber-300 ring-2 ring-amber-100' : 'border-gray-100'} mx-auto font-sans`} style={{ width: '100%', maxWidth: '850px', minHeight: '1100px' }}>
       
       {/* Header Section */}
       <div className="flex justify-between items-start border-b-2 border-amber-500/20 pb-8 mb-8">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Planung für Fahrer</h1>
-          <p className="text-sm font-bold text-amber-600 mt-2 uppercase tracking-widest">{docData.agency}</p>
+          <p className="text-sm font-bold text-amber-600 mt-2 uppercase tracking-widest" contentEditable={isEditing} suppressContentEditableWarning>{docData.agency}</p>
           <div className="mt-6 space-y-2">
             <div className="flex items-center gap-3">
               <Users className="w-5 h-5 text-gray-400" />
               <span className="font-bold text-gray-700">Client:</span>
-              <span className="font-extrabold text-lg">{docData.client}</span>
-              <span className="text-sm text-gray-500 ml-2">({docData.guests})</span>
+              <span className="font-extrabold text-lg" contentEditable={isEditing} suppressContentEditableWarning>{docData.client}</span>
+              <span className="text-sm text-gray-500 ml-2" contentEditable={isEditing} suppressContentEditableWarning>({docData.guests})</span>
             </div>
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5 text-gray-400" />
               <span className="font-bold text-gray-700">Dauer:</span>
-              <span className="font-bold">{docData.duration}</span>
-              {docData.betreuung && <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded ml-2">{docData.betreuung}</span>}
+              <span className="font-bold" contentEditable={isEditing} suppressContentEditableWarning>{docData.duration}</span>
+              {docData.betreuung && <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded ml-2" contentEditable={isEditing} suppressContentEditableWarning>{docData.betreuung}</span>}
             </div>
           </div>
         </div>
         <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 text-right min-w-[200px]">
           <div className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-1">Tour Leader</div>
-          <div className="font-black text-lg mb-4">{docData.tourLeader}</div>
+          <div className="font-black text-lg mb-4" contentEditable={isEditing} suppressContentEditableWarning>{docData.tourLeader}</div>
           <div className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-1">Fahrer</div>
-          <div className="font-black text-lg">{docData.driver}</div>
+          <div className="font-black text-lg" contentEditable={isEditing} suppressContentEditableWarning>{docData.driver}</div>
         </div>
       </div>
 
@@ -75,11 +75,11 @@ export function DriverItineraryDoc({ data }) {
           <tbody className="divide-y divide-gray-100">
             {docData.itinerary.map((row) => (
               <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="py-3 px-5 text-sm font-black text-gray-400">{row.id}</td>
-                <td className="py-3 px-5 text-sm font-bold text-gray-600">{row.date}</td>
-                <td className="py-3 px-5 text-sm font-bold">{row.activity}</td>
-                <td className="py-3 px-5 text-sm font-bold text-brand-primary">{row.hotel}</td>
-                <td className="py-3 px-5 text-sm font-black text-amber-600">{row.driver}</td>
+                <td className="py-3 px-5 text-sm font-black text-gray-400" contentEditable={isEditing} suppressContentEditableWarning>{row.id}</td>
+                <td className="py-3 px-5 text-sm font-bold text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{row.date}</td>
+                <td className="py-3 px-5 text-sm font-bold" contentEditable={isEditing} suppressContentEditableWarning>{row.activity}</td>
+                <td className="py-3 px-5 text-sm font-bold text-brand-primary" contentEditable={isEditing} suppressContentEditableWarning>{row.hotel}</td>
+                <td className="py-3 px-5 text-sm font-black text-amber-600" contentEditable={isEditing} suppressContentEditableWarning>{row.driver}</td>
               </tr>
             ))}
           </tbody>
@@ -115,10 +115,10 @@ export function DriverItineraryDoc({ data }) {
             <tbody className="divide-y divide-gray-100">
               {docData.flights.map((flight) => (
                 <tr key={flight.id}>
-                  <td className="py-3 px-5 text-sm font-bold text-gray-600">{flight.date}</td>
-                  <td className="py-3 px-5 text-sm font-bold">{flight.route}</td>
-                  <td className="py-3 px-5 text-sm font-medium text-gray-600">{flight.flightNo}</td>
-                  <td className="py-3 px-5 text-sm font-medium text-gray-600">{flight.details}</td>
+                  <td className="py-3 px-5 text-sm font-bold text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{flight.date}</td>
+                  <td className="py-3 px-5 text-sm font-bold" contentEditable={isEditing} suppressContentEditableWarning>{flight.route}</td>
+                  <td className="py-3 px-5 text-sm font-medium text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{flight.flightNo}</td>
+                  <td className="py-3 px-5 text-sm font-medium text-gray-600" contentEditable={isEditing} suppressContentEditableWarning>{flight.details}</td>
                 </tr>
               ))}
             </tbody>

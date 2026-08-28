@@ -9,6 +9,7 @@ import { ClientsPage } from './Pages/ClientsPage';
 import { ReservationsPage } from './Pages/ReservationsPage';
 import { DocumentsPage } from './Pages/DocumentsPage';
 import { LoginPage } from './Pages/LoginPage';
+import { CreateTripPage } from './Pages/CreateTripPage';
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -26,6 +27,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="trips" element={<TripsPage />} />
+          <Route path="trips/new" element={<CreateTripPage />} />
           <Route path="trips/:id" element={<TripDetailsPage />} />
           <Route path="reservations" element={<ReservationsPage />} />
           <Route path="clients" element={<ClientsPage />} />

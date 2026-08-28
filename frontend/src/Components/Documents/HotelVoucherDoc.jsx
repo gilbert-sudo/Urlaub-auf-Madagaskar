@@ -1,7 +1,7 @@
 import React from 'react';
-import { Building2, User, CreditCard, CalendarDays, Coffee, FileSignature, Moon } from 'lucide-react';
+import { Building2, User, CreditCard, CalendarDays, Coffee, FileSignature, Moon, UsersIcon as LucideUsersIcon } from 'lucide-react';
 
-export function HotelVoucherDoc({ data }) {
+export function HotelVoucherDoc({ data, isEditing }) {
   const docData = data || {
     agency: {
       name: "Madagascar Trip's and Pic's",
@@ -45,7 +45,7 @@ export function HotelVoucherDoc({ data }) {
   };
 
   return (
-    <div className="bg-white p-12 text-gray-900 rounded-2xl shadow-sm border border-gray-100 mx-auto font-sans" style={{ width: '100%', maxWidth: '850px', minHeight: '1100px' }}>
+    <div className={`bg-white p-12 text-gray-900 rounded-2xl shadow-sm border ${isEditing ? 'border-amber-300 ring-2 ring-amber-100' : 'border-gray-100'} mx-auto font-sans`} style={{ width: '100%', maxWidth: '850px', minHeight: '1100px' }}>
       
       {/* Header Section */}
       <div className="text-center pb-6 mb-8 border-b-4 border-gray-900">
@@ -56,30 +56,30 @@ export function HotelVoucherDoc({ data }) {
       <div className="grid grid-cols-2 gap-6 mb-8">
         <div className="border-2 border-brand-primary/20 rounded-2xl p-6 bg-brand-primary/5">
           <img src="/assets/logo.png" alt="Madagascar Trips & Pics" className="h-20 mb-4 object-contain" />
-          <div className="text-sm font-medium text-gray-700 whitespace-pre-line mb-2">
+          <div className="text-sm font-medium text-gray-700 whitespace-pre-line mb-2" contentEditable={isEditing} suppressContentEditableWarning>
             {docData.agency.address}
           </div>
           <div className="text-sm font-bold text-gray-600">
-            Tel: {docData.agency.phone}<br/>
-            Mail: {docData.agency.email}
+            Tel: <span contentEditable={isEditing} suppressContentEditableWarning>{docData.agency.phone}</span><br/>
+            Mail: <span contentEditable={isEditing} suppressContentEditableWarning>{docData.agency.email}</span>
           </div>
         </div>
         
         <div className="border-2 border-gray-200 rounded-2xl p-6 bg-gray-50 flex flex-col justify-between">
           <div>
             <div className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-1">Hôtel</div>
-            <div className="text-xl font-black text-gray-900">{docData.hotel}</div>
+            <div className="text-xl font-black text-gray-900" contentEditable={isEditing} suppressContentEditableWarning>{docData.hotel}</div>
           </div>
           <div className="mt-4 space-y-3">
             <div className="flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-gray-400" />
               <span className="text-sm text-gray-500 font-bold">Mode de paiement:</span>
-              <span className="text-sm font-black text-gray-900">{docData.paymentMode}</span>
+              <span className="text-sm font-black text-gray-900" contentEditable={isEditing} suppressContentEditableWarning>{docData.paymentMode}</span>
             </div>
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-gray-400" />
               <span className="text-sm text-gray-500 font-bold">Résponsable:</span>
-              <span className="text-sm font-black text-gray-900">{docData.responsable || "________________"}</span>
+              <span className="text-sm font-black text-gray-900" contentEditable={isEditing} suppressContentEditableWarning>{docData.responsable || "________________"}</span>
             </div>
           </div>
         </div>
@@ -98,20 +98,20 @@ export function HotelVoucherDoc({ data }) {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <span className="text-sm text-gray-500 font-bold block mb-1">Noms</span>
-              <span className="text-lg font-black">{docData.travelers.names}</span>
+              <span className="text-lg font-black" contentEditable={isEditing} suppressContentEditableWarning>{docData.travelers.names}</span>
             </div>
             <div className="flex gap-6 items-end">
               <div>
                 <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">Total Personnes</span>
-                <span className="text-lg font-black">{docData.travelers.pax}</span>
+                <span className="text-lg font-black" contentEditable={isEditing} suppressContentEditableWarning>{docData.travelers.pax}</span>
               </div>
               <div>
                 <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">Adultes</span>
-                <span className="text-base font-bold text-gray-700">{docData.travelers.adults}</span>
+                <span className="text-base font-bold text-gray-700" contentEditable={isEditing} suppressContentEditableWarning>{docData.travelers.adults}</span>
               </div>
               <div>
                 <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">Enfants</span>
-                <span className="text-base font-bold text-gray-700">{docData.travelers.children}</span>
+                <span className="text-base font-bold text-gray-700" contentEditable={isEditing} suppressContentEditableWarning>{docData.travelers.children}</span>
               </div>
             </div>
           </div>
@@ -134,19 +134,19 @@ export function HotelVoucherDoc({ data }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">Arrivée</span>
-                <span className="text-base font-bold">{docData.dates.arrival}</span>
+                <span className="text-base font-bold" contentEditable={isEditing} suppressContentEditableWarning>{docData.dates.arrival}</span>
               </div>
               <div>
                 <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">Départ</span>
-                <span className="text-base font-bold">{docData.dates.departure}</span>
+                <span className="text-base font-bold" contentEditable={isEditing} suppressContentEditableWarning>{docData.dates.departure}</span>
               </div>
               <div>
                 <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">N° de nuitées</span>
-                <span className="text-base font-bold">{docData.dates.nights}</span>
+                <span className="text-base font-bold" contentEditable={isEditing} suppressContentEditableWarning>{docData.dates.nights}</span>
               </div>
               <div>
                 <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">Day use</span>
-                <span className="text-base font-bold">{docData.dates.dayUse || "-"}</span>
+                <span className="text-base font-bold" contentEditable={isEditing} suppressContentEditableWarning>{docData.dates.dayUse || "-"}</span>
               </div>
             </div>
           </div>
@@ -159,19 +159,19 @@ export function HotelVoucherDoc({ data }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100">
                 <span className="text-xs font-bold text-gray-600">Double</span>
-                <span className="font-black">{docData.rooms.double || "-"}</span>
+                <span className="font-black" contentEditable={isEditing} suppressContentEditableWarning>{docData.rooms.double || "-"}</span>
               </div>
               <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100">
                 <span className="text-xs font-bold text-gray-600">Twin(s)</span>
-                <span className="font-black">{docData.rooms.twin || "-"}</span>
+                <span className="font-black" contentEditable={isEditing} suppressContentEditableWarning>{docData.rooms.twin || "-"}</span>
               </div>
               <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100">
                 <span className="text-xs font-bold text-gray-600">Triple(s)</span>
-                <span className="font-black">{docData.rooms.triple || "-"}</span>
+                <span className="font-black" contentEditable={isEditing} suppressContentEditableWarning>{docData.rooms.triple || "-"}</span>
               </div>
               <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100">
                 <span className="text-xs font-bold text-gray-600">Familial</span>
-                <span className="font-black">{docData.rooms.family || "-"}</span>
+                <span className="font-black" contentEditable={isEditing} suppressContentEditableWarning>{docData.rooms.family || "-"}</span>
               </div>
             </div>
           </div>
@@ -183,22 +183,22 @@ export function HotelVoucherDoc({ data }) {
             <h3 className="font-black text-lg text-gray-800 flex items-center gap-2">
               <Coffee className="w-5 h-5 text-brand-primary" /> Restauration
             </h3>
-            <span className="bg-brand-primary/10 text-brand-primary font-black px-3 py-1 rounded-lg text-sm border border-brand-primary/20">
+            <span className="bg-brand-primary/10 text-brand-primary font-black px-3 py-1 rounded-lg text-sm border border-brand-primary/20" contentEditable={isEditing} suppressContentEditableWarning>
               {docData.meals.type}
             </span>
           </div>
           <div className="p-6 grid grid-cols-3 gap-4 text-center">
             <div className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm">
               <span className="text-xs font-bold text-gray-500 block mb-1">Petit déjeuner</span>
-              <span className={`font-black ${docData.meals.breakfast === 'OUI' ? 'text-emerald-600' : 'text-gray-400'}`}>{docData.meals.breakfast}</span>
+              <span className={`font-black ${docData.meals.breakfast === 'OUI' ? 'text-emerald-600' : 'text-gray-400'}`} contentEditable={isEditing} suppressContentEditableWarning>{docData.meals.breakfast}</span>
             </div>
             <div className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm">
               <span className="text-xs font-bold text-gray-500 block mb-1">Repas midi</span>
-              <span className={`font-black ${docData.meals.lunch === 'OUI' ? 'text-emerald-600' : 'text-gray-400'}`}>{docData.meals.lunch}</span>
+              <span className={`font-black ${docData.meals.lunch === 'OUI' ? 'text-emerald-600' : 'text-gray-400'}`} contentEditable={isEditing} suppressContentEditableWarning>{docData.meals.lunch}</span>
             </div>
             <div className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm">
               <span className="text-xs font-bold text-gray-500 block mb-1">Repas soir</span>
-              <span className={`font-black ${docData.meals.dinner === 'OUI' ? 'text-emerald-600' : 'text-gray-400'}`}>{docData.meals.dinner}</span>
+              <span className={`font-black ${docData.meals.dinner === 'OUI' ? 'text-emerald-600' : 'text-gray-400'}`} contentEditable={isEditing} suppressContentEditableWarning>{docData.meals.dinner}</span>
             </div>
           </div>
         </div>
@@ -210,7 +210,7 @@ export function HotelVoucherDoc({ data }) {
           </div>
           <div className="w-full">
             <h3 className="font-bold text-gray-900 mb-1">Particularités :</h3>
-            <div className="text-sm font-medium text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 min-h-[60px]">
+            <div className="text-sm font-medium text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 min-h-[60px]" contentEditable={isEditing} suppressContentEditableWarning>
               {docData.particularities}
             </div>
           </div>
@@ -229,11 +229,11 @@ export function HotelVoucherDoc({ data }) {
           <div className="p-6 border-b-2 border-gray-200 flex flex-col justify-start">
             <div className="mb-4">
               <span className="text-sm font-bold text-gray-500">Nom du guide :</span>
-              <span className="font-black text-gray-900 ml-2">{docData.signatures.guide}</span>
+              <span className="font-black text-gray-900 ml-2" contentEditable={isEditing} suppressContentEditableWarning>{docData.signatures.guide}</span>
             </div>
             <div>
               <span className="text-sm font-bold text-gray-500">Nom du chauffeur :</span>
-              <span className="font-black text-gray-900 ml-2">{docData.signatures.driver}</span>
+              <span className="font-black text-gray-900 ml-2" contentEditable={isEditing} suppressContentEditableWarning>{docData.signatures.driver}</span>
             </div>
           </div>
           

@@ -10,12 +10,14 @@ import { Plus, Users, Calendar, MapPin, Search } from 'lucide-react';
 export function TripsPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items: trips, loading } = useSelector((state) => state.trips);
+  const { items: trips, loading, status } = useSelector((state) => state.trips);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    dispatch(fetchTrips());
-  }, [dispatch]);
+    if (status === 'idle') {
+      dispatch(fetchTrips());
+    }
+  }, [dispatch, status]);
 
   const filteredTrips = trips.filter(trip => {
     const titleMatch = trip.title?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -27,7 +29,7 @@ export function TripsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-black">Trips & Itineraries</h1>
-        <Button variant="primary">
+        <Button variant="primary" onClick={() => navigate('/trips/new')}>
           <Plus size={20} /> Create New Trip
         </Button>
       </div>
