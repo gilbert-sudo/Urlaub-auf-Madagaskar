@@ -173,7 +173,7 @@ export function TripDetailsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-20">
-      <div className="sticky top-[73px] z-20 bg-[#f8fafc]/80 backdrop-blur-xl py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200/50 -mx-4 px-4 sm:-mx-8 sm:px-8">
+      <div className="sticky top-[81px] z-20 bg-[#f8fafc]/80 backdrop-blur-xl py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200/50 -mx-4 px-4 sm:-mx-8 sm:px-8">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/trips')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft size={20} />

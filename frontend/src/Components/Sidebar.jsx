@@ -20,7 +20,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 fixed inset-y-0 left-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border-r border-gray-100/60 dark:border-slate-800 p-6 flex flex-col gap-10 z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+    <aside className="w-64 fixed inset-y-0 left-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl border-r border-white/50 dark:border-slate-800/50 p-6 flex flex-col gap-10 z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-colors duration-500">
       
       {/* Brand Logo - Interactive */}
       <div className="flex justify-center w-full group cursor-pointer px-2">

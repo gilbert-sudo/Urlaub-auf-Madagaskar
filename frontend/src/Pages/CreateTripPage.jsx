@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { createTrip } from '../store/slices/tripsSlice';
@@ -8,6 +9,7 @@ import { fetchDrivers } from '../store/slices/driversSlice';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
 import { DateRangePicker } from '../Components/DateRangePicker';
+import { ClientSelect } from '../Components/ClientSelect';
 import { Plus, Trash2, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 
 export function CreateTripPage() {
@@ -133,9 +135,10 @@ export function CreateTripPage() {
     };
     try {
       await dispatch(createTrip(formattedTrip)).unwrap();
+      toast.success('Trip created successfully!');
       navigate('/trips');
     } catch (err) {
-      alert('Failed to create trip: ' + err.message);
+      toast.error('Failed to create trip: ' + err.message);
     }
   };
 
@@ -202,15 +205,11 @@ export function CreateTripPage() {
                 <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Trip Title</label>
                 <input required={currentStep === 1} name="title" value={tripData.title} onChange={handleTripDataChange} className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all font-bold text-sm" placeholder="e.g. Honeymoon Madagascar" />
               </div>
-              <div className="space-y-2">
-                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Client</label>
-                <select required={currentStep === 1} name="client" value={tripData.client} onChange={handleTripDataChange} className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all font-bold text-sm">
-                  <option value="" disabled>Select a client</option>
-                  {clients.map(c => (
-                    <option key={c._id} value={c._id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
+              <ClientSelect 
+                required={currentStep === 1} 
+                value={tripData.client} 
+                onChange={handleTripDataChange} 
+              />
               <div className="space-y-2 md:col-span-2 xl:col-span-1">
                 <DateRangePicker 
                   startDate={tripData.startDate}

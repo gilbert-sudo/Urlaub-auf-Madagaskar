@@ -11,6 +11,8 @@ import { DocumentsPage } from './Pages/DocumentsPage';
 import { LoginPage } from './Pages/LoginPage';
 import { CreateTripPage } from './Pages/CreateTripPage';
 
+import { Toaster } from 'sonner';
+
 const ProtectedRoute = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
   if (!isAuthenticated) {
@@ -21,21 +23,24 @@ const ProtectedRoute = () => {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="trips" element={<TripsPage />} />
-          <Route path="trips/new" element={<CreateTripPage />} />
-          <Route path="trips/:id" element={<TripDetailsPage />} />
-          <Route path="reservations" element={<ReservationsPage />} />
-          <Route path="clients" element={<ClientsPage />} />
-          <Route path="documents" element={<DocumentsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+    <>
+      <Toaster position="top-center" richColors />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="trips" element={<TripsPage />} />
+            <Route path="trips/new" element={<CreateTripPage />} />
+            <Route path="trips/:id" element={<TripDetailsPage />} />
+            <Route path="reservations" element={<ReservationsPage />} />
+            <Route path="clients" element={<ClientsPage />} />
+            <Route path="documents" element={<DocumentsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   );
 }
 

@@ -43,28 +43,38 @@ export function Dashboard() {
         ))}
       </div>
 
-      <Card>
+      <Card className="flex flex-col">
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100 dark:border-slate-800">
-          <h2 className="text-lg font-extrabold">Recent Trips</h2>
-          <Button variant="primary">
-            <Plus size={20} /> New Trip
+          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Recent Trips</h2>
+          <Button variant="primary" onClick={() => window.location.href = '/trips/new'}>
+            <Plus size={18} /> New Trip
           </Button>
         </div>
         
-        <div className="space-y-4">
-          {trips.map((trip) => (
-            <div key={trip._id} className="flex justify-between items-center p-4 hover:bg-gray-50/50 dark:hover:bg-slate-700/50 rounded-2xl transition-colors">
-              <div>
-                <h3 className="text-sm font-bold">{trip.title}</h3>
-                <div className="flex gap-4 mt-2 text-xs font-bold text-gray-400">
-                  <span className="flex items-center gap-1.5"><Users size={14} /> {trip.client?.name}</span>
-                  <span className="flex items-center gap-1.5"><Calendar size={14} /> {new Date(trip.startDate).toLocaleDateString()}</span>
-                  <span className="flex items-center gap-1.5"><Clock size={14} /> {trip.duration} Days</span>
+        <div className="space-y-3">
+          {trips.length === 0 ? (
+            <div className="text-center py-12 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700">
+              <Map size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" strokeWidth={1} />
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">No trips found</h3>
+              <p className="text-xs text-slate-500 mt-1">Get started by creating your first trip itinerary.</p>
+            </div>
+          ) : (
+            trips.map((trip) => (
+              <div key={trip._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/80 rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all duration-300 cursor-pointer group">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-brand-primary transition-colors">{trip.title}</h3>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-[13px] font-medium text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1.5"><Users size={14} className="text-slate-400" /> {trip.client?.name || 'No Client'}</span>
+                    <span className="flex items-center gap-1.5"><Calendar size={14} className="text-slate-400" /> {trip.startDate ? new Date(trip.startDate).toLocaleDateString() : 'TBD'}</span>
+                    <span className="flex items-center gap-1.5"><Clock size={14} className="text-slate-400" /> {trip.duration} Days</span>
+                  </div>
+                </div>
+                <div className="flex items-center self-start sm:self-auto">
+                  <Badge type={getStatusType(trip.status)}>{trip.status}</Badge>
                 </div>
               </div>
-              <Badge type={getStatusType(trip.status)}>{trip.status}</Badge>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </Card>
     </div>

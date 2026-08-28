@@ -8,6 +8,11 @@ export const fetchClients = createAsyncThunk('clients/fetchClients', async () =>
   return response.data;
 });
 
+export const createClient = createAsyncThunk('clients/createClient', async (clientData) => {
+  const response = await axios.post(`${API_URL}/api/clients`, clientData);
+  return response.data;
+});
+
 const clientsSlice = createSlice({
   name: 'clients',
   initialState: {
@@ -32,6 +37,9 @@ const clientsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
         state.status = 'failed';
+      })
+      .addCase(createClient.fulfilled, (state, action) => {
+        state.items.push(action.payload);
       });
   }
 });
