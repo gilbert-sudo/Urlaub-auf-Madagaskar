@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchTrips } from '../store/slices/tripsSlice';
+import { fetchTrips, deleteTrip } from '../store/slices/tripsSlice';
 import { Card } from '../Components/Card';
 import { Badge } from '../Components/Badge';
 import { Button } from '../Components/Button';
-import { Plus, Users, Calendar, MapPin, Search, Clock } from 'lucide-react';
+import { Plus, Users, Calendar, MapPin, Search, Clock, AlertTriangle, Trash2 } from 'lucide-react';
 
 export function TripsPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items: trips, loading, status } = useSelector((state) => state.trips);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tripToDelete, setTripToDelete] = useState(null);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -92,14 +93,47 @@ export function TripsPage() {
                 <Calendar size={16} className="text-slate-400" /> <span>{trip.startDate ? new Date(trip.startDate).toLocaleDateString() : 'TBD'}</span>
               </div>
             </div>
-
             <div className="mt-auto pt-6 flex gap-3">
               <Button onClick={() => navigate(`/trips/${trip._id}`)} variant="secondary" className="flex-1 text-xs py-2 px-3">Details</Button>
-              <Button variant="ghost" className="flex-1 text-xs py-2 px-3 border border-slate-200 dark:border-slate-700">Edit</Button>
+              <Button onClick={() => navigate(`/trips/${trip._id}/edit`)} variant="ghost" className="flex-1 text-xs py-2 px-3 border border-slate-200 dark:border-slate-700">Edit</Button>
+              <Button onClick={() => setTripToDelete(trip)} variant="danger" className="p-2 border border-red-500 text-red-500 hover:bg-red-50">
+                <Trash2 size={16} />
+              </Button>
             </div>
           </Card>
         ))}
       </div>
+      
+      {/* Modern Confirmation Modal */}
+      {tripToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setTripToDelete(null)}></div>
+          <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100 opacity-100">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle className="text-red-500" size={32} />
+              </div>
+              <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Delete Trip?</h3>
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-6">
+                Are you sure you want to delete <span className="text-slate-700 dark:text-slate-300">"{tripToDelete.title}"</span>? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 w-full">
+                <Button onClick={() => setTripToDelete(null)} variant="secondary" className="flex-1">Cancel</Button>
+                <Button 
+                  onClick={() => {
+                    dispatch(deleteTrip(tripToDelete._id));
+                    setTripToDelete(null);
+                  }} 
+                  variant="danger" 
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white border-transparent"
+                >
+                  Yes, Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

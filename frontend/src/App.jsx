@@ -32,6 +32,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="trips" element={<TripsPage />} />
             <Route path="trips/new" element={<CreateTripPage />} />
+            <Route path="trips/:id/edit" element={<CreateTripPage />} />
             <Route path="trips/:id" element={<TripDetailsPage />} />
             <Route path="reservations" element={<ReservationsPage />} />
             <Route path="clients" element={<ClientsPage />} />

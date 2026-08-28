@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { createTrip } from '../store/slices/tripsSlice';
+import { useNavigate, useParams } from 'react-router-dom';
+import { createTrip, updateTrip, fetchTripById } from '../store/slices/tripsSlice';
 import { fetchClients } from '../store/slices/clientsSlice';
 import { fetchHotels } from '../store/slices/hotelsSlice';
 import { fetchDrivers } from '../store/slices/driversSlice';
@@ -15,6 +15,8 @@ import { Plus, Trash2, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 export function CreateTripPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = !!id;
 
   const { items: clients } = useSelector(state => state.clients);
   const { items: hotels } = useSelector(state => state.hotels);
@@ -24,7 +26,47 @@ export function CreateTripPage() {
     dispatch(fetchClients());
     dispatch(fetchHotels());
     dispatch(fetchDrivers());
-  }, [dispatch]);
+    
+    if (isEditing) {
+      dispatch(fetchTripById(id)).unwrap().then((trip) => {
+        setTripData({
+          title: trip.title || '',
+          client: trip.client?._id || trip.client || '',
+          duration: trip.duration || 1,
+          startDate: trip.startDate ? new Date(trip.startDate).toISOString().split('T')[0] : '',
+          endDate: trip.endDate ? new Date(trip.endDate).toISOString().split('T')[0] : '',
+          guestType: trip.guestType || 'Standard',
+          totalPrice: trip.totalPrice || 0,
+          status: trip.status || 'Inquiry',
+          inclusions: trip.inclusions?.length ? trip.inclusions : [''],
+          exclusions: trip.exclusions?.length ? trip.exclusions : [''],
+          flights: {
+            arrival: {
+              date: trip.flights?.arrival?.date ? new Date(trip.flights.arrival.date).toISOString().split('T')[0] : '',
+              flightNumber: trip.flights?.arrival?.flightNumber || '',
+              details: trip.flights?.arrival?.details || ''
+            },
+            departure: {
+              date: trip.flights?.departure?.date ? new Date(trip.flights.departure.date).toISOString().split('T')[0] : '',
+              flightNumber: trip.flights?.departure?.flightNumber || '',
+              details: trip.flights?.departure?.details || ''
+            }
+          }
+        });
+        
+        if (trip.itinerary && trip.itinerary.length > 0) {
+          setItinerary(trip.itinerary.map(day => ({
+            dayNumber: day.dayNumber,
+            date: day.date ? new Date(day.date).toISOString().split('T')[0] : '',
+            activities: day.activities || '',
+            hotel: day.hotel?._id || day.hotel || '',
+            driver: day.driver?._id || day.driver || '',
+            locationDetails: day.locationDetails || ''
+          })));
+        }
+      });
+    }
+  }, [dispatch, id, isEditing]);
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
@@ -134,11 +176,16 @@ export function CreateTripPage() {
       }))
     };
     try {
-      await dispatch(createTrip(formattedTrip)).unwrap();
-      toast.success('Trip created successfully!');
+      if (isEditing) {
+        await dispatch(updateTrip({ id, data: formattedTrip })).unwrap();
+        toast.success('Trip updated successfully!');
+      } else {
+        await dispatch(createTrip(formattedTrip)).unwrap();
+        toast.success('Trip created successfully!');
+      }
       navigate('/trips');
     } catch (err) {
-      toast.error('Failed to create trip: ' + err.message);
+      toast.error(`Failed to ${isEditing ? 'update' : 'create'} trip: ` + err.message);
     }
   };
 
@@ -157,7 +204,7 @@ export function CreateTripPage() {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-black">Create New Trip</h1>
+              <h1 className="text-2xl font-black">{isEditing ? 'Edit Trip' : 'Create New Trip'}</h1>
               <p className="text-sm font-bold text-gray-500 mt-1">Step {currentStep} of {totalSteps}: {stepLabels[currentStep-1]}</p>
             </div>
           </div>

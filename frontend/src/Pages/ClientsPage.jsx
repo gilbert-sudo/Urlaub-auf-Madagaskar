@@ -1,19 +1,45 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchClients } from '../store/slices/clientsSlice';
+import { fetchClients, deleteClient } from '../store/slices/clientsSlice';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { Plus, Mail, Phone, MapPin, Users } from 'lucide-react';
+import { Plus, Mail, Phone, MapPin, Users, Edit2, Trash2 } from 'lucide-react';
+import { ClientModal } from '../Components/ClientModal';
+import { toast } from 'sonner';
 
 export function ClientsPage() {
   const dispatch = useDispatch();
   const { items: clients, status } = useSelector((state) => state.clients);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
 
   useEffect(() => {
     if (status === 'idle') {
       dispatch(fetchClients());
     }
   }, [dispatch, status]);
+
+  const handleOpenModal = (client = null) => {
+    setSelectedClient(client);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedClient(null);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this client?')) {
+      try {
+        await dispatch(deleteClient(id)).unwrap();
+        toast.success('Client deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete client');
+      }
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -22,7 +48,7 @@ export function ClientsPage() {
           <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">Clients Directory</h1>
           <p className="text-sm font-semibold text-slate-500 mt-1">Manage all your client information and history</p>
         </div>
-        <Button variant="primary">
+        <Button variant="primary" onClick={() => handleOpenModal()}>
           <Plus size={18} /> Add Client
         </Button>
       </div>
@@ -74,7 +100,22 @@ export function ClientsPage() {
                   </td>
                   <td className="p-5 font-bold text-slate-500">{client.paxAdults + client.paxChildren}</td>
                   <td className="p-5 text-right">
-                    <Button variant="ghost" className="inline-flex py-1.5 px-3 text-xs border border-slate-200 dark:border-slate-700">View Profile</Button>
+                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => handleOpenModal(client)}
+                        className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
+                        title="Edit Client"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(client._id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors"
+                        title="Delete Client"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -82,6 +123,12 @@ export function ClientsPage() {
           </table>
         </div>
       </Card>
+      
+      <ClientModal 
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        client={selectedClient}
+      />
     </div>
   );
 }

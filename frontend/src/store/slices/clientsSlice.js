@@ -13,6 +13,16 @@ export const createClient = createAsyncThunk('clients/createClient', async (clie
   return response.data;
 });
 
+export const updateClient = createAsyncThunk('clients/updateClient', async ({ id, data }) => {
+  const response = await axios.put(`${API_URL}/api/clients/${id}`, data);
+  return response.data;
+});
+
+export const deleteClient = createAsyncThunk('clients/deleteClient', async (id) => {
+  await axios.delete(`${API_URL}/api/clients/${id}`);
+  return id;
+});
+
 const clientsSlice = createSlice({
   name: 'clients',
   initialState: {
@@ -40,6 +50,15 @@ const clientsSlice = createSlice({
       })
       .addCase(createClient.fulfilled, (state, action) => {
         state.items.push(action.payload);
+      })
+      .addCase(updateClient.fulfilled, (state, action) => {
+        const index = state.items.findIndex(client => client._id === action.payload._id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(deleteClient.fulfilled, (state, action) => {
+        state.items = state.items.filter(client => client._id !== action.payload);
       });
   }
 });
