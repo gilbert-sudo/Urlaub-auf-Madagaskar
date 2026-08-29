@@ -5,7 +5,8 @@ import { fetchTrips, deleteTrip } from '../store/slices/tripsSlice';
 import { Card } from '../Components/Card';
 import { Badge } from '../Components/Badge';
 import { Button } from '../Components/Button';
-import { Plus, Users, Calendar, MapPin, Search, Clock, AlertTriangle, Trash2 } from 'lucide-react';
+import { Plus, Users, Calendar, MapPin, Search, Clock, AlertTriangle, Trash2, ShieldAlert } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function TripsPage() {
   const dispatch = useDispatch();
@@ -104,36 +105,60 @@ export function TripsPage() {
         ))}
       </div>
       
-      {/* Modern Confirmation Modal */}
-      {tripToDelete && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setTripToDelete(null)}></div>
-          <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100 opacity-100">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-                <AlertTriangle className="text-red-500" size={32} />
+      {/* Sleek Mobile-Friendly Confirmation Modal */}
+      <AnimatePresence>
+        {tripToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+              onClick={() => setTripToDelete(null)}
+            />
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative bg-white dark:bg-slate-900 rounded-[28px] shadow-2xl w-full max-w-[320px] overflow-hidden border border-slate-100 dark:border-slate-800"
+            >
+              <div className="p-6 flex flex-col items-center text-center relative z-10">
+                {/* Sleek Icon Container */}
+                <div className="w-14 h-14 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                  <Trash2 className="text-red-500" size={24} strokeWidth={1.5} />
+                </div>
+
+                <h3 className="text-[19px] font-semibold text-slate-800 dark:text-slate-100 mb-2">Delete Trip</h3>
+                
+                <p className="text-[14px] text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                  Are you sure you want to delete <span className="font-medium text-slate-700 dark:text-slate-300">"{tripToDelete.title}"</span>? This action cannot be undone.
+                </p>
+
+                <div className="flex gap-3 w-full">
+                  <button 
+                    onClick={() => setTripToDelete(null)}
+                    className="flex-1 py-3 rounded-2xl font-medium text-slate-600 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors outline-none text-[14px]"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      dispatch(deleteTrip(tripToDelete._id));
+                      setTripToDelete(null);
+                    }} 
+                    className="flex-1 py-3 rounded-2xl font-medium text-white bg-red-500 hover:bg-red-600 transition-colors focus:ring-4 focus:ring-red-500/20 outline-none text-[14px] shadow-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-              <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Delete Trip?</h3>
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-6">
-                Are you sure you want to delete <span className="text-slate-700 dark:text-slate-300">"{tripToDelete.title}"</span>? This action cannot be undone.
-              </p>
-              <div className="flex gap-3 w-full">
-                <Button onClick={() => setTripToDelete(null)} variant="secondary" className="flex-1">Cancel</Button>
-                <Button 
-                  onClick={() => {
-                    dispatch(deleteTrip(tripToDelete._id));
-                    setTripToDelete(null);
-                  }} 
-                  variant="danger" 
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white border-transparent"
-                >
-                  Yes, Delete
-                </Button>
-              </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }

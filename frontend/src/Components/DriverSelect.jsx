@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Search, Plus, User, Check, X, Users } from 'lucide-react';
+import { Search, Plus, Car, Check, X, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createClient } from '../store/slices/clientsSlice';
+import { createDriver } from '../store/slices/driversSlice';
 import { toast } from 'sonner';
 
-export function ClientSelect({ value, onChange, required, label = 'Client', compact = false }) {
+export function DriverSelect({ value, onChange, required, label = 'Driver', compact = false }) {
   const dispatch = useDispatch();
-  const { items: clients } = useSelector(state => state.clients);
+  const { items: drivers } = useSelector(state => state.drivers);
   
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newClientData, setNewClientData] = useState({
+  const [newDriverData, setNewDriverData] = useState({
     name: '',
     email: '',
     phone: '',
-    paxAdults: 2,
-    paxChildren: 0,
-    notes: ''
+    vehicleType: '',
+    languages: ''
   });
   
   // Handle escape key
@@ -50,42 +49,46 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
     };
   }, [isOpen]);
 
-  const filteredClients = clients.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredDrivers = drivers.filter(d => 
+    d.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const selectedClient = clients.find(c => c._id === value);
+  const selectedDriver = drivers.find(d => d._id === value);
 
-  const handleSelect = (clientId) => {
-    onChange({ target: { name: 'client', value: clientId } });
+  const handleSelect = (driverId) => {
+    onChange(driverId);
     setIsOpen(false);
     setSearchTerm('');
   };
 
   const clearSelection = () => {
-    onChange({ target: { name: 'client', value: '' } });
+    onChange('');
   };
 
   const handleAddNew = async (e) => {
     e.preventDefault();
-    if (!newClientData.name.trim()) return;
+    if (!newDriverData.name.trim()) return;
 
     try {
-      const newClient = await dispatch(createClient({ 
-        name: newClientData.name.trim(),
-        email: newClientData.email.trim(),
-        phone: newClientData.phone.trim(),
-        paxAdults: Number(newClientData.paxAdults) || 2,
-        paxChildren: Number(newClientData.paxChildren) || 0,
-        notes: newClientData.notes.trim()
+      const formattedLanguages = newDriverData.languages
+        .split(',')
+        .map(lang => lang.trim())
+        .filter(lang => lang);
+
+      const newDriver = await dispatch(createDriver({ 
+        name: newDriverData.name.trim(),
+        email: newDriverData.email.trim(),
+        phone: newDriverData.phone.trim(),
+        vehicleType: newDriverData.vehicleType.trim(),
+        languages: formattedLanguages
       })).unwrap();
       
-      toast.success('Client created successfully');
-      handleSelect(newClient._id);
+      toast.success('Driver created successfully');
+      handleSelect(newDriver._id);
       setIsAddingNew(false);
-      setNewClientData({ name: '', email: '', phone: '', paxAdults: 2, paxChildren: 0, notes: '' });
+      setNewDriverData({ name: '', email: '', phone: '', vehicleType: '', languages: '' });
     } catch (err) {
-      toast.error('Failed to create client');
+      toast.error('Failed to create driver');
     }
   };
 
@@ -97,7 +100,7 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
       {required && (
         <input 
           type="text" 
-          name="client" 
+          name="driver" 
           value={value || ''} 
           readOnly 
           required 
@@ -114,10 +117,10 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
         onClick={() => setIsOpen(true)}
         className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm cursor-pointer flex items-center justify-between text-left group"
       >
-        <span className={selectedClient ? 'text-gray-800' : 'text-gray-400'}>
-          {selectedClient ? selectedClient.name : 'Select a client...'}
+        <span className={selectedDriver ? 'text-gray-800' : 'text-gray-400'}>
+          {selectedDriver ? selectedDriver.name : 'Select a driver...'}
         </span>
-        {selectedClient ? (
+        {selectedDriver ? (
           <button 
             type="button" 
             onClick={(e) => { e.stopPropagation(); clearSelection(); }}
@@ -126,7 +129,7 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
             <X size={14} />
           </button>
         ) : (
-          <User size={18} className="text-gray-400 group-hover:text-brand-primary transition-colors ml-2" />
+          <Car size={18} className="text-gray-400 group-hover:text-brand-primary transition-colors ml-2" />
         )}
       </div>
 
@@ -163,7 +166,7 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                           <Users size={20} />
                         </div>
                         <div>
-                          <h3 className="font-black text-xl text-gray-800">Select Client</h3>
+                          <h3 className="font-black text-xl text-gray-800">Select Driver</h3>
                         </div>
                       </div>
                       <button 
@@ -184,7 +187,7 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                         <input
                           autoFocus
                           type="text"
-                          placeholder="Search clients..."
+                          placeholder="Search drivers..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-full text-sm font-semibold outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all"
@@ -192,29 +195,29 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                       </div>
                     </div>
                     
-                    {/* List of Clients */}
+                    {/* List of Drivers */}
                     <div className="overflow-y-auto flex-1 p-4 space-y-2">
-                      {filteredClients.length > 0 ? (
-                        filteredClients.map(client => (
+                      {filteredDrivers.length > 0 ? (
+                        filteredDrivers.map(driver => (
                           <button
-                            key={client._id}
+                            key={driver._id}
                             type="button"
-                            onClick={() => handleSelect(client._id)}
+                            onClick={() => handleSelect(driver._id)}
                             className={`w-full text-left px-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-between transition-colors border ${
-                              value === client._id 
+                              value === driver._id 
                                 ? 'border-brand-primary bg-brand-primary/5 text-brand-primary' 
                                 : 'border-transparent text-gray-700 hover:bg-gray-50 hover:border-gray-100'
                             }`}
                           >
                             <div className="flex items-center gap-3">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${
-                                value === client._id ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-500'
+                                value === driver._id ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-500'
                               }`}>
-                                <User size={14} />
+                                <Car size={14} />
                               </div>
-                              {client.name}
+                              {driver.name}
                             </div>
-                            {value === client._id && <Check size={18} className="text-brand-primary" />}
+                            {value === driver._id && <Check size={18} className="text-brand-primary" />}
                           </button>
                         ))
                       ) : (
@@ -222,8 +225,8 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                           <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
                             <Search size={24} className="text-gray-300" />
                           </div>
-                          <h4 className="text-gray-800 font-bold mb-1">No clients found</h4>
-                          <p className="text-sm font-medium text-gray-500">Could not find any clients matching "{searchTerm}"</p>
+                          <h4 className="text-gray-800 font-bold mb-1">No drivers found</h4>
+                          <p className="text-sm font-medium text-gray-500">Could not find any drivers matching "{searchTerm}"</p>
                         </div>
                       )}
                     </div>
@@ -242,12 +245,12 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                       <button
                         type="button"
                         onClick={() => {
-                          setNewClientData(prev => ({ ...prev, name: searchTerm }));
+                          setNewDriverData(prev => ({ ...prev, name: searchTerm }));
                           setIsAddingNew(true);
                         }}
                         className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 hover:border-brand-primary/50 hover:text-brand-primary hover:bg-brand-primary/5 rounded-xl text-sm font-extrabold text-gray-600 transition-all shadow-sm"
                       >
-                        <Plus size={16} /> Add New Client
+                        <Plus size={16} /> Add New Driver
                       </button>
                     </div>
                   </>
@@ -257,11 +260,11 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                     <div className="flex items-center justify-between p-6 border-b border-gray-100">
                       <div className="flex items-center gap-4">
                         <div className="bg-brand-primary/10 w-10 h-10 rounded-full flex items-center justify-center text-brand-primary">
-                          <User size={20} />
+                          <Car size={20} />
                         </div>
                         <div>
-                          <h3 className="font-black text-xl text-gray-800">Quick Add Client</h3>
-                          <p className="text-sm font-bold text-gray-400">Add a new client to the system</p>
+                          <h3 className="font-black text-xl text-gray-800">Quick Add Driver</h3>
+                          <p className="text-sm font-bold text-gray-400">Add a new driver to the system</p>
                         </div>
                       </div>
                       <button 
@@ -279,9 +282,9 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                         <input
                           autoFocus
                           type="text"
-                          value={newClientData.name}
-                          onChange={(e) => setNewClientData(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="e.g. John Doe"
+                          value={newDriverData.name}
+                          onChange={(e) => setNewDriverData(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="e.g. John Driver"
                           className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                         />
                       </div>
@@ -291,8 +294,8 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                           <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Email</label>
                           <input
                             type="email"
-                            value={newClientData.email}
-                            onChange={(e) => setNewClientData(prev => ({ ...prev, email: e.target.value }))}
+                            value={newDriverData.email}
+                            onChange={(e) => setNewDriverData(prev => ({ ...prev, email: e.target.value }))}
                             placeholder="e.g. john@example.com"
                             className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                           />
@@ -301,8 +304,8 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                           <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Phone</label>
                           <input
                             type="tel"
-                            value={newClientData.phone}
-                            onChange={(e) => setNewClientData(prev => ({ ...prev, phone: e.target.value }))}
+                            value={newDriverData.phone}
+                            onChange={(e) => setNewDriverData(prev => ({ ...prev, phone: e.target.value }))}
                             placeholder="e.g. +123456789"
                             className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                           />
@@ -311,36 +314,25 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Adults</label>
+                          <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Vehicle Type</label>
                           <input
-                            type="number"
-                            min="1"
-                            value={newClientData.paxAdults}
-                            onChange={(e) => setNewClientData(prev => ({ ...prev, paxAdults: e.target.value }))}
+                            type="text"
+                            value={newDriverData.vehicleType}
+                            onChange={(e) => setNewDriverData(prev => ({ ...prev, vehicleType: e.target.value }))}
+                            placeholder="e.g. SUV, Minivan"
                             className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Children</label>
+                          <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Languages (comma separated)</label>
                           <input
-                            type="number"
-                            min="0"
-                            value={newClientData.paxChildren}
-                            onChange={(e) => setNewClientData(prev => ({ ...prev, paxChildren: e.target.value }))}
+                            type="text"
+                            value={newDriverData.languages}
+                            onChange={(e) => setNewDriverData(prev => ({ ...prev, languages: e.target.value }))}
+                            placeholder="e.g. English, French"
                             className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                           />
                         </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Notes</label>
-                        <textarea
-                          rows={3}
-                          value={newClientData.notes}
-                          onChange={(e) => setNewClientData(prev => ({ ...prev, notes: e.target.value }))}
-                          placeholder="Dietary requirements, special requests..."
-                          className="w-full px-5 py-3 rounded-2xl border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400 resize-none"
-                        />
                       </div>
                     </div>
 
@@ -356,7 +348,7 @@ export function ClientSelect({ value, onChange, required, label = 'Client', comp
                       <button
                         type="button"
                         onClick={handleAddNew}
-                        disabled={!newClientData.name.trim()}
+                        disabled={!newDriverData.name.trim()}
                         className="bg-brand-primary text-white px-8 py-3 rounded-full text-sm font-semibold shadow-lg shadow-brand-primary/20 hover:bg-brand-secondary hover:shadow-brand-primary/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:-translate-y-0 disabled:hover:shadow-none"
                       >
                         Create & Select

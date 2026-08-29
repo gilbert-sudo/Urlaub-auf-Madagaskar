@@ -73,32 +73,27 @@ export function DatePicker({ value, onChange, label = 'Date', compact = false })
 
   return (
     <div className="relative w-full">
-      {label && !compact && <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-2">{label}</label>}
-      {label && compact && <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">{label}</label>}
+      {label && <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider ml-2 mb-1.5 block">{label}</label>}
       
-      {/* Trigger Button - New Design */}
+      {/* Trigger Button - Standard Input Style */}
       <div 
         onClick={() => setIsOpen(true)}
-        className={`w-full ${compact ? 'p-2' : 'p-3.5'} rounded-xl border border-gray-200 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-brand-primary/20 outline-none cursor-pointer flex flex-col transition-all group relative`}
+        className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm cursor-pointer flex items-center justify-between text-left group"
       >
-        <div className={`flex items-center gap-1.5 ${compact ? 'mb-0.5' : 'mb-1.5'}`}>
-          <CalendarIcon size={compact ? 10 : 12} className="text-gray-400 group-hover:text-brand-primary transition-colors" />
-          <span className={`font-extrabold text-gray-400 uppercase tracking-widest ${compact ? 'text-[9px]' : 'text-[10px]'}`}>Date</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className={`font-bold ${compact ? 'text-xs' : 'text-sm'} ${value ? 'text-gray-800' : 'text-gray-400'}`}>
-            {formatDateLabel(value)}
-          </span>
-          {value && (
-            <button 
-              type="button" 
-              onClick={(e) => { e.stopPropagation(); clearDate(); }}
-              className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
+        <span className={value ? 'text-gray-800' : 'text-gray-400'}>
+          {formatDateLabel(value)}
+        </span>
+        {value ? (
+          <button 
+            type="button" 
+            onClick={(e) => { e.stopPropagation(); clearDate(); }}
+            className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors ml-2"
+          >
+            <X size={14} />
+          </button>
+        ) : (
+          <CalendarIcon size={18} className="text-gray-400 group-hover:text-brand-primary transition-colors ml-2" />
+        )}
       </div>
 
       {isClient && document.body && createPortal(

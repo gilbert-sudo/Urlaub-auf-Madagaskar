@@ -10,6 +10,8 @@ import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
 import { DateRangePicker } from '../Components/DateRangePicker';
 import { ClientSelect } from '../Components/ClientSelect';
+import { DriverSelect } from '../Components/DriverSelect';
+import { HotelSelect } from '../Components/HotelSelect';
 import { DateTimePicker } from '../Components/DateTimePicker';
 import { DatePicker } from '../Components/DatePicker';
 import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Calendar, Coffee, Utensils, Bed, Car, UserCheck, Ticket, Fuel, Plane, Receipt, FileText, Shield, CreditCard, Coins, Wine, Map } from 'lucide-react';
@@ -285,7 +287,7 @@ export function CreateTripPage() {
                 value={tripData.client} 
                 onChange={handleTripDataChange} 
               />
-              <div className="space-y-2 md:col-span-2 xl:col-span-1">
+              <div className="relative">
                 <DateRangePicker 
                   startDate={tripData.startDate}
                   endDate={tripData.endDate}
@@ -293,16 +295,31 @@ export function CreateTripPage() {
                 />
               </div>
               <div className="relative">
-                <label className={SHARED_LABEL_CLASS}>Duration (Days)</label>
-                <input required={currentStep === 1} disabled type="number" min="1" name="duration" value={tripData.duration} className={`${SHARED_INPUT_CLASS} opacity-70 cursor-not-allowed`} />
-              </div>
-              <div className="relative">
                 <label className={SHARED_LABEL_CLASS}>Guest Type</label>
                 <input name="guestType" value={tripData.guestType} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS} placeholder="e.g. Honeymoon, Family" />
               </div>
               <div className="relative">
-                <label className={SHARED_LABEL_CLASS}>Total Price (€)</label>
-                <input type="number" name="totalPrice" value={tripData.totalPrice} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS} />
+                <label className={SHARED_LABEL_CLASS}>Total Price</label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-1.5 top-1.5 bottom-1.5 w-10 bg-white rounded-full shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-500 font-black border border-gray-100/80 z-10">
+                    €
+                  </div>
+                  <input 
+                    type="number" 
+                    min="0"
+                    step="any"
+                    name="totalPrice" 
+                    value={tripData.totalPrice} 
+                    onChange={handleTripDataChange} 
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e') {
+                        e.preventDefault();
+                      }
+                    }}
+                    className="w-full pl-14 pr-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-black text-lg text-gray-800 placeholder:text-gray-300 relative z-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
               <div className="relative">
                 <label className={SHARED_LABEL_CLASS}>Status</label>
@@ -377,33 +394,32 @@ export function CreateTripPage() {
                   <button type="button" onClick={() => removeItineraryDay(index)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={18} /></button>
                   <div className="font-extrabold text-brand-primary text-sm uppercase tracking-widest">Day {day.dayNumber}</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
+                    <div className="lg:col-span-1">
                       <DatePicker
                         label="Date"
-                        compact={true}
                         value={day.date}
                         onChange={(val) => handleItineraryChange(index, 'date', val)}
                       />
                     </div>
-                    <div className="space-y-2 lg:col-span-3">
+                    <div className="relative lg:col-span-3">
                       <label className={SHARED_LABEL_CLASS}>Activities</label>
                       <input value={day.activities} onChange={(e) => handleItineraryChange(index, 'activities', e.target.value)} placeholder="e.g. Visit Lemur Park, transfer to Antsirabe" className={SHARED_INPUT_CLASS} />
                     </div>
-                    <div className="space-y-2 lg:col-span-2">
-                      <label className={SHARED_LABEL_CLASS}>Hotel</label>
-                      <select value={day.hotel} onChange={(e) => handleItineraryChange(index, 'hotel', e.target.value)} className={SHARED_INPUT_CLASS}>
-                        <option value="">None</option>
-                        {hotels.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
-                      </select>
+                    <div className="lg:col-span-2">
+                      <HotelSelect
+                        label="Hotel"
+                        value={day.hotel} 
+                        onChange={(val) => handleItineraryChange(index, 'hotel', val)} 
+                      />
                     </div>
-                    <div className="space-y-2 lg:col-span-1">
-                      <label className={SHARED_LABEL_CLASS}>Driver</label>
-                      <select value={day.driver} onChange={(e) => handleItineraryChange(index, 'driver', e.target.value)} className={SHARED_INPUT_CLASS}>
-                        <option value="">None</option>
-                        {drivers.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
-                      </select>
+                    <div className="lg:col-span-1">
+                      <DriverSelect
+                        label="Driver"
+                        value={day.driver} 
+                        onChange={(val) => handleItineraryChange(index, 'driver', val)} 
+                      />
                     </div>
-                    <div className="space-y-2 lg:col-span-1">
+                    <div className="relative lg:col-span-1">
                       <label className={SHARED_LABEL_CLASS}>Location Logistics</label>
                       <input value={day.locationDetails} onChange={(e) => handleItineraryChange(index, 'locationDetails', e.target.value)} placeholder="e.g. Drop at RN7" className={SHARED_INPUT_CLASS} />
                     </div>

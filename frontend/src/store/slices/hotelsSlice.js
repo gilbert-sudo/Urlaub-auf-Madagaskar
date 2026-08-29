@@ -8,6 +8,11 @@ export const fetchHotels = createAsyncThunk('hotels/fetchHotels', async () => {
   return response.data;
 });
 
+export const createHotel = createAsyncThunk('hotels/createHotel', async (hotelData) => {
+  const response = await axios.post(`${API_URL}/api/hotels`, hotelData);
+  return response.data;
+});
+
 const hotelsSlice = createSlice({
   name: 'hotels',
   initialState: {
@@ -32,6 +37,9 @@ const hotelsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
         state.status = 'failed';
+      })
+      .addCase(createHotel.fulfilled, (state, action) => {
+        state.items.push(action.payload);
       });
   }
 });

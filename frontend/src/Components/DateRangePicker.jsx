@@ -106,7 +106,14 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
 
   return (
     <div className="relative w-full">
-      <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-2">Trip Dates</label>
+      <div className="flex items-center gap-2 ml-2 mb-1.5">
+        <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider block">Trip Dates</label>
+        {startDate && endDate && (
+          <span className="bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded-md text-[9px] font-black tracking-widest">
+            {differenceInDays(new Date(endDate), new Date(startDate)) + 1} DAYS
+          </span>
+        )}
+      </div>
       
       {/* Trigger Button - Premium Split Design */}
       <div className="flex bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
@@ -139,6 +146,8 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
           </div>
           <div className={`absolute bottom-0 left-0 right-0 h-[3px] bg-brand-primary transition-opacity duration-300 ${isOpen && activeTab === 'end' ? 'opacity-100' : 'opacity-0'}`} />
         </div>
+        
+
         
         {(startDate || endDate) && (
           <div className="flex items-center justify-center px-3 border-l border-gray-100">
