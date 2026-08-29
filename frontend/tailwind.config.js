@@ -9,19 +9,20 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          primary: '#0d9488', // Deep refined teal
-          secondary: '#0f766e',
-          900: '#134e4a',
+          50: '#FDECEB',
+          100: '#FAD6D2',
+          200: '#F3A9A0',
+          300: '#EB7A6B',
+          400: '#CE422F',
+          500: '#811303',
+          primary: '#811303', // Molten Lava
+          secondary: '#441008', // Rich Mahogany
+          accent: '#E8B72F', // Sunflower Gold
+          900: '#2A0A05',
         },
         surface: {
           light: '#fcfcfd',
-          dark: '#0f172a', // Slate 900
+          dark: '#000000', // Black
         }
       },
       fontFamily: {

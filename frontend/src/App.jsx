@@ -7,7 +7,7 @@ import { TripsPage } from './Pages/TripsPage';
 import { TripDetailsPage } from './Pages/TripDetailsPage';
 import { ClientsPage } from './Pages/ClientsPage';
 import { DriversPage } from './Pages/DriversPage';
-import { ReservationsPage } from './Pages/ReservationsPage';
+import { HotelsPage } from './Pages/HotelsPage';
 import { DocumentsPage } from './Pages/DocumentsPage';
 import { LoginPage } from './Pages/LoginPage';
 import { CreateTripPage } from './Pages/CreateTripPage';
@@ -35,7 +35,7 @@ function App() {
             <Route path="trips/new" element={<CreateTripPage />} />
             <Route path="trips/:id/edit" element={<CreateTripPage />} />
             <Route path="trips/:id" element={<TripDetailsPage />} />
-            <Route path="reservations" element={<ReservationsPage />} />
+            <Route path="hotels" element={<HotelsPage />} />
             <Route path="clients" element={<ClientsPage />} />
             <Route path="drivers" element={<DriversPage />} />
             <Route path="documents" element={<DocumentsPage />} />
