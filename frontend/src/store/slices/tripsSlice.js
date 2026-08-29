@@ -86,10 +86,9 @@ const tripsSlice = createSlice({
       })
       // ----- UPDATE -----
       .addCase(updateTrip.pending, (state) => {
-        state.loading = true;
+        // We do not set loading=true here to prevent the UI from flashing/remounting
       })
       .addCase(updateTrip.fulfilled, (state, action) => {
-        state.loading = false;
         const idx = state.items.findIndex((t) => t._id === action.payload._id);
         if (idx !== -1) state.items[idx] = action.payload;
         if (state.currentTrip && state.currentTrip._id === action.payload._id) {
@@ -97,7 +96,6 @@ const tripsSlice = createSlice({
         }
       })
       .addCase(updateTrip.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.error.message;
       })
       // ----- DELETE -----

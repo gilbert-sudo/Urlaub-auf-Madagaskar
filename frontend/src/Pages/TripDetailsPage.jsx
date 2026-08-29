@@ -16,6 +16,7 @@ import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import { ItineraryManager } from '../Components/ItineraryManager';
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -32,6 +33,7 @@ export function TripDetailsPage() {
   const documentRef = useRef(null);
   const [activeTab, setActiveTab] = useState('overview'); // overview, client, driver, reservations, voucher
   const [isEditing, setIsEditing] = useState(false);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   useEffect(() => {
     if (!trip || trip._id !== id) {
@@ -183,36 +185,59 @@ export function TripDetailsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-20">
-      <div className="sticky top-[81px] z-20 bg-[#f8fafc]/80 backdrop-blur-xl py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200/50 -mx-4 px-4 sm:-mx-8 sm:px-8">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/trips')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h1 className="text-2xl font-black">{trip.title}</h1>
-            <p className="text-sm font-bold text-gray-500 mt-1">Preview and export modern, print-ready documents.</p>
+    <div className={`space-y-6 max-w-6xl mx-auto relative ${activeTab === 'client' ? 'pb-4' : 'pb-20'}`}>
+      <div className="sticky top-[81px] z-[100] bg-white border-b border-gray-200 -mx-4 sm:-mx-8 shadow-sm transition-all duration-300">
+        <div className="py-3.5 px-4 sm:px-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 w-full">
+          <div className="flex items-center gap-4 shrink-0">
+            <button onClick={() => navigate('/trips')} className="p-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors shadow-sm text-gray-600 hover:text-brand-primary group">
+              <ArrowLeft size={18} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
+            </button>
+            <h1 className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight leading-none">{trip.title}</h1>
           </div>
+          
+          {activeTab !== 'overview' && (
+            <div className="flex items-center flex-wrap gap-3">
+              <div id="itinerary-manager-header-portal" className="empty:hidden flex items-center gap-3"></div>
+              
+              {activeTab === 'client' && !showPdfPreview && <div className="w-px h-6 bg-gray-200 hidden sm:block"></div>}
+              
+              <div className="flex items-center gap-1 bg-white border border-gray-200/80 rounded-full p-1 shadow-sm">
+                {activeTab === 'client' && (
+                  <>
+                    <button 
+                      onClick={() => setShowPdfPreview(!showPdfPreview)} 
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-sm font-bold ${showPdfPreview ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 hover:text-brand-primary border border-gray-200/80'}`}
+                    >
+                      {showPdfPreview ? <Edit2 size={16} /> : <FileText size={16} />} 
+                      {showPdfPreview ? 'Back to Editor' : 'Preview & Export'}
+                    </button>
+                    <div className="w-px h-5 bg-gray-200 mx-1"></div>
+                  </>
+                )}
+                
+                {((activeTab === 'client' && showPdfPreview) || activeTab !== 'client') && (
+                  <>
+                    <button onClick={generatePDF} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-red-50 hover:text-red-600 text-gray-600 transition-colors text-sm font-bold" title="Export as PDF">
+                      <Download size={16} /> <span className="hidden lg:inline">PDF</span>
+                    </button>
+                    <div className="w-px h-4 bg-gray-200"></div>
+                    <button onClick={() => alert("DOCX export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors text-sm font-bold" title="Export as DOCX">
+                      <FileText size={16} /> <span className="hidden lg:inline">DOCX</span>
+                    </button>
+                    <div className="w-px h-4 bg-gray-200"></div>
+                    <button onClick={() => alert("Excel export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-green-50 hover:text-green-600 text-gray-600 transition-colors text-sm font-bold" title="Export as Excel">
+                      <Table size={16} /> <span className="hidden lg:inline">Excel</span>
+                    </button>
+                    <div className="w-px h-5 bg-gray-200 mx-1"></div>
+                    <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-sm font-bold shadow-sm ${isEditing ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-brand-primary hover:bg-brand-secondary text-white'}`}>
+                      <Edit2 size={16} /> {isEditing ? 'Done Editing' : 'Quick Edit'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-        {activeTab !== 'overview' && (
-          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-2xl p-1.5 shadow-sm">
-            <button onClick={generatePDF} className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-red-50 hover:text-red-600 text-gray-600 transition-colors text-sm font-bold" title="Export as PDF">
-              <Download size={16} /> <span className="hidden lg:inline">PDF</span>
-            </button>
-            <div className="w-px h-4 bg-gray-200"></div>
-            <button onClick={() => alert("DOCX export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors text-sm font-bold" title="Export as DOCX">
-              <FileText size={16} /> <span className="hidden lg:inline">DOCX</span>
-            </button>
-            <div className="w-px h-4 bg-gray-200"></div>
-            <button onClick={() => alert("Excel export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-green-50 hover:text-green-600 text-gray-600 transition-colors text-sm font-bold" title="Export as Excel">
-              <Table size={16} /> <span className="hidden lg:inline">Excel</span>
-            </button>
-            <div className="w-px h-6 bg-gray-200 mx-2"></div>
-            <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-2 px-4 py-1.5 rounded-xl transition-colors text-sm font-bold shadow-sm ${isEditing ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-brand-primary hover:bg-brand-secondary text-white'}`}>
-              <Edit2 size={16} /> {isEditing ? 'Done Editing' : 'Edit Document'}
-            </button>
-          </div>
-        )}
       </div>
       {/* Floating Vertical Navigation Bar */}
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 flex flex-col z-50 bg-white/80 backdrop-blur-xl shadow-xl border border-gray-100 rounded-[2.5rem] py-5 px-2 w-[90px] gap-6">
@@ -383,6 +408,8 @@ export function TripDetailsPage() {
             </div>
           </div>
         </div>
+      ) : (activeTab === 'client' && !showPdfPreview) ? (
+        <ItineraryManager trip={trip} />
       ) : (
         <div className="bg-gray-100 p-8 rounded-3xl border border-gray-200 overflow-x-auto shadow-inner relative flex justify-center">
           <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
