@@ -4,8 +4,8 @@ import { fetchDrivers, deleteDriver } from '../store/slices/driversSlice';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
 import { Plus, Mail, Phone, Edit2, Trash2, Car, Users, Eye } from 'lucide-react';
-import { DriverModal } from '../components/DriverModal';
-import { ProfileViewerModal } from '../components/ProfileViewerModal';
+import { DriverModal } from '../Components/DriverModal';
+import { ProfileViewerModal } from '../Components/ProfileViewerModal';
 import { toast } from 'sonner';
 
 export function DriversPage() {

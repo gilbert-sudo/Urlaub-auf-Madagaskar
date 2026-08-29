@@ -5,7 +5,7 @@ import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
 import { Plus, Mail, Phone, MapPin, Users, Edit2, Trash2, Eye } from 'lucide-react';
 import { ClientModal } from '../Components/ClientModal';
-import { ProfileViewerModal } from '../components/ProfileViewerModal';
+import { ProfileViewerModal } from '../Components/ProfileViewerModal';
 import { toast } from 'sonner';
 
 export function ClientsPage() {
