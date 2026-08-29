@@ -2,13 +2,14 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
-import { Home, Map, Calendar, Users, FileText, Settings, LogOut } from 'lucide-react';
+import { Home, Map, Calendar, Users, FileText, Settings, LogOut, Car } from 'lucide-react';
 
 const menuItems = [
   { path: '/', icon: <Home size={22} />, label: 'Dashboard' },
   { path: '/trips', icon: <Map size={22} />, label: 'Trips & Itineraries' },
   { path: '/reservations', icon: <Calendar size={22} />, label: 'Reservations' },
   { path: '/clients', icon: <Users size={22} />, label: 'Clients' },
+  { path: '/drivers', icon: <Car size={22} />, label: 'Drivers' },
   { path: '/documents', icon: <FileText size={22} />, label: 'Documents' },
 ];
 

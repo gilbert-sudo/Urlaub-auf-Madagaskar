@@ -8,6 +8,21 @@ export const fetchDrivers = createAsyncThunk('drivers/fetchDrivers', async () =>
   return response.data;
 });
 
+export const createDriver = createAsyncThunk('drivers/createDriver', async (driverData) => {
+  const response = await axios.post(`${API_URL}/api/drivers`, driverData);
+  return response.data;
+});
+
+export const updateDriver = createAsyncThunk('drivers/updateDriver', async ({ id, data }) => {
+  const response = await axios.put(`${API_URL}/api/drivers/${id}`, data);
+  return response.data;
+});
+
+export const deleteDriver = createAsyncThunk('drivers/deleteDriver', async (id) => {
+  await axios.delete(`${API_URL}/api/drivers/${id}`);
+  return id;
+});
+
 const driversSlice = createSlice({
   name: 'drivers',
   initialState: {
@@ -32,6 +47,18 @@ const driversSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
         state.status = 'failed';
+      })
+      .addCase(createDriver.fulfilled, (state, action) => {
+        state.items.push(action.payload);
+      })
+      .addCase(updateDriver.fulfilled, (state, action) => {
+        const index = state.items.findIndex(driver => driver._id === action.payload._id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(deleteDriver.fulfilled, (state, action) => {
+        state.items = state.items.filter(driver => driver._id !== action.payload);
       });
   }
 });
