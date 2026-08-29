@@ -19,7 +19,8 @@ exports.login = async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        avatar: user.avatar || ''
       }
     };
 
@@ -45,5 +46,22 @@ exports.setup = async (req, res) => {
     res.json({ message: 'User created successfully' });
   } catch (err) {
     res.status(500).send('Server error');
+  }
+};
+
+exports.updateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    const payload = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar || ''
+    };
+    res.json({ user: payload });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

@@ -3,8 +3,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchClients, deleteClient } from '../store/slices/clientsSlice';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { Plus, Mail, Phone, MapPin, Users, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Mail, Phone, MapPin, Users, Edit2, Trash2, Eye } from 'lucide-react';
 import { ClientModal } from '../Components/ClientModal';
+import { ProfileViewerModal } from '../components/ProfileViewerModal';
 import { toast } from 'sonner';
 
 export function ClientsPage() {
@@ -13,6 +14,7 @@ export function ClientsPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [viewProfileClient, setViewProfileClient] = useState(null);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -91,7 +93,12 @@ export function ClientsPage() {
 
               {status !== 'loading' && clients.map(client => (
                 <tr key={client._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">
-                  <td className="p-5 font-bold text-slate-900 dark:text-slate-100 group-hover:text-brand-primary transition-colors">{client.name}</td>
+                  <td 
+                    className="p-5 font-bold text-slate-900 dark:text-slate-100 group-hover:text-brand-primary transition-colors cursor-pointer"
+                    onClick={() => setViewProfileClient(client)}
+                  >
+                    {client.name}
+                  </td>
                   <td className="p-5">
                     <div className="flex flex-col gap-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400">
                       <span className="flex items-center gap-2"><Mail size={14} className="text-slate-400" /> {client.email}</span>
@@ -100,7 +107,14 @@ export function ClientsPage() {
                   </td>
                   <td className="p-5 font-bold text-slate-500">{client.paxAdults + client.paxChildren}</td>
                   <td className="p-5 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => setViewProfileClient(client)}
+                        className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
+                        title="View Profile"
+                      >
+                        <Eye size={16} />
+                      </button>
                       <button 
                         onClick={() => handleOpenModal(client)}
                         className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
@@ -128,6 +142,12 @@ export function ClientsPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         client={selectedClient}
+      />
+      <ProfileViewerModal
+        isOpen={!!viewProfileClient}
+        onClose={() => setViewProfileClient(null)}
+        data={viewProfileClient}
+        type="client"
       />
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { createDriver, updateDriver } from '../store/slices/driversSlice';
 import { X } from 'lucide-react';
-import { Button } from './Button';
+import { Button } from '../Components/Button';
 import { toast } from 'sonner';
 
 export function DriverModal({ isOpen, onClose, driver }) {
@@ -13,7 +13,8 @@ export function DriverModal({ isOpen, onClose, driver }) {
     phone: '',
     languages: '',
     vehicleType: '',
-    status: 'Available'
+    status: 'Available',
+    avatar: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +26,8 @@ export function DriverModal({ isOpen, onClose, driver }) {
         phone: driver.phone || '',
         languages: driver.languages ? driver.languages.join(', ') : '',
         vehicleType: driver.vehicleType || '',
-        status: driver.status || 'Available'
+        status: driver.status || 'Available',
+        avatar: driver.avatar || ''
       });
     } else {
       setFormData({
@@ -34,7 +36,8 @@ export function DriverModal({ isOpen, onClose, driver }) {
         phone: '',
         languages: '',
         vehicleType: '',
-        status: 'Available'
+        status: 'Available',
+        avatar: ''
       });
     }
   }, [driver, isOpen]);
@@ -47,6 +50,17 @@ export function DriverModal({ isOpen, onClose, driver }) {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, avatar: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -90,6 +104,25 @@ export function DriverModal({ isOpen, onClose, driver }) {
 
         <div className="p-6 overflow-y-auto">
           <form id="driver-form" onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                {formData.avatar ? (
+                  <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-slate-400 text-[10px] font-bold text-center leading-tight">No<br/>Image</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Profile Picture</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/10 file:text-brand-primary hover:file:bg-brand-primary/20 transition-all cursor-pointer"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Full Name *</label>
               <input

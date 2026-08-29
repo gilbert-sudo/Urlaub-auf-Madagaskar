@@ -6,7 +6,8 @@ const driverSchema = new mongoose.Schema({
   phone: { type: String },
   languages: [String], // e.g., ['German', 'English']
   vehicleType: { type: String },
-  status: { type: String, enum: ['Available', 'On Trip', 'Leave'], default: 'Available' }
+  status: { type: String, enum: ['Available', 'On Trip', 'Leave'], default: 'Available' },
+  avatar: { type: String, default: '' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Driver', driverSchema);

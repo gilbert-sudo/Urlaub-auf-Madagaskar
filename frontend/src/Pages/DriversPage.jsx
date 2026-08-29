@@ -3,8 +3,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchDrivers, deleteDriver } from '../store/slices/driversSlice';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { Plus, Mail, Phone, Edit2, Trash2, Car, Users } from 'lucide-react';
-import { DriverModal } from '../Components/DriverModal';
+import { Plus, Mail, Phone, Edit2, Trash2, Car, Users, Eye } from 'lucide-react';
+import { DriverModal } from '../components/DriverModal';
+import { ProfileViewerModal } from '../components/ProfileViewerModal';
 import { toast } from 'sonner';
 
 export function DriversPage() {
@@ -13,6 +14,7 @@ export function DriversPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState(null);
+  const [viewProfileDriver, setViewProfileDriver] = useState(null);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -93,7 +95,21 @@ export function DriversPage() {
 
               {status !== 'loading' && drivers.map(driver => (
                 <tr key={driver._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">
-                  <td className="p-5 font-bold text-slate-900 dark:text-slate-100 group-hover:text-brand-primary transition-colors">{driver.name}</td>
+                  <td 
+                    className="p-5 font-bold text-slate-900 dark:text-slate-100 group-hover:text-brand-primary transition-colors cursor-pointer"
+                    onClick={() => setViewProfileDriver(driver)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center shrink-0 border border-slate-300 dark:border-slate-600">
+                        {driver.avatar ? (
+                          <img src={driver.avatar} alt={driver.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-slate-500 text-sm font-bold">{driver.name.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <span>{driver.name}</span>
+                    </div>
+                  </td>
                   <td className="p-5">
                     <div className="flex flex-col gap-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400">
                       {driver.email && <span className="flex items-center gap-2"><Mail size={14} className="text-slate-400" /> {driver.email}</span>}
@@ -116,7 +132,14 @@ export function DriversPage() {
                     </span>
                   </td>
                   <td className="p-5 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => setViewProfileDriver(driver)}
+                        className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
+                        title="View Profile"
+                      >
+                        <Eye size={16} />
+                      </button>
                       <button 
                         onClick={() => handleOpenModal(driver)}
                         className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
@@ -144,6 +167,12 @@ export function DriversPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         driver={selectedDriver}
+      />
+      <ProfileViewerModal
+        isOpen={!!viewProfileDriver}
+        onClose={() => setViewProfileDriver(null)}
+        data={viewProfileDriver}
+        type="driver"
       />
     </div>
   );
