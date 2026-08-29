@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 export function Button({ children, type = 'button', variant = 'primary', onClick, className = '', disabled = false }) {
-  const baseStyle = 'font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:active:scale-100';
+  const baseStyle = 'font-semibold px-6 py-3 rounded-full transition-all duration-300 flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:active:scale-100';
   
   const variants = {
     primary: 'bg-brand-primary text-white hover:bg-brand-secondary shadow-lg shadow-brand-primary/20 hover:shadow-brand-primary/40 focus-visible:ring-brand-primary',

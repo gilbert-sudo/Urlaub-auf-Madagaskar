@@ -85,24 +85,24 @@ export function ClientSelect({ value, onChange, required }) {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-2">
-        Client {required && <span className="text-red-500">*</span>}
-      </label>
-      
-      {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full p-2.5 rounded-xl border flex items-center justify-between transition-all font-bold text-sm bg-gray-50 hover:bg-gray-100 ${
-          isOpen ? 'ring-2 ring-brand-primary/20 border-brand-primary/50 bg-white' : 'border-gray-200'
-        }`}
-      >
-        <span className={selectedClient ? 'text-gray-900' : 'text-gray-400'}>
-          {selectedClient ? selectedClient.name : 'Select a client...'}
-        </span>
-        <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+    <div className="relative mt-2" ref={dropdownRef}>
+      <div className={`relative border-2 rounded-full transition-all duration-300 bg-gray-50/50 ${isOpen ? 'border-brand-primary bg-white ring-4 ring-brand-primary/10' : 'border-gray-100 hover:bg-gray-50 hover:border-gray-200'}`}>
+        <label className={`absolute -top-2.5 left-4 inline-block bg-white px-1 text-[11px] font-extrabold uppercase tracking-wider transition-colors duration-300 ${isOpen ? 'text-brand-primary' : 'text-slate-500'}`}>
+          Client {required && <span className="text-red-500">*</span>}
+        </label>
+        
+        {/* Trigger Button */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full border-0 py-3.5 px-4 bg-transparent outline-none flex items-center justify-between cursor-pointer"
+        >
+          <span className={`font-semibold sm:text-sm ${selectedClient ? 'text-slate-900' : 'text-slate-400'}`}>
+            {selectedClient ? selectedClient.name : 'Select a client...'}
+          </span>
+          <ChevronDown size={18} className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
 
       {/* Hidden input for form validation if required */}
       {required && (
@@ -128,7 +128,7 @@ export function ClientSelect({ value, onChange, required }) {
                     placeholder="Search clients..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all"
+                    className="w-full pl-9 pr-4 py-3 bg-gray-50 border-none rounded-full text-sm font-semibold outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all"
                   />
                 </div>
               </div>
@@ -172,7 +172,7 @@ export function ClientSelect({ value, onChange, required }) {
                     setIsOpen(false);
                     setIsAddingNew(true);
                   }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-gray-200 hover:border-brand-primary/50 hover:text-brand-primary hover:bg-brand-primary/5 rounded-xl text-sm font-extrabold text-gray-600 transition-all shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 hover:border-brand-primary/50 hover:text-brand-primary hover:bg-brand-primary/5 rounded-full text-sm font-extrabold text-gray-600 transition-all shadow-sm"
                 >
                   <Plus size={16} /> Add New Client
                 </button>
@@ -228,7 +228,7 @@ export function ClientSelect({ value, onChange, required }) {
                       value={newClientData.name}
                       onChange={(e) => setNewClientData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="e.g. John Doe"
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 focus:bg-white transition-all"
+                      className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                     />
                   </div>
                   
@@ -240,7 +240,7 @@ export function ClientSelect({ value, onChange, required }) {
                         value={newClientData.email}
                         onChange={(e) => setNewClientData(prev => ({ ...prev, email: e.target.value }))}
                         placeholder="e.g. john@example.com"
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                       />
                     </div>
                     <div className="space-y-2">
@@ -250,7 +250,7 @@ export function ClientSelect({ value, onChange, required }) {
                         value={newClientData.phone}
                         onChange={(e) => setNewClientData(prev => ({ ...prev, phone: e.target.value }))}
                         placeholder="e.g. +123456789"
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                       />
                     </div>
                   </div>
@@ -263,7 +263,7 @@ export function ClientSelect({ value, onChange, required }) {
                         min="1"
                         value={newClientData.paxAdults}
                         onChange={(e) => setNewClientData(prev => ({ ...prev, paxAdults: e.target.value }))}
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                       />
                     </div>
                     <div className="space-y-2">
@@ -273,7 +273,7 @@ export function ClientSelect({ value, onChange, required }) {
                         min="0"
                         value={newClientData.paxChildren}
                         onChange={(e) => setNewClientData(prev => ({ ...prev, paxChildren: e.target.value }))}
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400"
                       />
                     </div>
                   </div>
@@ -285,7 +285,7 @@ export function ClientSelect({ value, onChange, required }) {
                       value={newClientData.notes}
                       onChange={(e) => setNewClientData(prev => ({ ...prev, notes: e.target.value }))}
                       placeholder="Dietary requirements, special requests..."
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 focus:bg-white transition-all resize-none"
+                      className="w-full px-5 py-3 rounded-2xl border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400 resize-none"
                     />
                   </div>
                 </div>
@@ -303,7 +303,7 @@ export function ClientSelect({ value, onChange, required }) {
                     type="button"
                     onClick={handleAddNew}
                     disabled={!newClientData.name.trim()}
-                    className="bg-brand-primary text-white px-8 py-3 rounded-xl text-sm font-black hover:bg-brand-secondary hover:shadow-lg hover:shadow-brand-primary/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:-translate-y-0 disabled:hover:shadow-none"
+                    className="bg-brand-primary text-white px-8 py-3 rounded-full text-sm font-semibold shadow-lg shadow-brand-primary/20 hover:bg-brand-secondary hover:shadow-brand-primary/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:-translate-y-0 disabled:hover:shadow-none"
                   >
                     Create & Select
                   </button>

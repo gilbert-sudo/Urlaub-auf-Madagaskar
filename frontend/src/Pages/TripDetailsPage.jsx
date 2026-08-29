@@ -4,13 +4,24 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchTripById } from '../store/slices/tripsSlice';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2 } from 'lucide-react';
+import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { ClientItineraryDoc } from '../Components/Documents/ClientItineraryDoc';
 import { DriverItineraryDoc } from '../Components/Documents/DriverItineraryDoc';
 import { ReservationsDoc } from '../Components/Documents/ReservationsDoc';
 import { HotelVoucherDoc } from '../Components/Documents/HotelVoucherDoc';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 export function TripDetailsPage() {
   const { id } = useParams();
@@ -243,59 +254,133 @@ export function TripDetailsPage() {
       </div>
 
       {activeTab === 'overview' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="!p-6">
-              <h2 className="text-lg font-extrabold mb-4">Itinerary</h2>
-              <div className="space-y-4">
-                {trip.itinerary?.map((item, index) => (
-                  <div key={index} className="flex gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
-                    <div className="flex-shrink-0 w-16 text-center">
-                      <div className="text-[10px] font-extrabold text-gray-400 uppercase">Day {item.dayNumber}</div>
-                      <div className="font-bold">{new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">{item.activities}</p>
-                      <div className="mt-2 text-sm text-gray-500 flex gap-4">
-                        {item.hotel?.name && <span>🏨 {item.hotel.name}</span>}
-                        {item.driver?.name && <span>🚗 {item.driver.name}</span>}
+        <div className="space-y-8 animate-in fade-in duration-500">
+          {/* Hero Section */}
+          <div className="relative w-full h-[400px] rounded-3xl overflow-hidden shadow-2xl">
+            <div className="absolute inset-0">
+              <img src="/hero.jpg" alt="Madagascar Landscape" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+            </div>
+            <div className="absolute bottom-0 left-0 w-full p-8 text-white flex justify-between items-end">
+              <div>
+                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold mb-3 uppercase tracking-wider">{trip.status}</span>
+                <h2 className="text-4xl md:text-5xl font-black mb-2">{trip.title}</h2>
+                <div className="flex items-center gap-4 text-sm md:text-base font-semibold text-white/90">
+                  <span className="flex items-center gap-1"><Map size={18}/> Madagascar</span>
+                  <span className="flex items-center gap-1"><Calendar size={18}/> {trip.duration} Tage</span>
+                  <span className="flex items-center gap-1"><Users size={18}/> {trip.guestType || 'Standard'}</span>
+                </div>
+              </div>
+              <div className="hidden md:block text-right">
+                <div className="text-sm font-bold text-white/80 mb-1">Total Price</div>
+                <div className="text-3xl font-black">€{trip.totalPrice}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-7 space-y-8">
+              {/* Itinerary Timeline */}
+              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 relative">
+                <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
+                  <MapPin className="text-brand-primary" /> 
+                  Itinerary Journey
+                </h2>
+                
+                <div className="space-y-8 relative before:absolute before:inset-0 before:ml-[27px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+                  {trip.itinerary?.map((item, index) => (
+                    <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                      {/* Timeline Dot */}
+                      <div className="flex items-center justify-center w-14 h-14 rounded-full border-4 border-white bg-brand-primary text-white shadow-lg shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-transform duration-300 group-hover:scale-110">
+                        <span className="font-black text-sm">D{item.dayNumber}</span>
+                      </div>
+                      
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-4 rounded-2xl bg-gray-50 border border-gray-100 group-hover:shadow-md transition-shadow duration-300 group-hover:bg-white group-hover:border-brand-primary/20">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-bold text-gray-500 text-xs">
+                            {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        </div>
+                        <h3 className="font-bold text-lg text-gray-900 mb-3 leading-tight">{item.activities}</h3>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {item.hotel?.name && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold">
+                              <Bed size={14} /> {item.hotel.name}
+                            </span>
+                          )}
+                          {item.driver?.name && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold">
+                              <Car size={14} /> {item.driver.name}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-          <div className="space-y-6">
-            <Card className="!p-6 bg-brand-primary/5 border-none">
-              <h2 className="text-lg font-extrabold mb-4">Trip Details</h2>
-              <div className="space-y-4 text-sm font-bold">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Status</span>
-                  <span>{trip.status}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Guest Type</span>
-                  <span>{trip.guestType || 'Standard'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Total Price</span>
-                  <span>€{trip.totalPrice}</span>
+                  ))}
                 </div>
               </div>
-            </Card>
-            
-            <Card className="!p-6">
-              <h2 className="text-lg font-extrabold mb-4">Inclusions</h2>
-              <ul className="list-disc pl-5 text-sm font-bold text-gray-700 space-y-1">
-                {trip.inclusions?.map((inc, i) => <li key={i}>{inc}</li>)}
-              </ul>
-              
-              <h2 className="text-lg font-extrabold mb-4 mt-6">Exclusions</h2>
-              <ul className="list-disc pl-5 text-sm font-bold text-gray-700 space-y-1">
-                {trip.exclusions?.map((exc, i) => <li key={i}>{exc}</li>)}
-              </ul>
-            </Card>
+            </div>
+
+            <div className="lg:col-span-5 space-y-6">
+              {/* Map */}
+              <div className="bg-white rounded-3xl p-2 shadow-sm border border-gray-100 h-[400px] overflow-hidden relative group">
+                <MapContainer center={[-18.8792, 47.5079]} zoom={6} scrollWheelZoom={false} className="h-full w-full rounded-2xl z-0">
+                  <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                  />
+                  {trip.itinerary?.map((item, index) => (
+                      item.hotel?.name && (
+                        <Marker key={index} position={[-18.8792 + (index * 0.5), 47.5079 - (index * 0.2)]}>
+                          <Popup>{item.hotel.name}</Popup>
+                        </Marker>
+                      )
+                  ))}
+                  {/* Default fallback marker if no hotels */}
+                  {(!trip.itinerary || trip.itinerary.length === 0) && (
+                    <Marker position={[-18.8792, 47.5079]}>
+                      <Popup>Antananarivo (Capital)</Popup>
+                    </Marker>
+                  )}
+                </MapContainer>
+                
+                <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-gray-800 flex items-center gap-2">
+                  <Globe size={16} className="text-brand-primary" /> Route Overview
+                </div>
+              </div>
+
+              {/* Inclusions & Exclusions */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+                <div className="bg-emerald-50/50 rounded-3xl p-6 border border-emerald-100">
+                  <h3 className="text-lg font-black text-emerald-800 flex items-center gap-2 mb-4">
+                    <CheckCircle2 size={20} /> Inclusions
+                  </h3>
+                  <ul className="space-y-2">
+                    {trip.inclusions?.map((inc, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm font-bold text-gray-700">
+                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></div>
+                        <span>{inc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="bg-red-50/50 rounded-3xl p-6 border border-red-100">
+                  <h3 className="text-lg font-black text-red-800 flex items-center gap-2 mb-4">
+                    <XCircle size={20} /> Exclusions
+                  </h3>
+                  <ul className="space-y-2">
+                    {trip.exclusions?.map((exc, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm font-bold text-gray-700">
+                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></div>
+                        <span>{exc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (

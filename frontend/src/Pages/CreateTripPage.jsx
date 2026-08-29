@@ -10,7 +10,35 @@ import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
 import { DateRangePicker } from '../Components/DateRangePicker';
 import { ClientSelect } from '../Components/ClientSelect';
-import { Plus, Trash2, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { DateTimePicker } from '../Components/DateTimePicker';
+import { DatePicker } from '../Components/DatePicker';
+import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Calendar, Coffee, Utensils, Bed, Car, UserCheck, Ticket, Fuel, Plane, Receipt, FileText, Shield, CreditCard, Coins, Wine, Map } from 'lucide-react';
+import { format } from 'date-fns';
+
+const PREDEFINED_FEATURES = [
+  { id: 'accommodation', label: 'Accommodation', icon: Bed },
+  { id: 'breakfast', label: 'Breakfast', icon: Coffee },
+  { id: 'lunch', label: 'Lunch', icon: Utensils },
+  { id: 'half_board', label: 'Half Board (Breakfast & Dinner)', icon: Utensils },
+  { id: 'full_board', label: 'Full Board (All Meals)', icon: Utensils },
+  { id: 'drinks', label: 'Drinks & Alcohol', icon: Wine },
+  { id: 'airport_transfer', label: 'Airport Transfers', icon: Car },
+  { id: 'local_flights', label: 'Local Flights', icon: Plane },
+  { id: 'intl_flights', label: 'International Flights', icon: Plane },
+  { id: 'vehicle', label: '4x4 Vehicle & Driver', icon: Car },
+  { id: 'fuel', label: 'Fuel', icon: Fuel },
+  { id: 'guide', label: 'English Speaking Guide', icon: UserCheck },
+  { id: 'park_fees', label: 'Park Entrance Fees', icon: Ticket },
+  { id: 'optional_activities', label: 'Optional Activities', icon: Map },
+  { id: 'taxes', label: 'Taxes & Fees', icon: Receipt },
+  { id: 'visa', label: 'Visa Fees', icon: FileText },
+  { id: 'insurance', label: 'Travel Insurance', icon: Shield },
+  { id: 'personal', label: 'Personal Expenses', icon: CreditCard },
+  { id: 'tips', label: 'Tips & Gratuities', icon: Coins },
+];
+
+const SHARED_INPUT_CLASS = "w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400";
+const SHARED_LABEL_CLASS = "text-[11px] font-extrabold text-gray-500 uppercase tracking-wider ml-2 mb-1.5 block";
 
 export function CreateTripPage() {
   const dispatch = useDispatch();
@@ -248,9 +276,9 @@ export function CreateTripPage() {
               Core Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Trip Title</label>
-                <input required={currentStep === 1} name="title" value={tripData.title} onChange={handleTripDataChange} className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all font-bold text-sm" placeholder="e.g. Honeymoon Madagascar" />
+              <div className="relative">
+                <label className={SHARED_LABEL_CLASS}>Trip Title</label>
+                <input required={currentStep === 1} name="title" value={tripData.title} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS} placeholder="e.g. Honeymoon Madagascar" />
               </div>
               <ClientSelect 
                 required={currentStep === 1} 
@@ -264,21 +292,21 @@ export function CreateTripPage() {
                   onChange={(range) => setTripData(prev => ({ ...prev, ...range }))}
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Duration (Days)</label>
-                <input required={currentStep === 1} disabled type="number" min="1" name="duration" value={tripData.duration} className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 outline-none font-bold text-sm" />
+              <div className="relative">
+                <label className={SHARED_LABEL_CLASS}>Duration (Days)</label>
+                <input required={currentStep === 1} disabled type="number" min="1" name="duration" value={tripData.duration} className={`${SHARED_INPUT_CLASS} opacity-70 cursor-not-allowed`} />
               </div>
-              <div className="space-y-2">
-                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Guest Type</label>
-                <input name="guestType" value={tripData.guestType} onChange={handleTripDataChange} className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all font-bold text-sm" placeholder="e.g. Honeymoon, Family" />
+              <div className="relative">
+                <label className={SHARED_LABEL_CLASS}>Guest Type</label>
+                <input name="guestType" value={tripData.guestType} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS} placeholder="e.g. Honeymoon, Family" />
               </div>
-              <div className="space-y-2">
-                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Total Price (€)</label>
-                <input type="number" name="totalPrice" value={tripData.totalPrice} onChange={handleTripDataChange} className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all font-bold text-sm" />
+              <div className="relative">
+                <label className={SHARED_LABEL_CLASS}>Total Price (€)</label>
+                <input type="number" name="totalPrice" value={tripData.totalPrice} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS} />
               </div>
-              <div className="space-y-2">
-                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Status</label>
-                <select name="status" value={tripData.status} onChange={handleTripDataChange} className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all font-bold text-sm">
+              <div className="relative">
+                <label className={SHARED_LABEL_CLASS}>Status</label>
+                <select name="status" value={tripData.status} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS}>
                   <option value="Inquiry">Inquiry</option>
                   <option value="Proposal">Proposal</option>
                   <option value="Booked">Booked</option>
@@ -299,32 +327,34 @@ export function CreateTripPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
                 <h3 className="font-extrabold text-sm text-gray-700 border-b border-gray-200 pb-2">Arrival Flight</h3>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Date & Time</label>
-                  <input type="datetime-local" value={tripData.flights.arrival.date} onChange={(e) => handleFlightChange('arrival', 'date', e.target.value)} className="w-full p-2.5 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none font-bold text-sm" />
+                <DateTimePicker
+                  label="Arrival Date & Time"
+                  value={tripData.flights.arrival.date}
+                  onChange={(val) => handleFlightChange('arrival', 'date', val)}
+                />
+                <div className="relative">
+                  <label className={SHARED_LABEL_CLASS}>Flight Number</label>
+                  <input value={tripData.flights.arrival.flightNumber} onChange={(e) => handleFlightChange('arrival', 'flightNumber', e.target.value)} className={SHARED_INPUT_CLASS} />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Flight Number</label>
-                  <input value={tripData.flights.arrival.flightNumber} onChange={(e) => handleFlightChange('arrival', 'flightNumber', e.target.value)} className="w-full p-2.5 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none font-bold text-sm" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Details</label>
-                  <input placeholder="e.g. Paris CDG - Antananarivo" value={tripData.flights.arrival.details} onChange={(e) => handleFlightChange('arrival', 'details', e.target.value)} className="w-full p-2.5 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none font-bold text-sm" />
+                <div className="relative">
+                  <label className={SHARED_LABEL_CLASS}>Details</label>
+                  <input placeholder="e.g. Paris CDG - Antananarivo" value={tripData.flights.arrival.details} onChange={(e) => handleFlightChange('arrival', 'details', e.target.value)} className={SHARED_INPUT_CLASS} />
                 </div>
               </div>
               <div className="space-y-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
                 <h3 className="font-extrabold text-sm text-gray-700 border-b border-gray-200 pb-2">Departure Flight</h3>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Date & Time</label>
-                  <input type="datetime-local" value={tripData.flights.departure.date} onChange={(e) => handleFlightChange('departure', 'date', e.target.value)} className="w-full p-2.5 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none font-bold text-sm" />
+                <DateTimePicker
+                  label="Departure Date & Time"
+                  value={tripData.flights.departure.date}
+                  onChange={(val) => handleFlightChange('departure', 'date', val)}
+                />
+                <div className="relative">
+                  <label className={SHARED_LABEL_CLASS}>Flight Number</label>
+                  <input value={tripData.flights.departure.flightNumber} onChange={(e) => handleFlightChange('departure', 'flightNumber', e.target.value)} className={SHARED_INPUT_CLASS} />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Flight Number</label>
-                  <input value={tripData.flights.departure.flightNumber} onChange={(e) => handleFlightChange('departure', 'flightNumber', e.target.value)} className="w-full p-2.5 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none font-bold text-sm" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Details</label>
-                  <input placeholder="e.g. Antananarivo - Paris CDG" value={tripData.flights.departure.details} onChange={(e) => handleFlightChange('departure', 'details', e.target.value)} className="w-full p-2.5 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-brand-primary/20 outline-none font-bold text-sm" />
+                <div className="relative">
+                  <label className={SHARED_LABEL_CLASS}>Details</label>
+                  <input placeholder="e.g. Antananarivo - Paris CDG" value={tripData.flights.departure.details} onChange={(e) => handleFlightChange('departure', 'details', e.target.value)} className={SHARED_INPUT_CLASS} />
                 </div>
               </div>
             </div>
@@ -347,31 +377,35 @@ export function CreateTripPage() {
                   <button type="button" onClick={() => removeItineraryDay(index)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={18} /></button>
                   <div className="font-extrabold text-brand-primary text-sm uppercase tracking-widest">Day {day.dayNumber}</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Date</label>
-                      <input type="date" value={day.date} onChange={(e) => handleItineraryChange(index, 'date', e.target.value)} onKeyDown={(e) => e.preventDefault()} onClick={(e) => e.target.showPicker && e.target.showPicker()} className="w-full p-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none font-bold text-xs cursor-pointer" />
+                    <div>
+                      <DatePicker
+                        label="Date"
+                        compact={true}
+                        value={day.date}
+                        onChange={(val) => handleItineraryChange(index, 'date', val)}
+                      />
                     </div>
                     <div className="space-y-2 lg:col-span-3">
-                      <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Activities</label>
-                      <input value={day.activities} onChange={(e) => handleItineraryChange(index, 'activities', e.target.value)} placeholder="e.g. Visit Lemur Park, transfer to Antsirabe" className="w-full p-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none font-bold text-xs" />
+                      <label className={SHARED_LABEL_CLASS}>Activities</label>
+                      <input value={day.activities} onChange={(e) => handleItineraryChange(index, 'activities', e.target.value)} placeholder="e.g. Visit Lemur Park, transfer to Antsirabe" className={SHARED_INPUT_CLASS} />
                     </div>
                     <div className="space-y-2 lg:col-span-2">
-                      <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Hotel</label>
-                      <select value={day.hotel} onChange={(e) => handleItineraryChange(index, 'hotel', e.target.value)} className="w-full p-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none font-bold text-xs">
+                      <label className={SHARED_LABEL_CLASS}>Hotel</label>
+                      <select value={day.hotel} onChange={(e) => handleItineraryChange(index, 'hotel', e.target.value)} className={SHARED_INPUT_CLASS}>
                         <option value="">None</option>
                         {hotels.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2 lg:col-span-1">
-                      <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Driver</label>
-                      <select value={day.driver} onChange={(e) => handleItineraryChange(index, 'driver', e.target.value)} className="w-full p-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none font-bold text-xs">
+                      <label className={SHARED_LABEL_CLASS}>Driver</label>
+                      <select value={day.driver} onChange={(e) => handleItineraryChange(index, 'driver', e.target.value)} className={SHARED_INPUT_CLASS}>
                         <option value="">None</option>
                         {drivers.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2 lg:col-span-1">
-                      <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Location Logistics</label>
-                      <input value={day.locationDetails} onChange={(e) => handleItineraryChange(index, 'locationDetails', e.target.value)} placeholder="e.g. Drop at RN7" className="w-full p-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none font-bold text-xs" />
+                      <label className={SHARED_LABEL_CLASS}>Location Logistics</label>
+                      <input value={day.locationDetails} onChange={(e) => handleItineraryChange(index, 'locationDetails', e.target.value)} placeholder="e.g. Drop at RN7" className={SHARED_INPUT_CLASS} />
                     </div>
                   </div>
                 </div>
@@ -382,28 +416,191 @@ export function CreateTripPage() {
 
         {/* Step 4: Inclusions & Exclusions */}
         <div className={`transition-all duration-500 ${currentStep === 4 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 translate-x-8'}`}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="!p-6 space-y-4">
-              <h2 className="text-lg font-extrabold text-brand-primary border-b border-gray-100 pb-2">Inclusions</h2>
-              {tripData.inclusions.map((inc, index) => (
-                <div key={index} className="flex gap-2">
-                  <input value={inc} onChange={(e) => handleArrayChange('inclusions', index, e.target.value)} className="flex-1 p-2.5 rounded-xl border border-gray-200 bg-gray-50 outline-none font-bold text-sm" placeholder="e.g. Breakfast included" />
-                  <button type="button" onClick={() => removeArrayItem('inclusions', index)} className="p-2 text-gray-400 hover:text-red-500"><Trash2 size={18}/></button>
-                </div>
-              ))}
-              <Button type="button" variant="secondary" onClick={() => addArrayItem('inclusions')} className="w-full justify-center text-xs py-2"><Plus size={16}/> Add Inclusion</Button>
-            </Card>
+          <div className="space-y-8">
             
-            <Card className="!p-6 space-y-4">
-              <h2 className="text-lg font-extrabold text-brand-primary border-b border-gray-100 pb-2">Exclusions</h2>
-              {tripData.exclusions.map((exc, index) => (
-                <div key={index} className="flex gap-2">
-                  <input value={exc} onChange={(e) => handleArrayChange('exclusions', index, e.target.value)} className="flex-1 p-2.5 rounded-xl border border-gray-200 bg-gray-50 outline-none font-bold text-sm" placeholder="e.g. International flights" />
-                  <button type="button" onClick={() => removeArrayItem('exclusions', index)} className="p-2 text-gray-400 hover:text-red-500"><Trash2 size={18}/></button>
+            {/* Inclusions */}
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-black text-gray-800">What's included in this trip?</h2>
+                <p className="text-gray-500 text-sm font-medium mt-1">Select all the features and services included in the total price.</p>
+              </div>
+              
+              <div className="flex flex-wrap gap-3">
+                {PREDEFINED_FEATURES.map(item => {
+                  const isSelected = tripData.inclusions.includes(item.label);
+                  const isExcluded = tripData.exclusions.includes(item.label);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      disabled={isExcluded}
+                      onClick={() => {
+                        if (isSelected) {
+                          setTripData(prev => ({ ...prev, inclusions: prev.inclusions.filter(i => i !== item.label) }));
+                        } else {
+                          setTripData(prev => ({ ...prev, inclusions: [...prev.inclusions.filter(i => i !== ''), item.label] }));
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-full border-2 transition-all duration-200 ${
+                        isExcluded
+                          ? 'opacity-40 cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
+                          : isSelected
+                            ? 'border-brand-primary bg-brand-primary/5 text-brand-primary shadow-sm scale-[0.98]'
+                            : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600 hover:bg-gray-50 hover:shadow-sm'
+                      }`}
+                    >
+                      <item.icon size={18} className={`transition-colors ${isExcluded ? 'text-gray-400' : isSelected ? 'text-brand-primary' : 'text-gray-500'}`} strokeWidth={2} />
+                      <span className={`font-bold text-sm transition-colors ${isExcluded ? 'text-gray-400' : isSelected ? 'text-brand-primary' : 'text-gray-700'}`}>{item.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Custom inclusions */}
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <h3 className="text-sm font-extrabold text-gray-700 mb-3">Other Inclusions</h3>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-3">
+                    {tripData.inclusions.filter(inc => inc !== '' && !PREDEFINED_FEATURES.find(p => p.label === inc)).map((inc, index) => (
+                      <div key={index} className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm group hover:border-brand-primary/30 transition-colors">
+                          <div className="w-5 h-5 rounded-full bg-brand-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Check size={12} className="text-brand-primary" />
+                          </div>
+                          <span className="font-bold text-sm text-gray-700 max-w-[200px] sm:max-w-xs truncate">{inc}</span>
+                          <button type="button" onClick={() => {
+                            setTripData(prev => ({ ...prev, inclusions: prev.inclusions.filter(i => i !== inc) }));
+                          }} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors ml-1"><Trash2 size={14}/></button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input 
+                      id="custom-inclusion"
+                      className={SHARED_INPUT_CLASS} 
+                      placeholder="e.g. Complimentary massage"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = e.target.value.trim();
+                          if (val) {
+                            if (tripData.exclusions.includes(val)) {
+                              toast.error(`"${val}" is already listed in Exclusions.`);
+                            } else if (!tripData.inclusions.includes(val)) {
+                              setTripData(prev => ({ ...prev, inclusions: [...prev.inclusions.filter(i => i !== ''), val] }));
+                              e.target.value = '';
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="secondary" onClick={() => {
+                      const input = document.getElementById('custom-inclusion');
+                      const val = input.value.trim();
+                      if (val) {
+                        if (tripData.exclusions.includes(val)) {
+                          toast.error(`"${val}" is already listed in Exclusions.`);
+                        } else if (!tripData.inclusions.includes(val)) {
+                          setTripData(prev => ({ ...prev, inclusions: [...prev.inclusions.filter(i => i !== ''), val] }));
+                          input.value = '';
+                        }
+                      }
+                    }} className="px-6 rounded-full">Add</Button>
+                  </div>
                 </div>
-              ))}
-              <Button type="button" variant="secondary" onClick={() => addArrayItem('exclusions')} className="w-full justify-center text-xs py-2"><Plus size={16}/> Add Exclusion</Button>
-            </Card>
+              </div>
+            </div>
+
+            {/* Exclusions */}
+            <div className="space-y-6 pt-10 border-t border-gray-200">
+              <div>
+                <h2 className="text-xl font-black text-gray-800">What's excluded?</h2>
+                <p className="text-gray-500 text-sm font-medium mt-1">Select the items that are not covered in the trip cost.</p>
+              </div>
+              
+              <div className="flex flex-wrap gap-3">
+                {PREDEFINED_FEATURES.map(item => {
+                  const isSelected = tripData.exclusions.includes(item.label);
+                  const isIncluded = tripData.inclusions.includes(item.label);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      disabled={isIncluded}
+                      onClick={() => {
+                        if (isSelected) {
+                          setTripData(prev => ({ ...prev, exclusions: prev.exclusions.filter(i => i !== item.label) }));
+                        } else {
+                          setTripData(prev => ({ ...prev, exclusions: [...prev.exclusions.filter(i => i !== ''), item.label] }));
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-full border-2 transition-all duration-200 ${
+                        isIncluded
+                          ? 'opacity-40 cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
+                          : isSelected
+                            ? 'border-red-500 bg-red-500/5 text-red-600 shadow-sm scale-[0.98]'
+                            : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600 hover:bg-gray-50 hover:shadow-sm'
+                      }`}
+                    >
+                      <item.icon size={18} className={`transition-colors ${isIncluded ? 'text-gray-400' : isSelected ? 'text-red-500' : 'text-gray-500'}`} strokeWidth={2} />
+                      <span className={`font-bold text-sm transition-colors ${isIncluded ? 'text-gray-400' : isSelected ? 'text-red-600' : 'text-gray-700'}`}>{item.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Custom exclusions */}
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <h3 className="text-sm font-extrabold text-gray-700 mb-3">Other Exclusions</h3>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-3">
+                    {tripData.exclusions.filter(exc => exc !== '' && !PREDEFINED_FEATURES.find(p => p.label === exc)).map((exc, index) => (
+                      <div key={index} className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm group hover:border-red-500/30 transition-colors">
+                          <div className="w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                          </div>
+                          <span className="font-bold text-sm text-gray-700 max-w-[200px] sm:max-w-xs truncate">{exc}</span>
+                          <button type="button" onClick={() => {
+                            setTripData(prev => ({ ...prev, exclusions: prev.exclusions.filter(i => i !== exc) }));
+                          }} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors ml-1"><Trash2 size={14}/></button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input 
+                      id="custom-exclusion"
+                      className={SHARED_INPUT_CLASS.replace("focus:border-brand-primary/40 focus:ring-brand-primary/10", "focus:border-red-500/40 focus:ring-red-500/10")} 
+                      placeholder="e.g. Photography permits"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = e.target.value.trim();
+                          if (val) {
+                            if (tripData.inclusions.includes(val)) {
+                              toast.error(`"${val}" is already listed in Inclusions.`);
+                            } else if (!tripData.exclusions.includes(val)) {
+                              setTripData(prev => ({ ...prev, exclusions: [...prev.exclusions.filter(i => i !== ''), val] }));
+                              e.target.value = '';
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="secondary" onClick={() => {
+                      const input = document.getElementById('custom-exclusion');
+                      const val = input.value.trim();
+                      if (val) {
+                        if (tripData.inclusions.includes(val)) {
+                          toast.error(`"${val}" is already listed in Inclusions.`);
+                        } else if (!tripData.exclusions.includes(val)) {
+                          setTripData(prev => ({ ...prev, exclusions: [...prev.exclusions.filter(i => i !== ''), val] }));
+                          input.value = '';
+                        }
+                      }
+                    }} className="px-6 rounded-full">Add</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

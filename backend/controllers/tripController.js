@@ -23,6 +23,7 @@ exports.createTrip = async (req, res) => {
   const trip = new Trip(req.body);
   try {
     const newTrip = await trip.save();
+    await newTrip.populate(['client', 'itinerary.hotel', 'itinerary.driver']);
     res.status(201).json(newTrip);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -31,7 +32,10 @@ exports.createTrip = async (req, res) => {
 
 exports.updateTrip = async (req, res) => {
   try {
-    const trip = await Trip.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const trip = await Trip.findByIdAndUpdate(req.params.id, req.body, { new: true })
+      .populate('client')
+      .populate('itinerary.hotel')
+      .populate('itinerary.driver');
     if (!trip) return res.status(404).json({ message: 'Trip not found' });
     res.json(trip);
   } catch (err) {

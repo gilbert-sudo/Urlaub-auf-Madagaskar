@@ -239,14 +239,19 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
                       selected={range}
                       onSelect={handleSelect}
                       numberOfMonths={2}
-                      className="font-sans"
+                      showOutsideDays
+                      fixedWeeks
+                      className="font-sans relative"
                       classNames={{
                         months: "flex flex-col xl:flex-row space-y-8 xl:space-x-12 xl:space-y-0",
-                        month: "space-y-6",
+                        month: "space-y-6 relative",
                         caption: "flex justify-center pt-1 relative items-center mb-6",
+                        month_caption: "flex justify-center pt-1 relative items-center mb-6",
                         caption_label: "text-lg font-black text-gray-800",
                         nav: "absolute inset-x-0 top-1 flex justify-between px-2",
                         nav_button: "h-8 w-8 bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-brand-primary hover:border-brand-primary transition-all rounded-full flex items-center justify-center",
+                        button_previous: "h-8 w-8 bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-brand-primary hover:border-brand-primary transition-all rounded-full flex items-center justify-center absolute left-2 top-1 z-10",
+                        button_next: "h-8 w-8 bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-brand-primary hover:border-brand-primary transition-all rounded-full flex items-center justify-center absolute right-2 top-1 z-10",
                         nav_button_previous: "",
                         nav_button_next: "",
                         table: "w-full border-collapse",
