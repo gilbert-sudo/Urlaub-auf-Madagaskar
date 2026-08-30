@@ -37,8 +37,8 @@ export function LoginPage() {
           <span className="inline-block py-1 px-3 rounded-full bg-white/20 backdrop-blur-md text-sm font-semibold tracking-widest uppercase mb-6 border border-white/30">
             Admin Portal
           </span>
-          <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-4 leading-tight">
-            Urlaub auf <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-brand-100">Madagaskar</span>
+          <h1 className="text-5xl lg:text-6xl xl:text-7xl font-['Rock_Salt',_cursive] tracking-normal mb-4 leading-normal font-normal text-white/80 mix-blend-overlay drop-shadow-sm py-4">
+            Urlaub auf <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300/90 to-brand-100/90">Madagaskar</span>
           </h1>
           <p className="text-lg text-gray-300 max-w-xl leading-relaxed mt-4">
             Manage your exclusive trips, clients, and documents seamlessly. Access the command center for unforgettable travel experiences.
@@ -47,7 +47,7 @@ export function LoginPage() {
       </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full lg:w-2/5 xl:w-1/3 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-16 relative bg-white dark:bg-surface-dark h-full shrink-0 shadow-[0_0_40px_rgba(0,0,0,0.1)] dark:shadow-[0_0_40px_rgba(0,0,0,0.5)] z-20 transition-colors duration-500">
+      <div className="w-full lg:w-2/5 xl:w-1/3 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-16 relative bg-white dark:bg-surface-dark h-full shrink-0 shadow-[-10px_0_40px_rgba(0,0,0,0.1)] dark:shadow-[-10px_0_40px_rgba(0,0,0,0.5)] z-20 transition-colors duration-500 lg:rounded-l-[3rem]">
         
         <div className="w-full max-w-sm mx-auto">
           <div className="mb-10 text-center lg:text-left">
@@ -57,60 +57,60 @@ export function LoginPage() {
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-rose-50 border-l-4 border-rose-500 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 p-4 rounded-r-lg text-sm flex items-center shadow-sm animate-pulse">
+              <div className="bg-rose-50 border-l-4 border-rose-500 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 p-4 rounded-r-2xl text-sm flex items-center shadow-sm animate-pulse">
                 <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                 {error}
               </div>
             )}
             
             <div className="space-y-6 mt-4">
-              <div className="relative border-2 border-slate-200 dark:border-slate-700 rounded-xl focus-within:border-brand-primary focus-within:ring-4 focus-within:ring-brand-primary/10 transition-all duration-300 bg-white dark:bg-slate-800">
-                <label htmlFor="email" className="absolute -top-2.5 left-3 inline-block bg-white dark:bg-slate-800 px-1 text-xs font-extrabold text-slate-500 uppercase tracking-wider transition-colors duration-300 focus-within:text-brand-primary">
+              <div className="relative border-2 border-slate-200 dark:border-slate-700 rounded-full focus-within:border-brand-primary focus-within:ring-4 focus-within:ring-brand-primary/10 transition-all duration-300 bg-white dark:bg-slate-800">
+                <label htmlFor="email" className="absolute -top-2.5 left-6 inline-block bg-white dark:bg-slate-800 px-2 text-xs font-extrabold text-slate-500 uppercase tracking-wider transition-colors duration-300 focus-within:text-brand-primary rounded-full">
                   Email Address
                 </label>
-                <div className="flex items-center">
-                  <div className="pl-4 pr-1 text-slate-400">
+                <div className="flex items-center w-full h-full rounded-full overflow-hidden">
+                  <div className="pl-5 pr-1 text-slate-400">
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
                   </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    className="block w-full border-0 py-3.5 pl-2 pr-4 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-0 sm:text-sm font-semibold bg-transparent outline-none"
-                    placeholder="admin@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      className="block w-full border-0 py-3.5 pl-2 pr-4 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-0 sm:text-sm font-semibold bg-transparent outline-none rounded-full"
+                      placeholder="admin@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                 </div>
               </div>
 
-              <div className="relative border-2 border-slate-200 dark:border-slate-700 rounded-xl focus-within:border-brand-primary focus-within:ring-4 focus-within:ring-brand-primary/10 transition-all duration-300 bg-white dark:bg-slate-800">
-                <label htmlFor="password" className="absolute -top-2.5 left-3 inline-block bg-white dark:bg-slate-800 px-1 text-xs font-extrabold text-slate-500 uppercase tracking-wider transition-colors duration-300 focus-within:text-brand-primary">
+              <div className="relative border-2 border-slate-200 dark:border-slate-700 rounded-full focus-within:border-brand-primary focus-within:ring-4 focus-within:ring-brand-primary/10 transition-all duration-300 bg-white dark:bg-slate-800">
+                <label htmlFor="password" className="absolute -top-2.5 left-6 inline-block bg-white dark:bg-slate-800 px-2 text-xs font-extrabold text-slate-500 uppercase tracking-wider transition-colors duration-300 focus-within:text-brand-primary rounded-full">
                   Password
                 </label>
-                <div className="flex items-center">
-                  <div className="pl-4 pr-1 text-slate-400">
+                <div className="flex items-center w-full h-full rounded-full overflow-hidden relative">
+                  <div className="pl-5 pr-1 text-slate-400">
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    className="block w-full border-0 py-3.5 pl-2 pr-12 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-0 sm:text-sm font-semibold bg-transparent outline-none"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      className="block w-full border-0 py-3.5 pl-2 pr-12 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-0 sm:text-sm font-semibold bg-transparent outline-none rounded-full"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-slate-400 hover:text-brand-primary focus:outline-none transition-colors"
+                    className="absolute right-3 text-slate-400 hover:text-brand-primary focus:outline-none transition-colors rounded-full p-1"
                   >
                     {showPassword ? (
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -137,7 +137,7 @@ export function LoginPage() {
               <button 
                 type="submit" 
                 disabled={loading}
-                className="group relative w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl text-sm font-bold text-white bg-slate-900 dark:bg-brand-primary hover:bg-black dark:hover:bg-brand-primary/90 focus:outline-none focus:ring-4 focus:ring-slate-900/30 dark:focus:ring-brand-primary/30 active:scale-[0.98] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-slate-900/20"
+                className="group relative w-full flex justify-center py-4 px-4 border border-transparent rounded-full text-sm font-bold text-white bg-slate-900 dark:bg-brand-primary hover:bg-black dark:hover:bg-brand-primary/90 focus:outline-none focus:ring-4 focus:ring-slate-900/30 dark:focus:ring-brand-primary/30 active:scale-[0.98] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-slate-900/20"
               >
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-primary opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out" />
                 <span className="relative z-10 flex items-center">

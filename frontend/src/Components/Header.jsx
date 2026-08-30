@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Bell, Moon, Sun, ChevronDown, LogOut, Settings, Image as ImageIcon } from 'lucide-react';
+import { Bell, Moon, Sun, ChevronDown, LogOut, Settings, Image as ImageIcon, Search, Mail } from 'lucide-react';
 import { useTheme } from '../Hooks/useTheme';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
@@ -55,52 +55,71 @@ export function Header() {
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl px-8 xl:px-12 py-5 flex justify-between items-center border-b border-gray-200/50 dark:border-slate-800/50 transition-colors duration-500">
-      <div className="flex items-center gap-4">
-        {/* We can leave this empty or add a global search bar here later */}
-        <div className="w-64 hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100/50 dark:bg-slate-800/50 rounded-full text-sm text-gray-500 dark:text-slate-400 border border-gray-200/50 dark:border-slate-700/50">
-          <span className="opacity-50">Search (⌘K)</span>
+    <header className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 px-8 xl:px-12 py-6 flex justify-between items-center transition-colors duration-500">
+      
+      {/* Search Bar */}
+      <div className="flex items-center gap-4 flex-1">
+        <div className="hidden md:flex items-center gap-3 px-5 py-2.5 bg-white dark:bg-slate-800 rounded-full w-full max-w-md shadow-sm border border-gray-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 focus-within:ring-2 focus-within:ring-brand-primary/20 transition-all">
+          <Search size={18} />
+          <input 
+            type="text" 
+            placeholder="Search task" 
+            className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700 dark:text-slate-200 placeholder:text-gray-400"
+          />
+          <div className="flex items-center justify-center px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-[10px] font-bold text-gray-400 dark:text-slate-500">
+            ⌘F
+          </div>
         </div>
       </div>
       
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-4">
         <motion.button 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={toggleTheme} 
-          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors"
         >
-          {theme === 'light' ? <Moon size={20} strokeWidth={2.5} /> : <Sun size={20} strokeWidth={2.5} />}
+          {theme === 'light' ? <Moon size={18} strokeWidth={2.5} /> : <Sun size={18} strokeWidth={2.5} />}
         </motion.button>
         
         <motion.button 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 transition-colors relative"
+          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors relative"
         >
-          <Bell size={20} strokeWidth={2.5} />
-          <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+          <Mail size={18} strokeWidth={2.5} />
         </motion.button>
         
-        <div className="h-8 w-px bg-gray-200 dark:bg-slate-700 mx-1"></div>
+        <motion.button 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors relative"
+        >
+          <Bell size={18} strokeWidth={2.5} />
+          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-slate-900"></span>
+        </motion.button>
+        
+        <div className="h-8 w-px bg-gray-200 dark:bg-slate-700 mx-2 hidden sm:block"></div>
         
         <div className="relative" ref={dropdownRef}>
           <div 
-            className="flex items-center gap-3 cursor-pointer group p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" 
+            className="flex items-center gap-3 cursor-pointer group p-1.5 rounded-full hover:bg-white dark:hover:bg-slate-800 transition-colors" 
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <div className="text-right hidden sm:block mr-1">
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-tight group-hover:text-brand-primary transition-colors">{displayName}</p>
-              <p className="text-[11px] font-semibold text-slate-400">Management</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center text-white font-bold shadow-md shadow-brand-primary/20 ring-2 ring-white dark:ring-slate-900 group-hover:scale-105 transition-transform overflow-hidden relative">
+            <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold overflow-hidden relative">
               {user?.avatar ? (
                 <img src={user.avatar} alt={displayName} className="w-full h-full object-cover" />
               ) : (
                 <span>{initial}</span>
               )}
             </div>
-            <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            <div className="hidden sm:block">
+              <div className="flex items-center gap-1">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight group-hover:text-brand-primary transition-colors">{displayName}</p>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              </div>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">{user?.email || 'tmichael20@mail.com'}</p>
+            </div>
           </div>
 
           <AnimatePresence>
@@ -110,10 +129,10 @@ export function Header() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 py-2 z-50 origin-top-right"
+                className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 py-2 z-50 origin-top-right"
               >
-                <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 mb-2 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center text-white font-bold shrink-0 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700 mb-2 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold shrink-0 overflow-hidden">
                     {user?.avatar ? (
                       <img src={user.avatar} alt={displayName} className="w-full h-full object-cover" />
                     ) : (
@@ -143,7 +162,7 @@ export function Header() {
                   </button>
                 </div>
                 
-                <div className="my-2 border-t border-gray-100 dark:border-slate-800"></div>
+                <div className="my-2 border-t border-gray-100 dark:border-slate-700"></div>
                 
                 <div className="px-2">
                   <button 

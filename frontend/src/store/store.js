@@ -5,6 +5,30 @@ import driversReducer from './slices/driversSlice';
 import hotelsReducer from './slices/hotelsSlice';
 import authReducer from './slices/authSlice';
 
+// Persistence utilities
+const loadState = () => {
+  try {
+    const serializedState = localStorage.getItem('klaus_app_state');
+    if (serializedState === null) {
+      return undefined;
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    return undefined;
+  }
+};
+
+const saveState = (state) => {
+  try {
+    const serializedState = JSON.stringify(state);
+    localStorage.setItem('klaus_app_state', serializedState);
+  } catch {
+    // ignore write errors
+  }
+};
+
+const persistedState = loadState();
+
 export const store = configureStore({
   reducer: {
     trips: tripsReducer,
@@ -13,4 +37,9 @@ export const store = configureStore({
     hotels: hotelsReducer,
     auth: authReducer,
   },
+  preloadedState: persistedState
+});
+
+store.subscribe(() => {
+  saveState(store.getState());
 });
