@@ -186,13 +186,21 @@ export function TripDetailsPage() {
 
   return (
     <div className={`space-y-6 max-w-6xl mx-auto relative ${activeTab === 'client' ? 'pb-4' : 'pb-20'}`}>
-      <div className="sticky top-[81px] z-[100] bg-white border-b border-gray-200 -mx-4 sm:-mx-8 shadow-sm transition-all duration-300">
-        <div className="py-3.5 px-4 sm:px-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 w-full">
+      <div className="sticky top-[88px] z-[100] bg-white border border-gray-200 rounded-[2rem] shadow-sm transition-all duration-300">
+        <div className="py-2.5 px-6 sm:px-8 flex flex-col xl:flex-row justify-between items-center gap-3 w-full">
           <div className="flex items-center gap-4 shrink-0">
             <button onClick={() => navigate('/trips')} className="p-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors shadow-sm text-gray-600 hover:text-brand-primary group">
               <ArrowLeft size={18} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
             </button>
-            <h1 className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight leading-none">{trip.title}</h1>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight leading-none">{trip.title}</h1>
+              {activeTab === 'client' && (
+                <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary w-fit">
+                  <Map className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest">Itinerary Manager</span>
+                </div>
+              )}
+            </div>
           </div>
           
           {activeTab !== 'overview' && (

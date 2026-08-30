@@ -93,15 +93,9 @@ export function ItineraryManager({ trip }) {
   };
 
   const headerContent = (
-    <div className="flex items-center gap-3">
-      <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary">
-        <Map className="w-4 h-4" />
-        <span className="text-[11px] font-extrabold uppercase tracking-widest">Itinerary Manager</span>
-      </div>
-      <Button type="button" variant="primary" onClick={handleSave} disabled={isSaving} className="text-xs py-1.5 px-6 rounded-full shadow-md shadow-brand-primary/25 hover:shadow-lg hover:shadow-brand-primary/30 hover:-translate-y-0.5 transition-all">
-        <Save size={16} className="mr-2" /> {isSaving ? 'Saving...' : 'Save Itinerary'}
-      </Button>
-    </div>
+    <Button type="button" variant="primary" onClick={handleSave} disabled={isSaving} className="text-xs py-1.5 px-6 rounded-full shadow-md shadow-brand-primary/25 hover:shadow-lg hover:shadow-brand-primary/30 hover:-translate-y-0.5 transition-all">
+      <Save size={16} className="mr-2" /> {isSaving ? 'Saving...' : 'Save Itinerary'}
+    </Button>
   );
 
   const portalTarget = document.getElementById('itinerary-manager-header-portal');
