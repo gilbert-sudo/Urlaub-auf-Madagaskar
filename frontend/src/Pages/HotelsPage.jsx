@@ -7,13 +7,15 @@ import { Building, MapPin, Calendar, Search, Mail, Phone, ExternalLink } from 'l
 
 export function HotelsPage() {
   const dispatch = useDispatch();
-  const { items: hotels, loading } = useSelector((state) => state.hotels);
+  const { items: hotels, loading, status } = useSelector((state) => state.hotels);
   const [activeTab, setActiveTab] = useState('directory');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    dispatch(fetchHotels());
-  }, [dispatch]);
+    if (status === 'idle') {
+      dispatch(fetchHotels());
+    }
+  }, [dispatch, status]);
 
   const dummyReservations = [
     { id: 1, hotel: 'Carlton Hotel', location: 'Antananarivo', dates: '10/09 - 12/09/2026', status: 'Confirmed', client: 'Patrick & Nadine', room: '1 Double Room (B&B)' },
