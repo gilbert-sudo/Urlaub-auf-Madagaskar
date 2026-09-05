@@ -168,15 +168,15 @@ export function TripDetailsPage() {
     return () => {
       if (observerRef.current) observerRef.current.disconnect();
     };
-  }, [trip.itinerary, activeTab]);
+  }, [trip?.itinerary, activeTab]);
 
   useEffect(() => {
-    if (mapRef.current && activeStoryDay !== null && trip.itinerary && trip.itinerary[activeStoryDay]?.coordinates) {
+    if (mapRef.current && activeStoryDay !== null && trip?.itinerary && trip.itinerary[activeStoryDay]?.coordinates) {
       mapRef.current.panTo(trip.itinerary[activeStoryDay].coordinates);
       mapRef.current.setZoom(9);
       setActiveMarker(activeStoryDay);
     }
-  }, [activeStoryDay, trip.itinerary]);
+  }, [activeStoryDay, trip?.itinerary]);
 
   useEffect(() => {
     if (!trip || trip._id !== id) {
