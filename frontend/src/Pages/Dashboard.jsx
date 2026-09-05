@@ -28,6 +28,8 @@ const mapLocations = [
   { id: 3, name: 'Lemur Safari', position: [-18.8792, 47.5079], driver: 'David Oshodi', status: 'Departing', color: '#f59e0b' }
 ];
 
+const libraries = ['places'];
+
 export function Dashboard() {
   const trips = useSelector((state) => state.trips.items);
   
@@ -36,7 +38,8 @@ export function Dashboard() {
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries
   });
   const [activeMarker, setActiveMarker] = React.useState(null);
 

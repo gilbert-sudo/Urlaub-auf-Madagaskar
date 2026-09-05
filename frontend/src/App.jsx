@@ -11,6 +11,7 @@ import { HotelsPage } from './Pages/HotelsPage';
 import { DocumentsPage } from './Pages/DocumentsPage';
 import { LoginPage } from './Pages/LoginPage';
 import { CreateTripPage } from './Pages/CreateTripPage';
+import { SharedTripPage } from './Pages/SharedTripPage';
 
 import { Toaster } from 'sonner';
 
@@ -28,6 +29,7 @@ function App() {
       <Toaster position="top-center" richColors />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/shared/trip/:token" element={<SharedTripPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />

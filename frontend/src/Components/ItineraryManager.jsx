@@ -7,7 +7,8 @@ import { DatePicker } from './DatePicker';
 import { HotelSelect } from './HotelSelect';
 import { DriverSelect } from './DriverSelect';
 import { Button } from './Button';
-import { Plus, Trash2, Save, Map, ChevronRight, MapPin, CalendarDays, Navigation } from 'lucide-react';
+import { Plus, Trash2, Save, Map, ChevronRight, MapPin, CalendarDays, Navigation, Maximize2, X, Globe, Search } from 'lucide-react';
+import { GoogleMap, MarkerF, Autocomplete } from '@react-google-maps/api';
 
 const SHARED_INPUT_CLASS = "w-full px-5 py-4 rounded-2xl border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400";
 const SHARED_LABEL_CLASS = "text-[11px] font-extrabold text-gray-500 uppercase tracking-wider ml-2 block";
@@ -17,7 +18,22 @@ export function ItineraryManager({ trip }) {
   const [itinerary, setItinerary] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
   const sidebarRef = useRef(null);
+  const searchBoxRef = useRef(null);
+
+  const onPlaceChanged = () => {
+    if (searchBoxRef.current) {
+      const place = searchBoxRef.current.getPlace();
+      if (place && place.geometry && place.geometry.location) {
+        const location = place.geometry.location;
+        handleItineraryChange(activeDayIndex, 'coordinates', {
+          lat: location.lat(),
+          lng: location.lng()
+        });
+      }
+    }
+  };
 
   useEffect(() => {
     if (trip && trip.itinerary) {
@@ -27,10 +43,11 @@ export function ItineraryManager({ trip }) {
         activities: day.activities || '',
         hotel: day.hotel?._id || day.hotel || '',
         driver: day.driver?._id || day.driver || '',
-        locationDetails: day.locationDetails || ''
+        locationDetails: day.locationDetails || '',
+        coordinates: day.coordinates || { lat: -18.8792, lng: 47.5079 }
       })));
     } else {
-      setItinerary([{ dayNumber: 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '' }]);
+      setItinerary([{ dayNumber: 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }]);
     }
   }, [trip]);
 
@@ -44,7 +61,7 @@ export function ItineraryManager({ trip }) {
     setItinerary(prev => {
       const newItinerary = [
         ...prev, 
-        { dayNumber: prev.length + 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '' }
+        { dayNumber: prev.length + 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }
       ];
       setActiveDayIndex(newItinerary.length - 1);
       return newItinerary;
@@ -272,16 +289,85 @@ export function ItineraryManager({ trip }) {
                   <div className="space-y-2 flex-1 flex flex-col min-h-0">
                      <div className="flex items-center gap-2 mb-1 shrink-0">
                         <div className="w-6 h-6 rounded-lg bg-green-100 text-green-600 flex items-center justify-center"><Map size={14}/></div>
-                        <h4 className="font-extrabold text-sm text-gray-800 uppercase tracking-wider">Activities & Route</h4>
+                        <h4 className="font-extrabold text-sm text-gray-800 uppercase tracking-wider">Activities & Route Location</h4>
                      </div>
                      
-                     <div className="p-3 md:p-4 rounded-[1.25rem] bg-gray-50/50 border border-gray-100 flex-1 flex flex-col min-h-0">
+                     <div className="p-3 md:p-4 rounded-[1.25rem] bg-gray-50/50 border border-gray-100 flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
                         <textarea 
                           value={activeDay.activities} 
                           onChange={(e) => handleItineraryChange(activeDayIndex, 'activities', e.target.value)} 
                           placeholder="e.g. Morning safari, afternoon transfer..." 
-                          className={`${SHARED_INPUT_CLASS} flex-1 resize-none py-3 leading-relaxed bg-white text-sm h-full w-full`}
+                          className={`${SHARED_INPUT_CLASS} flex-1 resize-none py-3 leading-relaxed bg-white text-sm h-full w-full lg:w-1/2`}
                         />
+                        {isMapExpanded && <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[150]" onClick={() => setIsMapExpanded(false)}></div>}
+                        <div className={
+                          isMapExpanded 
+                          ? "fixed inset-4 md:inset-8 z-[200] bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2.5rem] p-4 md:p-6 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col transition-all duration-300" 
+                          : "flex-1 h-64 lg:h-full rounded-2xl overflow-hidden border border-gray-200 shadow-inner relative group transition-all duration-300"
+                        }>
+                          {isMapExpanded && (
+                            <div className="flex justify-between items-center mb-4 px-2 shrink-0">
+                              <div>
+                                <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><Globe className="text-brand-primary" /> Edit Location</h3>
+                                <p className="text-sm font-semibold text-gray-500 mt-1">Click on the map to set the exact coordinates for this day.</p>
+                              </div>
+                              <button 
+                                onClick={() => setIsMapExpanded(false)}
+                                className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 flex items-center justify-center transition-colors"
+                              >
+                                <X size={20} strokeWidth={2.5} />
+                              </button>
+                            </div>
+                          )}
+                          <div className={`relative ${isMapExpanded ? 'flex-1 rounded-[1.5rem] overflow-hidden shadow-2xl border-4 border-white/50' : 'w-full h-full'}`}>
+                            {isMapExpanded && (
+                              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[10] w-11/12 max-w-md">
+                                <Autocomplete
+                                  onLoad={ref => searchBoxRef.current = ref}
+                                  onPlaceChanged={onPlaceChanged}
+                                  options={{ componentRestrictions: { country: "mg" } }}
+                                >
+                                  <div className="relative">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input 
+                                      type="text" 
+                                      placeholder="Search for a location..." 
+                                      className="w-full bg-white/95 backdrop-blur-md border border-white/50 shadow-xl rounded-full py-3.5 pl-11 pr-4 text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-brand-primary/20 transition-all"
+                                    />
+                                  </div>
+                                </Autocomplete>
+                              </div>
+                            )}
+                            <GoogleMap
+                              mapContainerStyle={{ width: '100%', height: '100%', borderRadius: isMapExpanded ? '0' : '1rem' }}
+                              center={activeDay.coordinates || { lat: -18.8792, lng: 47.5079 }}
+                              zoom={7}
+                              options={{ disableDefaultUI: true, zoomControl: isMapExpanded, draggable: isMapExpanded }}
+                              onClick={(e) => {
+                                if (isMapExpanded) {
+                                  handleItineraryChange(activeDayIndex, 'coordinates', {
+                                    lat: e.latLng.lat(),
+                                    lng: e.latLng.lng()
+                                  });
+                                }
+                              }}
+                            >
+                              {activeDay.coordinates && (
+                                <MarkerF position={activeDay.coordinates} />
+                              )}
+                            </GoogleMap>
+                            {!isMapExpanded && (
+                              <div 
+                                className="absolute inset-0 z-[10] cursor-pointer"
+                                onClick={() => setIsMapExpanded(true)}
+                              >
+                                <div className="absolute top-2 left-2 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg text-xs font-black text-gray-700 shadow-sm transition-transform hover:scale-105 flex items-center gap-1.5">
+                                  <Maximize2 size={14} className="text-brand-primary" /> Click to expand and edit location
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                      </div>
                   </div>
                 </div>

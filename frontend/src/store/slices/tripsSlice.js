@@ -33,6 +33,18 @@ export const deleteTrip = createAsyncThunk('trips/deleteTrip', async (id) => {
   return id; // return the deleted id for reducer
 });
 
+// Generate Share Token
+export const shareTrip = createAsyncThunk('trips/shareTrip', async (id) => {
+  const response = await axios.post(`${API_URL}/api/trips/${id}/share`);
+  return response.data;
+});
+
+// Fetch Shared Trip
+export const fetchSharedTrip = createAsyncThunk('trips/fetchSharedTrip', async (token) => {
+  const response = await axios.get(`${API_URL}/api/trips/shared/${token}`);
+  return response.data;
+});
+
 const tripsSlice = createSlice({
   name: 'trips',
   initialState: {
@@ -110,6 +122,24 @@ const tripsSlice = createSlice({
         }
       })
       .addCase(deleteTrip.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+      // ----- SHARE TRIP -----
+      .addCase(shareTrip.fulfilled, (state, action) => {
+        if (state.currentTrip) {
+          state.currentTrip.shareToken = action.payload.shareToken;
+        }
+      })
+      // ----- FETCH SHARED TRIP -----
+      .addCase(fetchSharedTrip.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchSharedTrip.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentTrip = action.payload;
+      })
+      .addCase(fetchSharedTrip.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       });

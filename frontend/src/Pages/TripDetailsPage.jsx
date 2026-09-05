@@ -1,18 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTripById } from '../store/slices/tripsSlice';
+import { fetchTripById, shareTrip } from '../store/slices/tripsSlice';
+import { toast } from 'sonner';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle, Share2, Maximize2, X } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { ClientItineraryDoc } from '../Components/Documents/ClientItineraryDoc';
 import { DriverItineraryDoc } from '../Components/Documents/DriverItineraryDoc';
 import { ReservationsDoc } from '../Components/Documents/ReservationsDoc';
 import { HotelVoucherDoc } from '../Components/Documents/HotelVoucherDoc';
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF } from '@react-google-maps/api';
 import { ItineraryManager } from '../Components/ItineraryManager';
+
+const libraries = ['places'];
 
 export function TripDetailsPage() {
   const { id } = useParams();
@@ -27,9 +30,153 @@ export function TripDetailsPage() {
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries
   });
   const [activeMarker, setActiveMarker] = useState(null);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  
+  // Scroll-Telling Map State
+  const mapRef = useRef(null);
+  const observerRef = useRef(null);
+  const isAutoScrolling = useRef(false);
+  const [activeStoryDay, setActiveStoryDay] = useState(0);
+  const [directionsResponses, setDirectionsResponses] = useState([]);
+  const [failedSegments, setFailedSegments] = useState([]);
+
+  const handleScrollToDay = (index) => {
+    setActiveMarker(index);
+    setActiveStoryDay(index);
+    isAutoScrolling.current = true;
+    const el = document.querySelector(`[data-index="${index}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      isAutoScrolling.current = false;
+    }, 1000); // Wait for smooth scroll animation to finish
+  };
+
+  useEffect(() => {
+    if (!isLoaded || !trip || !trip.itinerary) return;
+    
+    let ignore = false;
+    
+    // Immediately clear old paths so they don't show up on a new trip
+    setDirectionsResponses([]);
+    setFailedSegments([]);
+    
+    const validPoints = trip.itinerary.filter(day => day.coordinates).map(day => day.coordinates);
+    if (validPoints.length < 2) return;
+
+    const directionsService = new window.google.maps.DirectionsService();
+
+    const routeSegment = async (origin, destination, retryCount = 0) => {
+      // Primary Engine: Google Maps (prefers National Roads / Highways)
+      try {
+        const googleResult = await new Promise((resolve) => {
+          directionsService.route(
+            { origin, destination, travelMode: window.google.maps.TravelMode.DRIVING },
+            (result, status) => resolve({ result, status })
+          );
+        });
+
+        if (googleResult.status === window.google.maps.DirectionsStatus.OK) {
+          const path = googleResult.result.routes[0].overview_path.map(p => ({
+            lat: typeof p.lat === 'function' ? p.lat() : p.lat,
+            lng: typeof p.lng === 'function' ? p.lng() : p.lng
+          }));
+          return { success: true, path };
+        } 
+        
+        if (googleResult.status === window.google.maps.DirectionsStatus.OVER_QUERY_LIMIT && retryCount < 3) {
+          await new Promise(r => setTimeout(r, 1500));
+          return routeSegment(origin, destination, retryCount + 1);
+        }
+      } catch (err) {
+        console.warn("Google Maps routing failed:", err);
+      }
+
+      // Fallback Engine: OSRM (prefers remote dirt roads / unmapped areas)
+      try {
+        const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`);
+        const data = await response.json();
+        
+        if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+          const coords = data.routes[0].geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+          return { success: true, path: coords };
+        }
+      } catch (err) {
+        console.warn("OSRM routing failed:", err);
+      }
+
+      // Complete failure, will draw straight line
+      return { success: false, origin, destination };
+    };
+
+    const fetchAllSegments = async () => {
+      const promises = [];
+      for (let i = 0; i < validPoints.length - 1; i++) {
+        promises.push(routeSegment(validPoints[i], validPoints[i + 1]));
+      }
+      
+      const results = await Promise.all(promises);
+      
+      const successfulResponses = [];
+      const failedPolylineSegments = [];
+      
+      results.forEach(res => {
+        if (res.success) {
+          successfulResponses.push(res.path);
+        } else {
+          failedPolylineSegments.push([res.origin, res.destination]);
+        }
+      });
+      
+      if (ignore) return;
+      
+      setDirectionsResponses(successfulResponses);
+      setFailedSegments(failedPolylineSegments);
+    };
+
+    fetchAllSegments();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isLoaded, trip]);
+
+  useEffect(() => {
+    if (activeTab !== 'overview') return;
+    
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (isAutoScrolling.current) return;
+      
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+          const index = Number(entry.target.dataset.index);
+          setActiveStoryDay(index);
+        }
+      });
+    }, {
+      root: document.getElementById('story-scroll-container'),
+      rootMargin: '-10% 0px -40% 0px',
+      threshold: 0.3
+    });
+
+    const elements = document.querySelectorAll('.story-day-card');
+    elements.forEach(el => observerRef.current.observe(el));
+
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect();
+    };
+  }, [trip.itinerary, activeTab]);
+
+  useEffect(() => {
+    if (mapRef.current && activeStoryDay !== null && trip.itinerary && trip.itinerary[activeStoryDay]?.coordinates) {
+      mapRef.current.panTo(trip.itinerary[activeStoryDay].coordinates);
+      mapRef.current.setZoom(9);
+      setActiveMarker(activeStoryDay);
+    }
+  }, [activeStoryDay, trip.itinerary]);
 
   useEffect(() => {
     if (!trip || trip._id !== id) {
@@ -80,6 +227,17 @@ export function TripDetailsPage() {
     }
   };
 
+  const handleShareTrip = async () => {
+    try {
+      const result = await dispatch(shareTrip(id)).unwrap();
+      const shareUrl = `${window.location.origin}/shared/trip/${result.shareToken}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Share link copied to clipboard!');
+    } catch (err) {
+      toast.error('Failed to generate share link');
+    }
+  };
+
   const tabs = [
     { id: 'overview', label: 'Overview', desc: 'Trip Details', icon: Briefcase },
     { id: 'client', label: 'Reiseplanung', desc: 'Client Itinerary', icon: Map },
@@ -104,10 +262,10 @@ export function TripDetailsPage() {
       hotel: item.hotel?.name || "N/A",
       driver: item.driver?.name || "Standard Route"
     })) || [],
-    flights: trip.flights?.arrival ? [
-      { id: 1, date: new Date(trip.flights.arrival.date).toLocaleDateString(), route: "Ankunft", flightNo: trip.flights.arrival.flightNumber, details: trip.flights.arrival.details },
-      { id: 2, date: new Date(trip.flights.departure.date).toLocaleDateString(), route: "Rückflug", flightNo: trip.flights.departure.flightNumber, details: trip.flights.departure.details }
-    ] : [],
+    flights: [
+      trip.flights?.arrival?.date ? { id: 1, date: new Date(trip.flights.arrival.date).toLocaleDateString(), route: "Ankunft", flightNo: trip.flights.arrival.flightNumber, details: trip.flights.arrival.details } : null,
+      trip.flights?.departure?.date ? { id: 2, date: new Date(trip.flights.departure.date).toLocaleDateString(), route: "Rückflug", flightNo: trip.flights.departure.flightNumber, details: trip.flights.departure.details } : null
+    ].filter(Boolean),
     inclusions: trip.inclusions || [],
     exclusions: trip.exclusions || []
   };
@@ -300,47 +458,162 @@ export function TripDetailsPage() {
                   <span className="flex items-center gap-1"><Users size={18}/> {trip.guestType || 'Standard'}</span>
                 </div>
               </div>
-              <div className="hidden md:block text-right">
+              <div className="hidden md:flex flex-col items-end text-right">
                 <div className="text-sm font-bold text-white/80 mb-1">Total Price</div>
-                <div className="text-3xl font-black">€{trip.totalPrice}</div>
+                <div className="text-3xl font-black mb-4">€{trip.totalPrice}</div>
+                <button 
+                  onClick={handleShareTrip}
+                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-xl transition-colors font-bold text-sm shadow-sm border border-white/20"
+                >
+                  <Share2 size={16} /> Share Itinerary
+                </button>
               </div>
             </div>
           </div>
+          <div className="space-y-8">
+            {/* Scroll-Telling Map Journey */}
+            
+            {isMapExpanded && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150] transition-opacity duration-500" onClick={() => setIsMapExpanded(false)}></div>}
+            
+            <div className={
+              isMapExpanded 
+              ? "fixed inset-4 md:inset-8 z-[200] bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col overflow-hidden transition-all duration-500 animate-in zoom-in-95"
+              : "relative w-full h-[700px] rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100 group bg-gray-100 transition-all duration-500"
+            }>
+              
+              {isMapExpanded && (
+                <button 
+                  onClick={() => setIsMapExpanded(false)}
+                  className="absolute top-6 right-6 z-[210] w-12 h-12 rounded-full bg-white text-gray-900 hover:bg-gray-100 shadow-xl flex items-center justify-center transition-colors"
+                >
+                  <X size={24} strokeWidth={2.5} />
+                </button>
+              )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-7 space-y-8">
-              {/* Itinerary Timeline */}
-              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 relative">
-                <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
+              {!isMapExpanded && (
+                <button 
+                  onClick={() => setIsMapExpanded(true)}
+                  className="absolute top-6 right-6 z-[20] w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm text-gray-900 hover:bg-white shadow-xl flex items-center justify-center transition-transform hover:scale-110 opacity-0 group-hover:opacity-100"
+                  title="Fullscreen Map"
+                >
+                  <Maximize2 size={20} strokeWidth={2.5} />
+                </button>
+              )}
+
+              {/* The Base Map */}
+              {isLoaded ? (
+                <GoogleMap
+                  onLoad={(map) => { mapRef.current = map; }}
+                  mapContainerStyle={{ width: '100%', height: '100%' }}
+                  center={trip.itinerary?.find(i => i.coordinates)?.coordinates || { lat: -18.8792, lng: 47.5079 }}
+                  zoom={6}
+                  options={{ disableDefaultUI: false, zoomControl: true, streetViewControl: false, mapTypeControl: false, fullscreenControl: false, gestureHandling: 'greedy' }}
+                >
+                  {directionsResponses.map((path, idx) => (
+                    <PolylineF 
+                      key={`osrm-${idx}`}
+                      path={path} 
+                      options={{ strokeColor: '#f97316', strokeOpacity: 0.8, strokeWeight: 5, geodesic: true }} 
+                    />
+                  ))}
+                  {failedSegments.map((segment, idx) => (
+                    <PolylineF 
+                      key={`poly-${idx}`}
+                      path={segment} 
+                      options={{ strokeColor: '#f97316', strokeOpacity: 0.8, strokeWeight: 4, geodesic: true }} 
+                    />
+                  ))}
+                  {trip.itinerary?.map((item, index) => (
+                    item.coordinates && (
+                      <MarkerF 
+                        key={index} 
+                        position={item.coordinates}
+                        onClick={() => handleScrollToDay(index)}
+                        label={{
+                          text: `D${item.dayNumber}`,
+                          color: activeStoryDay === index ? '#ffffff' : '#f97316',
+                          fontSize: activeStoryDay === index ? '12px' : '10px',
+                          fontWeight: 'bold',
+                        }}
+                        icon={
+                          activeStoryDay === index 
+                          ? {
+                              path: window.google.maps.SymbolPath.CIRCLE,
+                              fillColor: '#f97316',
+                              fillOpacity: 1,
+                              strokeWeight: 3,
+                              strokeColor: '#ffffff',
+                              scale: 14,
+                            }
+                          : {
+                              path: window.google.maps.SymbolPath.CIRCLE,
+                              fillColor: '#ffffff',
+                              fillOpacity: 1,
+                              strokeWeight: 3,
+                              strokeColor: '#f97316',
+                              scale: 12,
+                            }
+                        }
+                      >
+                        {activeMarker === index && (
+                          <InfoWindowF 
+                            position={item.coordinates}
+                            onCloseClick={() => setActiveMarker(null)}
+                          >
+                            <div className="font-bold text-gray-800 px-1 py-0.5">
+                              <div className="text-sm">Day {item.dayNumber}</div>
+                              {item.hotel?.name && <div className="text-xs font-normal text-gray-500">{item.hotel.name}</div>}
+                            </div>
+                          </InfoWindowF>
+                        )}
+                      </MarkerF>
+                    )
+                  ))}
+                </GoogleMap>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">Loading Map...</div>
+              )}
+
+              {/* The Floating Story Overlay */}
+              <div 
+                id="story-scroll-container"
+                className="absolute inset-y-0 left-0 w-full md:w-[460px] z-10 overflow-y-auto no-scrollbar scroll-smooth pointer-events-auto px-4 md:px-8 pt-8 pb-[500px] transition-colors duration-500 bg-gradient-to-r from-white/95 via-white/80 to-transparent"
+              >
+                <h2 className="text-3xl font-black mb-8 flex items-center gap-3 text-gray-900 drop-shadow-sm sticky top-0 bg-white/40 backdrop-blur-md py-4 z-20 rounded-2xl px-4 -mx-4 border border-white/50">
                   <MapPin className="text-brand-primary" /> 
                   Itinerary Journey
                 </h2>
                 
-                <div className="space-y-6 md:space-y-0 relative before:absolute before:inset-0 before:ml-[27px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent py-2">
+                <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[23px] before:h-full before:w-[3px] before:bg-brand-primary/20 py-2">
                   {trip.itinerary?.map((item, index) => (
-                    <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active md:-mt-12 first:md:mt-0 z-10 hover:z-20">
+                    <div 
+                      key={index} 
+                      data-index={index}
+                      className={`story-day-card relative flex items-start gap-4 z-10 transition-all duration-500 cursor-pointer ${activeStoryDay === index ? 'opacity-100 translate-x-2' : 'opacity-60 hover:opacity-80'}`}
+                      onClick={() => handleScrollToDay(index)}
+                    >
                       {/* Timeline Dot */}
-                      <div className="flex items-center justify-center w-12 h-12 rounded-full border-[3px] border-white bg-brand-primary text-white shadow-lg shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-transform duration-300 group-hover:scale-110">
-                        <span className="font-black text-xs">D{item.dayNumber}</span>
+                      <div className={`flex items-center justify-center w-12 h-12 rounded-full border-[3px] shadow-lg shrink-0 z-10 transition-colors duration-500 ${activeStoryDay === index ? 'bg-brand-primary border-brand-primary text-white shadow-brand-primary/30' : 'bg-white border-gray-200 text-gray-400'}`}>
+                        <span className="font-black text-sm">D{item.dayNumber}</span>
                       </div>
                       
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded-xl bg-gray-50 border border-gray-100 group-hover:shadow-md transition-shadow duration-300 group-hover:bg-white group-hover:border-brand-primary/20">
-                        <div className="flex justify-between items-start mb-1.5">
-                          <div className="font-bold text-gray-500 text-[11px] uppercase tracking-wider">
+                      <div className={`flex-1 p-5 rounded-[1.5rem] border shadow-xl backdrop-blur-xl transition-all duration-500 ${activeStoryDay === index ? 'bg-white/95 border-brand-primary/30 shadow-brand-primary/10' : 'bg-white/70 border-white/50 hover:bg-white/90'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-black text-brand-primary/80 text-[10px] uppercase tracking-widest">
                             {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                           </div>
                         </div>
-                        <h3 className="font-bold text-base text-gray-900 mb-2.5 leading-tight">{item.activities}</h3>
+                        <h3 className={`font-black text-lg mb-3 leading-tight ${activeStoryDay === index ? 'text-gray-900' : 'text-gray-700'}`}>{item.activities}</h3>
                         
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-2">
                           {item.hotel?.name && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold">
-                              <Bed size={12} /> {item.hotel.name}
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50/80 text-blue-700 text-xs font-bold border border-blue-100/50">
+                              <Bed size={14} /> {item.hotel.name}
                             </span>
                           )}
                           {item.driver?.name && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold">
-                              <Car size={12} /> {item.driver.name}
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50/80 text-emerald-700 text-xs font-bold border border-emerald-100/50">
+                              <Car size={14} /> {item.driver.name}
                             </span>
                           )}
                         </div>
@@ -349,54 +622,7 @@ export function TripDetailsPage() {
                   ))}
                 </div>
               </div>
-            </div>
-
-            <div className="lg:col-span-5 space-y-6">
-              {/* Map */}
-              <div className="bg-white rounded-3xl p-2 shadow-sm border border-gray-100 h-[400px] overflow-hidden relative group">
-                {isLoaded ? (
-                  <GoogleMap
-                    mapContainerStyle={{ width: '100%', height: '100%', borderRadius: '1rem' }}
-                    center={{ lat: -18.8792, lng: 47.5079 }}
-                    zoom={6}
-                    options={{ disableDefaultUI: true, zoomControl: true }}
-                  >
-                    {trip.itinerary?.map((item, index) => (
-                      item.hotel?.name && (
-                        <MarkerF 
-                          key={index} 
-                          position={{ lat: -18.8792 + (index * 0.5), lng: 47.5079 - (index * 0.2) }}
-                          onClick={() => setActiveMarker(index)}
-                        >
-                          {activeMarker === index && (
-                            <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
-                              <div>{item.hotel.name}</div>
-                            </InfoWindowF>
-                          )}
-                        </MarkerF>
-                      )
-                    ))}
-                    {(!trip.itinerary || trip.itinerary.length === 0) && (
-                      <MarkerF 
-                        position={{ lat: -18.8792, lng: 47.5079 }}
-                        onClick={() => setActiveMarker('default')}
-                      >
-                        {activeMarker === 'default' && (
-                          <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
-                            <div>Antananarivo (Capital)</div>
-                          </InfoWindowF>
-                        )}
-                      </MarkerF>
-                    )}
-                  </GoogleMap>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-2xl">Loading Map...</div>
-                )}
-                
-                <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-gray-800 flex items-center gap-2">
-                  <Globe size={16} className="text-brand-primary" /> Route Overview
-                </div>
-              </div>
+            </div>  </div>
 
               {/* Inclusions & Exclusions */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
@@ -428,8 +654,6 @@ export function TripDetailsPage() {
                   </ul>
                 </div>
               </div>
-            </div>
-          </div>
         </div>
       ) : (activeTab === 'client' && !showPdfPreview) ? (
         <ItineraryManager trip={trip} />

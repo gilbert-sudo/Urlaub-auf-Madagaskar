@@ -15,8 +15,13 @@ const tripSchema = new mongoose.Schema({
     activities: String,
     hotel: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel' },
     driver: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver' },
-    locationDetails: String // For the driver's specific logistic location (e.g., Location N°3)
+    locationDetails: String, // For the driver's specific logistic location (e.g., Location N°3)
+    coordinates: {
+      lat: Number,
+      lng: Number
+    }
   }],
+  shareToken: { type: String, unique: true, sparse: true },
   flights: {
     arrival: { date: Date, flightNumber: String, details: String },
     departure: { date: Date, flightNumber: String, details: String }
