@@ -4,6 +4,7 @@ import clientsReducer from './slices/clientsSlice';
 import driversReducer from './slices/driversSlice';
 import hotelsReducer from './slices/hotelsSlice';
 import authReducer from './slices/authSlice';
+import itineraryReducer from './slices/itinerarySlice';
 
 // Persistence utilities
 const loadState = () => {
@@ -36,6 +37,7 @@ export const store = configureStore({
     drivers: driversReducer,
     hotels: hotelsReducer,
     auth: authReducer,
+    itinerary: itineraryReducer,
   },
   preloadedState: persistedState
 });

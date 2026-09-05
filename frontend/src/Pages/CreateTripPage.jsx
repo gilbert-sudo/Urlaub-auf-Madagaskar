@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createTrip, updateTrip, fetchTripById } from '../store/slices/tripsSlice';
+import { setItinerary, addDay, updateDay, removeDay, resetItinerary } from '../store/slices/itinerarySlice';
 import { fetchClients } from '../store/slices/clientsSlice';
 import { fetchHotels } from '../store/slices/hotelsSlice';
 import { fetchDrivers } from '../store/slices/driversSlice';
@@ -51,11 +52,16 @@ export function CreateTripPage() {
   const { items: clients } = useSelector(state => state.clients);
   const { items: hotels } = useSelector(state => state.hotels);
   const { items: drivers } = useSelector(state => state.drivers);
+  const { days: itinerary } = useSelector(state => state.itinerary);
 
   useEffect(() => {
     dispatch(fetchClients());
     dispatch(fetchHotels());
     dispatch(fetchDrivers());
+
+    if (!isEditing) {
+      dispatch(setItinerary([{ dayNumber: 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }]));
+    }
     
     if (isEditing) {
       dispatch(fetchTripById(id)).unwrap().then((trip) => {
@@ -85,14 +91,15 @@ export function CreateTripPage() {
         });
         
         if (trip.itinerary && trip.itinerary.length > 0) {
-          setItinerary(trip.itinerary.map(day => ({
+          dispatch(setItinerary(trip.itinerary.map(day => ({
             dayNumber: day.dayNumber,
             date: day.date ? new Date(day.date).toISOString().split('T')[0] : '',
             activities: day.activities || '',
             hotel: day.hotel?._id || day.hotel || '',
             driver: day.driver?._id || day.driver || '',
-            locationDetails: day.locationDetails || ''
-          })));
+            locationDetails: day.locationDetails || '',
+            coordinates: day.coordinates || { lat: -18.8792, lng: 47.5079 }
+          }))));
         }
       });
     }
@@ -118,9 +125,6 @@ export function CreateTripPage() {
     }
   });
 
-  const [itinerary, setItinerary] = useState([
-    { dayNumber: 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '' }
-  ]);
 
   const handleTripDataChange = (e) => {
     const { name, value } = e.target;
@@ -173,21 +177,23 @@ export function CreateTripPage() {
   };
 
   const handleItineraryChange = (index, field, value) => {
-    const newItinerary = [...itinerary];
-    newItinerary[index] = { ...newItinerary[index], [field]: value };
-    setItinerary(newItinerary);
+    dispatch(updateDay({ index, data: { [field]: value } }));
   };
 
   const addItineraryDay = () => {
-    setItinerary(prev => [
-      ...prev, 
-      { dayNumber: prev.length + 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '' }
-    ]);
+    dispatch(addDay({ 
+      dayNumber: itinerary.length + 1, 
+      date: '', 
+      activities: '', 
+      hotel: '', 
+      driver: '', 
+      locationDetails: '',
+      coordinates: { lat: -18.8792, lng: 47.5079 }
+    }));
   };
 
   const removeItineraryDay = (index) => {
-    const newItinerary = itinerary.filter((_, i) => i !== index).map((item, i) => ({ ...item, dayNumber: i + 1 }));
-    setItinerary(newItinerary);
+    dispatch(removeDay(index));
   };
 
   const handleSubmit = async (e) => {

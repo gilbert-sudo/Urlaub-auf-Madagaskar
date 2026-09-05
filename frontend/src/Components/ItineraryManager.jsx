@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { updateTrip } from '../store/slices/tripsSlice';
+import { setItinerary, addDay, updateDay, removeDay, setActiveDayIndex, resetItinerary } from '../store/slices/itinerarySlice';
 import { DatePicker } from './DatePicker';
 import { HotelSelect } from './HotelSelect';
 import { DriverSelect } from './DriverSelect';
@@ -15,9 +16,8 @@ const SHARED_LABEL_CLASS = "text-[11px] font-extrabold text-gray-500 uppercase t
 
 export function ItineraryManager({ trip }) {
   const dispatch = useDispatch();
-  const [itinerary, setItinerary] = useState([]);
+  const { days: itinerary, activeDayIndex } = useSelector(state => state.itinerary);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const sidebarRef = useRef(null);
   const searchBoxRef = useRef(null);
@@ -27,17 +27,22 @@ export function ItineraryManager({ trip }) {
       const place = searchBoxRef.current.getPlace();
       if (place && place.geometry && place.geometry.location) {
         const location = place.geometry.location;
-        handleItineraryChange(activeDayIndex, 'coordinates', {
-          lat: location.lat(),
-          lng: location.lng()
-        });
+        dispatch(updateDay({
+          index: activeDayIndex,
+          data: {
+            coordinates: {
+              lat: location.lat(),
+              lng: location.lng()
+            }
+          }
+        }));
       }
     }
   };
 
   useEffect(() => {
     if (trip && trip.itinerary) {
-      setItinerary(trip.itinerary.map(day => ({
+      dispatch(setItinerary(trip.itinerary.map(day => ({
         dayNumber: day.dayNumber,
         date: day.date ? new Date(day.date).toISOString().split('T')[0] : '',
         activities: day.activities || '',
@@ -45,27 +50,26 @@ export function ItineraryManager({ trip }) {
         driver: day.driver?._id || day.driver || '',
         locationDetails: day.locationDetails || '',
         coordinates: day.coordinates || { lat: -18.8792, lng: 47.5079 }
-      })));
+      }))));
     } else {
-      setItinerary([{ dayNumber: 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }]);
+      dispatch(setItinerary([{ dayNumber: 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }]));
     }
-  }, [trip]);
+  }, [trip, dispatch]);
 
   const handleItineraryChange = (index, field, value) => {
-    const newItinerary = [...itinerary];
-    newItinerary[index] = { ...newItinerary[index], [field]: value };
-    setItinerary(newItinerary);
+    dispatch(updateDay({ index, data: { [field]: value } }));
   };
 
   const addItineraryDay = () => {
-    setItinerary(prev => {
-      const newItinerary = [
-        ...prev, 
-        { dayNumber: prev.length + 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }
-      ];
-      setActiveDayIndex(newItinerary.length - 1);
-      return newItinerary;
-    });
+    dispatch(addDay({
+      dayNumber: itinerary.length + 1, 
+      date: '', 
+      activities: '', 
+      hotel: '', 
+      driver: '', 
+      locationDetails: '', 
+      coordinates: { lat: -18.8792, lng: 47.5079 }
+    }));
 
     // Auto-scroll the sidebar to the newly added day
     setTimeout(() => {
@@ -79,13 +83,7 @@ export function ItineraryManager({ trip }) {
   };
 
   const removeItineraryDay = (index) => {
-    setItinerary(prev => {
-      const newItinerary = prev.filter((_, i) => i !== index).map((item, i) => ({ ...item, dayNumber: i + 1 }));
-      if (activeDayIndex >= newItinerary.length) {
-        setActiveDayIndex(Math.max(0, newItinerary.length - 1));
-      }
-      return newItinerary;
-    });
+    dispatch(removeDay(index));
   };
 
   const handleSave = async () => {
@@ -148,7 +146,7 @@ export function ItineraryManager({ trip }) {
                   return (
                      <div 
                        key={index} 
-                       onClick={() => setActiveDayIndex(index)}
+                       onClick={() => dispatch(setActiveDayIndex(index))}
                        className="relative flex gap-5 cursor-pointer group"
                      >
                         {/* Timeline Node */}
