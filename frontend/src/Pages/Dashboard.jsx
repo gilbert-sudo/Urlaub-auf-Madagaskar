@@ -3,19 +3,7 @@ import { useSelector } from 'react-redux';
 import { Plus, ArrowUpRight, Calendar, Users, Map, Clock, Download, Video, CheckCircle2, Play, Pause, Square } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Custom Map Marker Icon
-const createMarkerIcon = (color) => {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-  });
-};
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
 
 // Mock Data for Charts & Map
 const analyticsData = [
@@ -45,6 +33,25 @@ export function Dashboard() {
   
   const activeTrips = trips.filter(t => t.status === 'Booked').length;
   const pendingTrips = trips.filter(t => t.status === 'Proposal' || t.status === 'Inquiry').length;
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  });
+  const [activeMarker, setActiveMarker] = React.useState(null);
+
+  // Custom marker icon SVG for Google Maps
+  const createMarkerIcon = (color) => {
+    return {
+      path: "M0,7 C0,3.13400675 3.13400675,0 7,0 C10.8659932,0 14,3.13400675 14,7 C14,10.8659932 10.8659932,14 7,14 C3.13400675,14 0,10.8659932 0,7 Z",
+      fillColor: color,
+      fillOpacity: 1,
+      strokeWeight: 2,
+      strokeColor: "white",
+      scale: 1,
+      anchor: new window.google.maps.Point(7, 7),
+    };
+  };
 
   return (
     <div className="space-y-4 pb-8">
@@ -337,24 +344,35 @@ export function Dashboard() {
         <div className="w-full xl:w-1/3 flex flex-col">
           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col flex-1 relative z-0 overflow-hidden">
             <div className="flex-1 w-full relative z-0 bg-[#e5e7eb]">
-              <MapContainer center={[-18.8792, 47.5079]} zoom={5} scrollWheelZoom={false} zoomControl={false} className="absolute inset-0 bg-transparent z-0" style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                />
-                <ZoomControl position="bottomright" />
-                {mapLocations.map(loc => (
-                  <Marker key={loc.id} position={loc.position} icon={createMarkerIcon(loc.color)}>
-                    <Popup className="rounded-xl overflow-hidden">
-                      <div className="font-sans px-1 pb-1">
-                        <h4 className="font-bold text-sm text-slate-900 m-0 leading-tight">{loc.name}</h4>
-                        <p className="text-xs text-slate-500 mt-2 mb-0">Driver: <span className="font-semibold text-slate-700">{loc.driver}</span></p>
-                        <p className="text-xs text-slate-500 mt-1 mb-0">Status: <span style={{color: loc.color}} className="font-bold">{loc.status}</span></p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+              {isLoaded ? (
+                <GoogleMap
+                  mapContainerStyle={{ width: '100%', height: '100%', position: 'absolute', inset: 0, zIndex: 0 }}
+                  center={{ lat: -18.8792, lng: 47.5079 }}
+                  zoom={5}
+                  options={{ disableDefaultUI: true, zoomControl: true }}
+                >
+                  {mapLocations.map(loc => (
+                    <MarkerF 
+                      key={loc.id} 
+                      position={{ lat: loc.position[0], lng: loc.position[1] }} 
+                      icon={createMarkerIcon(loc.color)}
+                      onClick={() => setActiveMarker(loc.id)}
+                    >
+                      {activeMarker === loc.id && (
+                        <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
+                          <div className="font-sans px-1 pb-1">
+                            <h4 className="font-bold text-sm text-slate-900 m-0 leading-tight">{loc.name}</h4>
+                            <p className="text-xs text-slate-500 mt-2 mb-0">Driver: <span className="font-semibold text-slate-700">{loc.driver}</span></p>
+                            <p className="text-xs text-slate-500 mt-1 mb-0">Status: <span style={{color: loc.color}} className="font-bold">{loc.status}</span></p>
+                          </div>
+                        </InfoWindowF>
+                      )}
+                    </MarkerF>
+                  ))}
+                </GoogleMap>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">Loading Map...</div>
+              )}
               {/* Floating Header */}
               <div className="absolute top-5 left-5 right-5 flex justify-between items-center z-[1000] pointer-events-none">
                 <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm pointer-events-auto border border-white/20">

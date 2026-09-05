@@ -11,18 +11,8 @@ import { ClientItineraryDoc } from '../Components/Documents/ClientItineraryDoc';
 import { DriverItineraryDoc } from '../Components/Documents/DriverItineraryDoc';
 import { ReservationsDoc } from '../Components/Documents/ReservationsDoc';
 import { HotelVoucherDoc } from '../Components/Documents/HotelVoucherDoc';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { ItineraryManager } from '../Components/ItineraryManager';
-
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow
-});
-L.Marker.prototype.options.icon = DefaultIcon;
 
 export function TripDetailsPage() {
   const { id } = useParams();
@@ -34,6 +24,12 @@ export function TripDetailsPage() {
   const [activeTab, setActiveTab] = useState('overview'); // overview, client, driver, reservations, voucher
   const [isEditing, setIsEditing] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  });
+  const [activeMarker, setActiveMarker] = useState(null);
 
   useEffect(() => {
     if (!trip || trip._id !== id) {
@@ -320,31 +316,31 @@ export function TripDetailsPage() {
                   Itinerary Journey
                 </h2>
                 
-                <div className="space-y-8 relative before:absolute before:inset-0 before:ml-[27px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+                <div className="space-y-6 md:space-y-0 relative before:absolute before:inset-0 before:ml-[27px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent py-2">
                   {trip.itinerary?.map((item, index) => (
-                    <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active md:-mt-12 first:md:mt-0 z-10 hover:z-20">
                       {/* Timeline Dot */}
-                      <div className="flex items-center justify-center w-14 h-14 rounded-full border-4 border-white bg-brand-primary text-white shadow-lg shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-transform duration-300 group-hover:scale-110">
-                        <span className="font-black text-sm">D{item.dayNumber}</span>
+                      <div className="flex items-center justify-center w-12 h-12 rounded-full border-[3px] border-white bg-brand-primary text-white shadow-lg shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-transform duration-300 group-hover:scale-110">
+                        <span className="font-black text-xs">D{item.dayNumber}</span>
                       </div>
                       
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-4 rounded-2xl bg-gray-50 border border-gray-100 group-hover:shadow-md transition-shadow duration-300 group-hover:bg-white group-hover:border-brand-primary/20">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="font-bold text-gray-500 text-xs">
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded-xl bg-gray-50 border border-gray-100 group-hover:shadow-md transition-shadow duration-300 group-hover:bg-white group-hover:border-brand-primary/20">
+                        <div className="flex justify-between items-start mb-1.5">
+                          <div className="font-bold text-gray-500 text-[11px] uppercase tracking-wider">
                             {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                           </div>
                         </div>
-                        <h3 className="font-bold text-lg text-gray-900 mb-3 leading-tight">{item.activities}</h3>
+                        <h3 className="font-bold text-base text-gray-900 mb-2.5 leading-tight">{item.activities}</h3>
                         
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {item.hotel?.name && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold">
-                              <Bed size={14} /> {item.hotel.name}
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold">
+                              <Bed size={12} /> {item.hotel.name}
                             </span>
                           )}
                           {item.driver?.name && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold">
-                              <Car size={14} /> {item.driver.name}
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                              <Car size={12} /> {item.driver.name}
                             </span>
                           )}
                         </div>
@@ -358,25 +354,44 @@ export function TripDetailsPage() {
             <div className="lg:col-span-5 space-y-6">
               {/* Map */}
               <div className="bg-white rounded-3xl p-2 shadow-sm border border-gray-100 h-[400px] overflow-hidden relative group">
-                <MapContainer center={[-18.8792, 47.5079]} zoom={6} scrollWheelZoom={false} className="h-full w-full rounded-2xl z-0">
-                  <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  />
-                  {trip.itinerary?.map((item, index) => (
+                {isLoaded ? (
+                  <GoogleMap
+                    mapContainerStyle={{ width: '100%', height: '100%', borderRadius: '1rem' }}
+                    center={{ lat: -18.8792, lng: 47.5079 }}
+                    zoom={6}
+                    options={{ disableDefaultUI: true, zoomControl: true }}
+                  >
+                    {trip.itinerary?.map((item, index) => (
                       item.hotel?.name && (
-                        <Marker key={index} position={[-18.8792 + (index * 0.5), 47.5079 - (index * 0.2)]}>
-                          <Popup>{item.hotel.name}</Popup>
-                        </Marker>
+                        <MarkerF 
+                          key={index} 
+                          position={{ lat: -18.8792 + (index * 0.5), lng: 47.5079 - (index * 0.2) }}
+                          onClick={() => setActiveMarker(index)}
+                        >
+                          {activeMarker === index && (
+                            <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
+                              <div>{item.hotel.name}</div>
+                            </InfoWindowF>
+                          )}
+                        </MarkerF>
                       )
-                  ))}
-                  {/* Default fallback marker if no hotels */}
-                  {(!trip.itinerary || trip.itinerary.length === 0) && (
-                    <Marker position={[-18.8792, 47.5079]}>
-                      <Popup>Antananarivo (Capital)</Popup>
-                    </Marker>
-                  )}
-                </MapContainer>
+                    ))}
+                    {(!trip.itinerary || trip.itinerary.length === 0) && (
+                      <MarkerF 
+                        position={{ lat: -18.8792, lng: 47.5079 }}
+                        onClick={() => setActiveMarker('default')}
+                      >
+                        {activeMarker === 'default' && (
+                          <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
+                            <div>Antananarivo (Capital)</div>
+                          </InfoWindowF>
+                        )}
+                      </MarkerF>
+                    )}
+                  </GoogleMap>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-2xl">Loading Map...</div>
+                )}
                 
                 <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-gray-800 flex items-center gap-2">
                   <Globe size={16} className="text-brand-primary" /> Route Overview
