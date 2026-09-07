@@ -61,6 +61,7 @@ const tripsSlice = createSlice({
       .addCase(fetchTrips.pending, (state) => {
         state.loading = true;
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(fetchTrips.fulfilled, (state, action) => {
         state.loading = false;
@@ -75,6 +76,7 @@ const tripsSlice = createSlice({
       // ----- FETCH ONE -----
       .addCase(fetchTripById.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchTripById.fulfilled, (state, action) => {
         state.loading = false;
@@ -87,6 +89,7 @@ const tripsSlice = createSlice({
       // ----- CREATE -----
       .addCase(createTrip.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(createTrip.fulfilled, (state, action) => {
         state.loading = false;
@@ -99,6 +102,7 @@ const tripsSlice = createSlice({
       // ----- UPDATE -----
       .addCase(updateTrip.pending, (state) => {
         // We do not set loading=true here to prevent the UI from flashing/remounting
+        state.error = null;
       })
       .addCase(updateTrip.fulfilled, (state, action) => {
         const idx = state.items.findIndex((t) => t._id === action.payload._id);
@@ -113,6 +117,7 @@ const tripsSlice = createSlice({
       // ----- DELETE -----
       .addCase(deleteTrip.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(deleteTrip.fulfilled, (state, action) => {
         state.loading = false;
@@ -134,6 +139,7 @@ const tripsSlice = createSlice({
       // ----- FETCH SHARED TRIP -----
       .addCase(fetchSharedTrip.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchSharedTrip.fulfilled, (state, action) => {
         state.loading = false;
