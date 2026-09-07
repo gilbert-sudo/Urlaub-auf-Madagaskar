@@ -12,7 +12,7 @@ import { ClientItineraryDoc } from '../Components/Documents/ClientItineraryDoc';
 import { DriverItineraryDoc } from '../Components/Documents/DriverItineraryDoc';
 import { ReservationsDoc } from '../Components/Documents/ReservationsDoc';
 import { HotelVoucherDoc } from '../Components/Documents/HotelVoucherDoc';
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF, OverlayViewF, OverlayView } from '@react-google-maps/api';
 import { ItineraryManager } from '../Components/ItineraryManager';
 
 const libraries = ['places'];
@@ -43,6 +43,7 @@ export function TripDetailsPage() {
   const [activeStoryDay, setActiveStoryDay] = useState(0);
   const [directionsResponses, setDirectionsResponses] = useState([]);
   const [failedSegments, setFailedSegments] = useState([]);
+  const [locationData, setLocationData] = useState({});
 
   const handleScrollToDay = (index) => {
     setActiveMarker(index);
@@ -176,6 +177,149 @@ export function TripDetailsPage() {
       mapRef.current.setZoom(9);
       setActiveMarker(activeStoryDay);
     }
+  }, [activeStoryDay, trip?.itinerary]);
+
+  useEffect(() => {
+    if (!trip?.itinerary || activeStoryDay === null) return;
+    
+    const day = trip.itinerary[activeStoryDay];
+    if (!day || locationData[activeStoryDay] !== undefined) return; // Already fetched or fetching
+
+    const fetchLocationData = async () => {
+      // Mark as fetching to avoid duplicate calls
+      setLocationData(prev => ({ ...prev, [activeStoryDay]: null }));
+
+      try {
+        let photoUrl = null;
+        let extract = null;
+        let title = null;
+
+        // Clean destination name from activities
+        let cleanDestName = day.activities.split('-').pop().trim();
+        if (cleanDestName.toLowerCase().includes(' in ')) {
+           cleanDestName = cleanDestName.split(/ in /i).pop().trim();
+        }
+
+        // 1. Try Google Places with multiple fallback queries
+        if (window.google && mapRef.current) {
+          const service = new window.google.maps.places.PlacesService(mapRef.current);
+          
+          const queriesToTry = [];
+          if (day.hotel?.name) {
+            queriesToTry.push(`${day.hotel.name}, Madagascar`);
+          }
+          queriesToTry.push(`${cleanDestName}, Madagascar`);
+
+          let placeResult = null;
+
+          // Try text searches first
+          for (const query of queriesToTry) {
+            if (placeResult) break;
+            
+            const request = {
+              query,
+              fields: ['name', 'photos', 'editorial_summary'],
+              locationBias: day.coordinates
+            };
+
+            placeResult = await new Promise((resolve) => {
+              service.findPlaceFromQuery(request, (results, status) => {
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                  // Prefer results with photos
+                  const withPhoto = results.find(r => r.photos && r.photos.length > 0);
+                  resolve(withPhoto || results[0]);
+                } else {
+                  resolve(null);
+                }
+              });
+            });
+          }
+
+          // If text search fails, fallback to nearby search (tourist attractions or POI)
+          if (!placeResult && day.coordinates) {
+            placeResult = await new Promise((resolve) => {
+              service.nearbySearch({
+                location: day.coordinates,
+                radius: 50000,
+                type: 'point_of_interest'
+              }, (results, status) => {
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                  const withPhoto = results.find(r => r.photos && r.photos.length > 0);
+                  resolve(withPhoto || results[0]);
+                } else {
+                  resolve(null);
+                }
+              });
+            });
+          }
+
+          if (placeResult) {
+            title = placeResult.name;
+            if (placeResult.photos && placeResult.photos.length > 0) {
+              photoUrl = placeResult.photos[0].getUrl({ maxWidth: 600, maxHeight: 400 });
+            }
+            if (placeResult.editorial_summary && placeResult.editorial_summary.overview) {
+              extract = placeResult.editorial_summary.overview;
+            }
+          }
+        }
+
+        // 2. Wikipedia Text Search for description (if extract is still missing)
+        if (!extract) {
+          try {
+            const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanDestName)}&utf8=&format=json&origin=*`);
+            const searchData = await searchRes.json();
+            
+            if (searchData.query?.search?.length > 0) {
+              const pageId = searchData.query.search[0].pageid;
+              const detailsRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&pageids=${pageId}&exintro&explaintext&exsentences=3&pithumbsize=600&format=json&origin=*`);
+              const detailsData = await detailsRes.json();
+              const page = detailsData.query?.pages[pageId];
+              
+              if (page) {
+                extract = page.extract;
+                if (!photoUrl && page.thumbnail?.source) {
+                  photoUrl = page.thumbnail.source;
+                }
+                if (!title) {
+                  title = page.title;
+                }
+              }
+            }
+          } catch (e) {
+            console.warn("Wiki fallback failed", e);
+          }
+        }
+
+        // 3. Absolute Fallbacks to ensure something ALWAYS shows
+        if (!title) title = day.hotel?.name || cleanDestName;
+        if (!extract) extract = `${title} is a wonderful destination on this itinerary. Take time to relax and enjoy the unique landscapes and hospitality of Madagascar.`;
+        if (!photoUrl) photoUrl = "/hero.jpg"; // Project's default hero image
+
+        setLocationData(prev => ({
+          ...prev,
+          [activeStoryDay]: {
+            title: title,
+            extract: extract,
+            image: photoUrl
+          }
+        }));
+
+      } catch (err) {
+        console.warn("Failed to fetch location data", err);
+        // Even on total failure, show a generic card instead of nothing
+        setLocationData(prev => ({
+          ...prev,
+          [activeStoryDay]: {
+            title: day.hotel?.name || day.activities,
+            extract: "An exciting part of your journey through Madagascar.",
+            image: "/hero.jpg"
+          }
+        }));
+      }
+    };
+
+    fetchLocationData();
   }, [activeStoryDay, trip?.itinerary]);
 
   useEffect(() => {
@@ -525,48 +669,95 @@ export function TripDetailsPage() {
                   ))}
                   {trip.itinerary?.map((item, index) => (
                     item.coordinates && (
-                      <MarkerF 
-                        key={index} 
-                        position={item.coordinates}
-                        onClick={() => handleScrollToDay(index)}
-                        label={{
-                          text: `D${item.dayNumber}`,
-                          color: activeStoryDay === index ? '#ffffff' : '#f97316',
-                          fontSize: activeStoryDay === index ? '12px' : '10px',
-                          fontWeight: 'bold',
-                        }}
-                        icon={
-                          activeStoryDay === index 
-                          ? {
-                              path: window.google.maps.SymbolPath.CIRCLE,
-                              fillColor: '#f97316',
-                              fillOpacity: 1,
-                              strokeWeight: 3,
-                              strokeColor: '#ffffff',
-                              scale: 14,
-                            }
-                          : {
-                              path: window.google.maps.SymbolPath.CIRCLE,
-                              fillColor: '#ffffff',
-                              fillOpacity: 1,
-                              strokeWeight: 3,
-                              strokeColor: '#f97316',
-                              scale: 12,
-                            }
-                        }
-                      >
+                      <React.Fragment key={index}>
+                        <OverlayViewF
+                          position={item.coordinates}
+                          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                        >
+                          <div 
+                            onClick={(e) => {
+                               e.stopPropagation();
+                               handleScrollToDay(index);
+                            }}
+                            className={`relative flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 shadow-md ${
+                              activeStoryDay === index 
+                              ? 'scale-110 z-50 bg-[#811303] border-[3px] border-white text-white w-9 h-9 md:w-10 md:h-10 shadow-lg' 
+                              : 'hover:scale-105 z-10 bg-white border-[3px] border-[#811303] text-[#811303] w-7 h-7 md:w-8 md:h-8 hover:shadow-lg'
+                            } rounded-full`}
+                          >
+                            <span className="font-bold text-xs md:text-[13px] leading-none">D{item.dayNumber}</span>
+                          </div>
+                        </OverlayViewF>
+                        
                         {activeMarker === index && (
                           <InfoWindowF 
                             position={item.coordinates}
                             onCloseClick={() => setActiveMarker(null)}
+                            options={{ 
+                              maxWidth: 320,
+                              pixelOffset: new window.google.maps.Size(0, -20)
+                            }}
                           >
-                            <div className="font-bold text-gray-800 px-1 py-0.5">
-                              <div className="text-sm">Day {item.dayNumber}</div>
-                              {item.hotel?.name && <div className="text-xs font-normal text-gray-500">{item.hotel.name}</div>}
+                            <div className="p-0 m-0 w-[280px] sm:w-[300px] bg-white rounded-xl overflow-hidden font-sans">
+                              {/* Image section */}
+                              {locationData[index] && locationData[index].image && (
+                                <div className="w-full h-32 relative overflow-hidden bg-gray-100 mb-3">
+                                   <img src={locationData[index].image} alt={locationData[index].title || item.activities} className="w-full h-full object-cover" />
+                                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                   {locationData[index].title && (
+                                      <div className="absolute bottom-2.5 left-2.5 right-2.5 flex">
+                                        <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-full px-3.5 py-1.5 shadow-xl max-w-full">
+                                          <div className="text-white font-bold text-xs truncate drop-shadow-md">
+                                            {locationData[index].title}
+                                          </div>
+                                        </div>
+                                      </div>
+                                   )}
+                                </div>
+                              )}
+                              
+                              <div className="px-3 pb-3">
+                                <div className="flex justify-between items-start mb-1">
+                                  <div className="font-black text-brand-primary/80 text-[10px] uppercase tracking-widest">
+                                    {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    <span className="ml-2 inline-block px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary rounded text-[9px]">D{item.dayNumber}</span>
+                                  </div>
+                                </div>
+                                <h3 className="font-black text-base mb-2 leading-tight text-gray-900">{item.activities}</h3>
+                                
+                                {/* Description section */}
+                                {locationData[index] && locationData[index].extract && (
+                                  <p className="text-xs text-gray-600 mb-3 line-clamp-3 leading-relaxed">
+                                    {locationData[index].extract}
+                                  </p>
+                                )}
+                                {/* loading state */}
+                                {locationData[index] === null && (
+                                  <div className="animate-pulse flex space-x-4 mb-3">
+                                    <div className="flex-1 space-y-2 py-1">
+                                      <div className="h-2 bg-gray-200 rounded"></div>
+                                      <div className="h-2 bg-gray-200 rounded w-5/6"></div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {item.hotel?.name && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200/60 shadow-sm">
+                                      <Bed size={12} /> <span className="line-clamp-1">{item.hotel.name}</span>
+                                    </span>
+                                  )}
+                                  {item.driver?.name && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200/60 shadow-sm">
+                                      <Car size={12} /> <span className="line-clamp-1">{item.driver.name}</span>
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </InfoWindowF>
                         )}
-                      </MarkerF>
+                      </React.Fragment>
                     )
                   ))}
                 </GoogleMap>
@@ -577,43 +768,43 @@ export function TripDetailsPage() {
               {/* The Floating Story Overlay */}
               <div 
                 id="story-scroll-container"
-                className="absolute inset-y-0 left-0 w-full md:w-[460px] z-10 overflow-y-auto no-scrollbar scroll-smooth pointer-events-auto px-4 md:px-8 pt-8 pb-[500px] transition-colors duration-500 bg-gradient-to-r from-white/95 via-white/80 to-transparent"
+                className="absolute md:inset-y-0 md:left-0 bottom-0 left-0 w-full md:w-[460px] h-[45%] md:h-full z-10 overflow-x-auto md:overflow-y-auto overflow-y-hidden no-scrollbar scroll-smooth pointer-events-auto px-4 md:px-8 pt-4 md:pt-8 pb-4 md:pb-[500px] transition-colors duration-500 md:bg-gradient-to-r md:from-white/95 md:via-white/80 md:to-transparent bg-gradient-to-t from-white/95 via-white/90 to-transparent flex md:block items-end md:items-stretch snap-x snap-mandatory"
               >
-                <h2 className="text-3xl font-black mb-8 flex items-center gap-3 text-gray-900 drop-shadow-sm sticky top-0 bg-white/40 backdrop-blur-md py-4 z-20 rounded-2xl px-4 -mx-4 border border-white/50">
+                <h2 className="hidden md:flex text-3xl font-black mb-8 items-center gap-3 text-gray-900 drop-shadow-sm sticky top-0 bg-white/40 backdrop-blur-md py-4 z-20 rounded-2xl px-4 -mx-4 border border-white/50">
                   <MapPin className="text-brand-primary" /> 
                   Itinerary Journey
                 </h2>
                 
-                <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[23px] before:h-full before:w-[3px] before:bg-brand-primary/20 py-2">
+                <div className="flex md:block gap-4 md:gap-0 md:space-y-6 relative md:before:absolute md:before:inset-0 md:before:ml-[23px] md:before:h-full md:before:w-[3px] md:before:bg-brand-primary/20 py-2 w-max md:w-auto px-4 md:px-0">
                   {trip.itinerary?.map((item, index) => (
                     <div 
                       key={index} 
                       data-index={index}
-                      className={`story-day-card relative flex items-start gap-4 z-10 transition-all duration-500 cursor-pointer ${activeStoryDay === index ? 'opacity-100 translate-x-2' : 'opacity-60 hover:opacity-80'}`}
+                      className={`story-day-card snap-center w-[300px] md:w-auto relative flex flex-col md:flex-row md:items-start gap-4 z-10 transition-all duration-500 cursor-pointer ${activeStoryDay === index ? 'opacity-100 md:translate-x-2' : 'opacity-60 hover:opacity-80'}`}
                       onClick={() => handleScrollToDay(index)}
                     >
-                      {/* Timeline Dot */}
-                      <div className={`flex items-center justify-center w-12 h-12 rounded-full border-[3px] shadow-lg shrink-0 z-10 transition-colors duration-500 ${activeStoryDay === index ? 'bg-brand-primary border-brand-primary text-white shadow-brand-primary/30' : 'bg-white border-gray-200 text-gray-400'}`}>
+                      <div className={`hidden md:flex items-center justify-center w-12 h-12 rounded-full border-[3px] shadow-lg shrink-0 z-10 transition-colors duration-500 ${activeStoryDay === index ? 'bg-brand-primary border-brand-primary text-white shadow-brand-primary/30' : 'bg-white border-brand-primary/50 text-brand-primary/80 hover:border-brand-primary hover:text-brand-primary'}`}>
                         <span className="font-black text-sm">D{item.dayNumber}</span>
                       </div>
                       
-                      <div className={`flex-1 p-5 rounded-[1.5rem] border shadow-xl backdrop-blur-xl transition-all duration-500 ${activeStoryDay === index ? 'bg-white/95 border-brand-primary/30 shadow-brand-primary/10' : 'bg-white/70 border-white/50 hover:bg-white/90'}`}>
-                        <div className="flex justify-between items-start mb-2">
+                      <div className={`flex-1 p-4 md:p-5 rounded-[1.5rem] border shadow-xl backdrop-blur-xl transition-all duration-500 overflow-hidden ${activeStoryDay === index ? 'bg-white/95 border-brand-primary/30 shadow-brand-primary/10 scale-[1.02]' : 'bg-white/70 border-white/50 hover:bg-white/90'}`}>
+                        <div className="flex justify-between items-start mb-1.5 md:mb-2">
                           <div className="font-black text-brand-primary/80 text-[10px] uppercase tracking-widest">
                             {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            <span className="md:hidden ml-2 inline-block px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary rounded text-[9px]">D{item.dayNumber}</span>
                           </div>
                         </div>
-                        <h3 className={`font-black text-lg mb-3 leading-tight ${activeStoryDay === index ? 'text-gray-900' : 'text-gray-700'}`}>{item.activities}</h3>
+                        <h3 className={`font-black text-base md:text-lg mb-2.5 md:mb-3 leading-tight line-clamp-2 ${activeStoryDay === index ? 'text-gray-900' : 'text-gray-700'}`}>{item.activities}</h3>
                         
                         <div className="flex flex-wrap gap-2">
                           {item.hotel?.name && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50/80 text-blue-700 text-xs font-bold border border-blue-100/50">
-                              <Bed size={14} /> {item.hotel.name}
+                              <Bed size={14} /> <span className="line-clamp-1">{item.hotel.name}</span>
                             </span>
                           )}
                           {item.driver?.name && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50/80 text-emerald-700 text-xs font-bold border border-emerald-100/50">
-                              <Car size={14} /> {item.driver.name}
+                              <Car size={14} /> <span className="line-clamp-1">{item.driver.name}</span>
                             </span>
                           )}
                         </div>
