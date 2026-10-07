@@ -487,11 +487,11 @@ export function TripDetailsPage() {
       <div className="sticky top-[73px] md:top-[88px] z-[100] bg-gradient-to-b from-slate-50 via-slate-50/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 pb-8 pt-2 -mt-2 transition-all duration-300 pointer-events-none">
         <div className="flex flex-col xl:flex-row justify-between items-center gap-3 w-full pointer-events-auto px-2 sm:px-4">
           <div className="flex items-center gap-4 shrink-0">
-            <button onClick={() => navigate('/trips')} className="p-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors shadow-sm text-gray-600 hover:text-brand-primary group">
+            <button onClick={() => navigate('/trips')} className="p-2 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 rounded-full transition-colors shadow-sm text-gray-600 dark:text-slate-300 hover:text-brand-primary group">
               <ArrowLeft size={18} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
             </button>
             <div className="flex flex-col gap-1">
-              <h1 className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight leading-none">{trip.title}</h1>
+              <h1 className="text-xl sm:text-2xl font-black text-gray-800 dark:text-slate-100 tracking-tight leading-none">{trip.title}</h1>
               {activeTab === 'client' && (
                 <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary w-fit">
                   <Map className="w-3.5 h-3.5" />
@@ -505,29 +505,29 @@ export function TripDetailsPage() {
             <div className="flex items-center flex-wrap gap-3">
               <div id="itinerary-manager-header-portal" className="empty:hidden flex items-center gap-3"></div>
               
-              {activeTab === 'client' && !showPdfPreview && <div className="w-px h-6 bg-gray-200 hidden sm:block"></div>}
+              {activeTab === 'client' && !showPdfPreview && <div className="w-px h-6 bg-gray-200 dark:bg-slate-700 hidden sm:block"></div>}
               
-              <div className="flex items-center gap-1 bg-white border border-gray-200/80 rounded-full p-1 shadow-sm">
+              <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-700 rounded-full p-1 shadow-sm">
                 {activeTab === 'client' && (
                   <>
                     <button 
                       onClick={() => setShowPdfPreview(!showPdfPreview)} 
-                      className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-sm font-bold ${showPdfPreview ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 hover:text-brand-primary border border-gray-200/80'}`}
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-sm font-bold ${showPdfPreview ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md' : 'bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 hover:text-brand-primary border border-gray-200/80 dark:border-slate-700'}`}
                     >
                       {showPdfPreview ? <Edit2 size={16} /> : <FileText size={16} />} 
                       {showPdfPreview ? 'Back to Editor' : 'Preview & Export'}
                     </button>
-                    <div className="w-px h-5 bg-gray-200 mx-1"></div>
+                    <div className="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></div>
                   </>
                 )}
                 
                 {((activeTab === 'client' && showPdfPreview) || activeTab !== 'client') && (
                   <>
-                    <button onClick={generatePDF} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-red-50 hover:text-red-600 text-gray-600 transition-colors text-sm font-bold" title="Export as PDF">
+                    <button onClick={generatePDF} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 text-gray-600 dark:text-slate-300 transition-colors text-sm font-bold" title="Export as PDF">
                       <Download size={16} /> <span className="hidden lg:inline">PDF</span>
                     </button>
-                    <div className="w-px h-4 bg-gray-200"></div>
-                    <button onClick={() => alert("DOCX export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-colors text-sm font-bold" title="Export as DOCX">
+                    <div className="w-px h-4 bg-gray-200 dark:bg-slate-700"></div>
+                    <button onClick={() => alert("DOCX export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 text-gray-600 dark:text-slate-300 transition-colors text-sm font-bold" title="Export as DOCX">
                       <FileText size={16} /> <span className="hidden lg:inline">DOCX</span>
                     </button>
                     <div className="w-px h-4 bg-gray-200"></div>
