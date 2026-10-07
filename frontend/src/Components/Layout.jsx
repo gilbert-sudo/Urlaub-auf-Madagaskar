@@ -20,7 +20,7 @@ export function Layout() {
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="flex-1 lg:pl-72 flex flex-col min-w-0 transition-all duration-300">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className="flex-1 p-4 md:p-8 xl:px-12 max-w-[1600px] w-full mx-auto overflow-x-hidden">
+        <main className="flex-1 p-4 md:p-8 xl:px-12 max-w-[1600px] w-full mx-auto">
           <Outlet />
         </main>
       </div>
