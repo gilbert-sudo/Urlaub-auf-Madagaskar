@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Mail, Phone, Car, Users, Calendar, MapPin, Globe, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '../Components/Button';
 
@@ -7,7 +8,7 @@ export function ProfileViewerModal({ isOpen, onClose, data, type }) {
 
   const isDriver = type === 'driver';
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl dark:ring-1 dark:ring-white/10 w-full max-w-md overflow-hidden flex flex-col relative animate-in fade-in zoom-in duration-200">
         
@@ -120,6 +121,7 @@ export function ProfileViewerModal({ isOpen, onClose, data, type }) {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useDispatch } from 'react-redux';
 import { createDriver, updateDriver } from '../store/slices/driversSlice';
 import { X } from 'lucide-react';
@@ -87,7 +88,7 @@ export function DriverModal({ isOpen, onClose, driver }) {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl dark:ring-1 dark:ring-white/10 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800 z-10">
@@ -217,6 +218,7 @@ export function DriverModal({ isOpen, onClose, driver }) {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

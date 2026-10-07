@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchDriverEvents, addDriverEvent, updateDriverEvent, deleteDriverEvent } from '../store/slices/driverEventsSlice';
 import { fetchTrips } from '../store/slices/tripsSlice';
 import axios from 'axios';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, addHours, startOfDay, endOfDay } from 'date-fns';
+import { format, parse, startOfWeek, getDay, addHours, startOfDay, endOfDay, eachMonthOfInterval, startOfYear, endOfYear, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { X, Calendar as CalendarIcon, Clock, Briefcase, User, MapPin, Trash2, Save, Plus } from 'lucide-react';
@@ -34,6 +35,9 @@ export function DriverAgendaModal({ isOpen, onClose, driver }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'list'
   const [localEvents, setLocalEvents] = useState(null); // Bypass Redux for HMR
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(null);
+  const [dragCurrent, setDragCurrent] = useState(null);
   
   const activeEvents = localEvents || events;
   const [formData, setFormData] = useState({
@@ -68,6 +72,32 @@ export function DriverAgendaModal({ isOpen, onClose, driver }) {
       }
     }
   }, [isOpen, driver, dispatch, tripsStatus]);
+
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (isDragging) {
+        if (dragStart && dragCurrent) {
+          if (dragStart.getTime() !== dragCurrent.getTime()) {
+            const start = dragStart < dragCurrent ? dragStart : dragCurrent;
+            const end = dragStart > dragCurrent ? dragStart : dragCurrent;
+            handleSelectSlot({ 
+              start: startOfDay(start), 
+              end: endOfDay(end) 
+            });
+          } else {
+            // Just a click on a single day
+            setCurrentDate(dragStart);
+            setViewMode('calendar');
+          }
+        }
+        setDragStart(null);
+        setDragCurrent(null);
+        setIsDragging(false);
+      }
+    };
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, [isDragging, dragStart, dragCurrent]);
 
   if (!isOpen || !driver) return null;
 
@@ -189,18 +219,17 @@ export function DriverAgendaModal({ isOpen, onClose, driver }) {
 
     if (hasEvent) {
       return {
-        className: 'bg-brand-primary/5 dark:bg-brand-primary/10',
-        style: {
-          boxShadow: 'inset 0 0 0 1px rgba(59, 130, 246, 0.2)'
-        }
+        className: 'booked-day',
       };
     }
     return {};
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-6xl h-[90vh] flex flex-col relative animate-in fade-in zoom-in duration-200 overflow-hidden">
+  if (!isOpen || !driver) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity">
+      <div className="bg-white dark:bg-slate-800 shadow-xl w-full h-full flex flex-col relative animate-in fade-in zoom-in duration-200 overflow-hidden">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
@@ -231,7 +260,7 @@ export function DriverAgendaModal({ isOpen, onClose, driver }) {
                 onClick={() => setViewMode('list')}
                 className={`px-4 py-1.5 text-xs font-bold rounded-md transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-primary dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
-                Yearly List
+                Yearly Calendar
               </button>
             </div>
             {viewMode === 'calendar' && (
@@ -260,79 +289,145 @@ export function DriverAgendaModal({ isOpen, onClose, driver }) {
         <div className="flex-1 flex overflow-hidden relative">
           {viewMode === 'list' ? (
             <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-50/50 dark:bg-slate-900/20">
-              <div className="max-w-4xl mx-auto space-y-8">
-                {(() => {
-                  const sortedEvents = [...activeEvents].sort((a, b) => new Date(a.start) - new Date(b.start));
-                  const groupedEvents = {};
-                  sortedEvents.forEach(e => {
-                    const date = new Date(e.start);
-                    const yearMonth = format(date, 'MMMM yyyy');
-                    if (!groupedEvents[yearMonth]) groupedEvents[yearMonth] = [];
-                    groupedEvents[yearMonth].push(e);
-                  });
+              <div className="w-full h-full flex flex-col">
+                <div className="flex items-center justify-between mb-8 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-2xl font-black text-brand-primary dark:text-white">
+                    {format(currentDate, 'yyyy')} Overview
+                  </h3>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setCurrentDate(new Date(currentDate.getFullYear() - 1, 0, 1))}
+                      className="px-4 py-2 text-sm font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition"
+                    >
+                      Previous
+                    </button>
+                    <button 
+                      onClick={() => setCurrentDate(new Date())}
+                      className="px-4 py-2 text-sm font-bold bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition shadow-sm"
+                    >
+                      Today
+                    </button>
+                    <button 
+                      onClick={() => setCurrentDate(new Date(currentDate.getFullYear() + 1, 0, 1))}
+                      className="px-4 py-2 text-sm font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
 
-                  const groups = Object.keys(groupedEvents);
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 xl:gap-6 pb-8 flex-1">
+                  {(() => {
+                    const yearStart = startOfYear(currentDate);
+                    const yearEnd = endOfYear(currentDate);
+                    const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
 
-                  if (groups.length === 0) {
-                    return (
-                      <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <CalendarIcon size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-                        <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No upcoming schedule</h3>
-                        <p className="text-sm text-slate-500 mt-2">Switch back to Calendar view to add new events.</p>
-                      </div>
-                    );
-                  }
+                    return months.map(month => {
+                      const monthStart = startOfMonth(month);
+                      const monthEnd = endOfMonth(month);
+                      const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+                      
+                      // padding for the first day of the month (0 = Sunday)
+                      const firstDayOfWeek = getDay(monthStart); 
+                      const emptyCells = Array.from({ length: firstDayOfWeek }).map((_, i) => i);
 
-                  return groups.map(month => (
-                    <div key={month} className="space-y-4">
-                      <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                        <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
-                        <span>{month}</span>
-                        <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {groupedEvents[month].map(event => (
-                          <div 
-                            key={event._id} 
-                            onClick={() => {
-                              handleSelectEvent(event);
-                              setCurrentDate(new Date(event.start));
-                              setViewMode('calendar');
-                            }}
-                            className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-3 hover:border-brand-primary/50 hover:shadow-md transition-all cursor-pointer relative overflow-hidden group"
-                          >
-                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${event.type === 'tour' ? 'bg-emerald-500' : event.type === 'unavailable' ? 'bg-red-500' : 'bg-amber-500'}`}></div>
-                            
-                            <div className="flex justify-between items-start pl-2">
-                              <h4 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-brand-primary transition-colors">{event.title}</h4>
-                              <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full ${event.type === 'tour' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : event.type === 'unavailable' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'}`}>
-                                {event.type}
-                              </span>
-                            </div>
-
-                            <div className="space-y-1.5 pl-2">
-                              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
-                                <Clock size={14} className="text-slate-400" />
-                                {format(new Date(event.start), 'MMM d, h:mm a')} - {format(new Date(event.end), event.allDay ? 'MMM d' : 'h:mm a')}
-                              </div>
-                              {event.tripId && (
-                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 font-medium">
-                                  <Briefcase size={14} className="text-brand-primary" />
-                                  <span>{event.tripId.title || 'Linked Tour'}</span>
-                                </div>
-                              )}
-                              {event.notes && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-md">
-                                  {event.notes}
-                                </p>
-                              )}
-                            </div>
+                      return (
+                        <div key={month.toString()} className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                          <h4 className="font-black text-slate-800 dark:text-slate-100 mb-4 text-center border-b border-slate-100 dark:border-slate-700 pb-2">
+                            {format(month, 'MMMM')}
+                          </h4>
+                          <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                              <div key={`${day}-${i}`} className="text-[10px] font-bold text-slate-400">{day}</div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ));
-                })()}
+                          <div className="grid grid-cols-7 gap-1 flex-1 content-start">
+                            {emptyCells.map(i => (
+                              <div key={`empty-${i}`} className="aspect-square w-full min-h-[32px] max-h-[48px]"></div>
+                            ))}
+                            {days.map(day => {
+                              // Check if day has events
+                              const dayEvents = activeEvents.filter(event => {
+                                const start = startOfDay(new Date(event.start));
+                                const end = endOfDay(new Date(event.end));
+                                return day >= start && day <= end;
+                              });
+
+                              let bgColor = 'hover:bg-slate-100 dark:hover:bg-slate-700 bg-slate-50/50 dark:bg-slate-800/50';
+                              let textColor = 'text-slate-600 dark:text-slate-400';
+                              let ring = '';
+                              
+                              if (dayEvents.length > 0) {
+                                const hasTour = dayEvents.some(e => e.type === 'tour');
+                                const hasUnavailable = dayEvents.some(e => e.type === 'unavailable');
+                                
+                                if (hasTour) {
+                                  bgColor = 'bg-emerald-100 dark:bg-emerald-500/20';
+                                  textColor = 'text-emerald-700 dark:text-emerald-400 font-bold';
+                                  ring = 'ring-1 ring-inset ring-emerald-500/30';
+                                } else if (hasUnavailable) {
+                                  bgColor = 'bg-red-100 dark:bg-red-500/20';
+                                  textColor = 'text-red-700 dark:text-red-400 font-bold';
+                                  ring = 'ring-1 ring-inset ring-red-500/30';
+                                } else {
+                                  bgColor = 'bg-amber-100 dark:bg-amber-500/20';
+                                  textColor = 'text-amber-700 dark:text-amber-400 font-bold';
+                                  ring = 'ring-1 ring-inset ring-amber-500/30';
+                                }
+                              } else if (format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')) {
+                                // Today's date styling if no event
+                                bgColor = 'bg-brand-primary text-white font-bold';
+                                textColor = 'text-white';
+                              }
+
+                              const isHoverRange = isDragging && dragStart && dragCurrent && (
+                                (day.getTime() >= dragStart.getTime() && day.getTime() <= dragCurrent.getTime()) ||
+                                (day.getTime() <= dragStart.getTime() && day.getTime() >= dragCurrent.getTime())
+                              );
+
+                              if (isHoverRange) {
+                                bgColor = 'bg-brand-primary/20 dark:bg-brand-primary/40';
+                                textColor = 'text-brand-primary dark:text-white font-bold';
+                                ring = 'ring-2 ring-inset ring-brand-primary';
+                              }
+
+                              return (
+                                <div 
+                                  key={day.toString()} 
+                                  onMouseDown={(e) => {
+                                    e.preventDefault(); // Prevent text selection
+                                    setDragStart(day);
+                                    setDragCurrent(day);
+                                    setIsDragging(true);
+                                  }}
+                                  onMouseEnter={() => {
+                                    if (isDragging) {
+                                      setDragCurrent(day);
+                                    }
+                                  }}
+                                  className={`aspect-square w-full min-h-[32px] max-h-[48px] flex flex-col items-center justify-center rounded-md cursor-pointer transition-all hover:scale-110 z-10 relative text-[10px] sm:text-xs xl:text-sm select-none ${bgColor} ${textColor} ${ring}`}
+                                  title={dayEvents.length > 0 ? dayEvents.map(e => e.title).join(', ') : format(day, 'MMM d, yyyy')}
+                                >
+                                  <span>{format(day, 'd')}</span>
+                                  {dayEvents.length > 0 && (
+                                    <div className="flex gap-[2px] mt-[2px] xl:mt-1">
+                                      {dayEvents.slice(0, 3).map((e, idx) => (
+                                        <div 
+                                          key={idx} 
+                                          className={`w-1 h-1 xl:w-1.5 xl:h-1.5 rounded-full ${e.type === 'tour' ? 'bg-emerald-500' : e.type === 'unavailable' ? 'bg-red-500' : 'bg-amber-500'}`}
+                                        ></div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             </div>
           ) : (
@@ -557,7 +652,44 @@ export function DriverAgendaModal({ isOpen, onClose, driver }) {
         .dark .custom-calendar .rbc-agenda-view table.rbc-agenda-table tbody > tr + tr {
           border-top-color: #334155;
         }
+
+        /* 1. Active/Booked Days UI */
+        .custom-calendar .booked-day {
+          background-color: rgba(59, 130, 246, 0.08); /* light brand blue */
+          box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
+        }
+        .dark .custom-calendar .booked-day {
+          background-color: rgba(59, 130, 246, 0.15);
+          box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
+        }
+
+        /* 2. Mouse Hover Effect UI (overrides booked background when hovered) */
+        .custom-calendar .rbc-day-bg:hover,
+        .custom-calendar .rbc-time-slot:hover {
+          background-color: rgba(245, 158, 11, 0.15) !important; /* vivid amber hover */
+          cursor: pointer;
+          box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.4) !important;
+          transition: all 0.2s ease;
+        }
+        .dark .custom-calendar .rbc-day-bg:hover,
+        .dark .custom-calendar .rbc-time-slot:hover {
+          background-color: rgba(245, 158, 11, 0.25) !important;
+          box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.6) !important;
+        }
+
+        /* 3. Active Mouse Drag Selection Overlay (Including Multi-Day Select) */
+        .custom-calendar .rbc-slot-selection,
+        .custom-calendar .rbc-day-bg.rbc-selected-cell {
+          background-color: rgba(16, 185, 129, 0.2) !important; /* vivid emerald selection */
+          box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.8) !important;
+          border-radius: 4px;
+        }
+        .dark .custom-calendar .rbc-slot-selection,
+        .dark .custom-calendar .rbc-day-bg.rbc-selected-cell {
+          background-color: rgba(16, 185, 129, 0.3) !important;
+        }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
