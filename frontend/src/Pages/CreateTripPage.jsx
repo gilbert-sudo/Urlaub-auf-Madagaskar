@@ -628,7 +628,7 @@ export function CreateTripPage() {
         </div>
 
         {/* Wizard Navigation Controls (Floating Bottom) */}
-        <div className="fixed bottom-8 left-64 right-0 z-50 flex justify-center pointer-events-none">
+        <div className="fixed bottom-8 left-0 lg:left-72 right-0 z-50 flex justify-center pointer-events-none">
           <div className="flex items-center justify-between gap-4 bg-white/90 backdrop-blur-md px-6 py-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/60 w-[90%] max-w-2xl pointer-events-auto">
             <Button 
               type="button" 

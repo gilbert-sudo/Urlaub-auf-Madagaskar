@@ -545,8 +545,8 @@ export function TripDetailsPage() {
           )}
         </div>
       </div>
-      {/* Floating Vertical Navigation Bar */}
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 flex flex-col z-50 bg-white/80 backdrop-blur-xl shadow-xl border border-gray-100 rounded-[2.5rem] py-5 px-2 w-[90px] gap-6">
+      {/* Floating Navigation Bar */}
+      <div className="fixed left-0 right-0 bottom-0 md:left-auto md:right-4 md:top-1/2 md:-translate-y-1/2 flex flex-row md:flex-col z-50 bg-white/90 md:bg-white/80 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl border-t md:border border-gray-100 rounded-t-[2rem] md:rounded-[2.5rem] py-3 md:py-5 px-4 md:px-2 w-full md:w-[90px] gap-2 sm:gap-6 justify-around overflow-x-auto no-scrollbar">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -554,7 +554,7 @@ export function TripDetailsPage() {
             <div 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="relative flex flex-col items-center justify-center cursor-pointer group"
+              className="relative flex flex-col items-center justify-center cursor-pointer group flex-shrink-0 min-w-[60px] md:min-w-0"
             >
               {/* Icon Container */}
               <div className={`relative flex flex-col items-center transition-all duration-500 ${

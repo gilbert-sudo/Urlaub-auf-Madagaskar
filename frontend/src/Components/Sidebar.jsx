@@ -13,7 +13,7 @@ const menuItems = [
   { path: '/documents', icon: <FileText size={22} />, label: 'Documents' },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isOpen, setIsOpen }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -22,7 +22,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-72 fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 p-6 flex flex-col z-40 transition-colors duration-500">
+    <aside className={`w-72 fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 p-6 flex flex-col z-50 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       
       {/* Brand Logo */}
       <div className="flex justify-center w-full mb-10 px-2 cursor-pointer" onClick={() => navigate('/')}>
@@ -40,7 +40,7 @@ export function Sidebar() {
           <ul className="flex flex-col gap-1">
             {menuItems.map(item => (
               <li key={item.path}>
-                <NavLink to={item.path}>
+                <NavLink to={item.path} onClick={() => setIsOpen(false)}>
                   {({ isActive }) => (
                     <div className={`relative flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group overflow-hidden ${
                       isActive 

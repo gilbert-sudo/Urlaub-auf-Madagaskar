@@ -344,7 +344,7 @@ export function Dashboard() {
         </div>
 
         {/* Right Side (Live Fleet Map) */}
-        <div className="w-full xl:w-1/3 flex flex-col">
+        <div className="w-full xl:w-1/3 flex flex-col min-h-[400px]">
           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col flex-1 relative z-0 overflow-hidden">
             <div className="flex-1 w-full relative z-0 bg-[#e5e7eb]">
               {isLoaded ? (
