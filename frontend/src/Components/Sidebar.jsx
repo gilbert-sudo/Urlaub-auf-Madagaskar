@@ -36,7 +36,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
       <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-8">
         {/* Main Navigation */}
         <nav>
-          <p className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-4">Menu</p>
+          <p className="text-[11px] font-bold text-gray-400 dark:text-slate-400 uppercase tracking-widest mb-4 px-4">Menu</p>
           <ul className="flex flex-col gap-1">
             {menuItems.map(item => (
               <li key={item.path}>
@@ -45,7 +45,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
                     <div className={`relative flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group overflow-hidden ${
                       isActive 
                         ? 'text-slate-900 dark:text-white font-bold' 
-                        : 'text-gray-400 dark:text-slate-400 font-semibold hover:text-slate-700 dark:hover:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800/50'
+                        : 'text-gray-400 dark:text-slate-300 font-semibold hover:text-slate-700 dark:hover:text-slate-100 hover:bg-gray-50 dark:hover:bg-slate-800/50'
                     }`}>
                       
                       {/* Active vertical pill indicator */}
@@ -68,9 +68,9 @@ export function Sidebar({ isOpen, setIsOpen }) {
 
         {/* General Settings / Action Area */}
         <div>
-          <p className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-4">General</p>
+          <p className="text-[11px] font-bold text-gray-400 dark:text-slate-400 uppercase tracking-widest mb-4 px-4">General</p>
           <ul className="flex flex-col gap-1">
-            <li className="flex items-center gap-4 px-4 py-3 rounded-2xl font-semibold text-gray-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer transition-all duration-300 group">
+            <li className="flex items-center gap-4 px-4 py-3 rounded-2xl font-semibold text-gray-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-100 hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer transition-all duration-300 group">
               <div className="transition-transform duration-300 group-hover:rotate-90">
                 <Settings size={22} />
               </div>
@@ -78,7 +78,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
             </li>
             <li 
               onClick={handleLogout}
-              className="flex items-center gap-4 px-4 py-3 rounded-2xl font-semibold text-gray-400 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer transition-all duration-300 group"
+              className="flex items-center gap-4 px-4 py-3 rounded-2xl font-semibold text-gray-400 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer transition-all duration-300 group"
             >
               <div className="transition-transform duration-300 group-hover:-translate-x-1">
                 <LogOut size={22} />

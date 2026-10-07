@@ -67,14 +67,14 @@ export function Header({ onMenuClick }) {
         </button>
 
         {/* Search Bar */}
-        <div className="hidden md:flex items-center gap-3 px-5 py-2.5 bg-white dark:bg-slate-800 rounded-full w-full max-w-md shadow-sm border border-gray-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 focus-within:ring-2 focus-within:ring-brand-primary/20 transition-all">
+        <div className="hidden md:flex items-center gap-3 px-5 py-2.5 bg-white dark:bg-slate-800 rounded-full w-full max-w-md shadow-sm border border-gray-100 dark:border-slate-800 text-slate-500 dark:text-slate-300 focus-within:ring-2 focus-within:ring-brand-primary/20 transition-all">
           <Search size={18} />
           <input 
             type="text" 
             placeholder="Search task" 
             className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700 dark:text-slate-200 placeholder:text-gray-400"
           />
-          <div className="flex items-center justify-center px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-[10px] font-bold text-gray-400 dark:text-slate-500">
+          <div className="flex items-center justify-center px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-[10px] font-bold text-gray-400 dark:text-slate-300">
             ⌘F
           </div>
         </div>
@@ -85,7 +85,7 @@ export function Header({ onMenuClick }) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={toggleTheme} 
-          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 dark:text-slate-300 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors"
         >
           {theme === 'light' ? <Moon size={18} strokeWidth={2.5} /> : <Sun size={18} strokeWidth={2.5} />}
         </motion.button>
@@ -93,7 +93,7 @@ export function Header({ onMenuClick }) {
         <motion.button 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors relative"
+          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 dark:text-slate-300 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors relative"
         >
           <Mail size={18} strokeWidth={2.5} />
         </motion.button>
@@ -101,7 +101,7 @@ export function Header({ onMenuClick }) {
         <motion.button 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors relative"
+          className="w-10 h-10 flex items-center justify-center rounded-full text-gray-500 dark:text-slate-300 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors relative"
         >
           <Bell size={18} strokeWidth={2.5} />
           <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-slate-900"></span>
@@ -124,9 +124,9 @@ export function Header({ onMenuClick }) {
             <div className="hidden sm:block">
               <div className="flex items-center gap-1">
                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight group-hover:text-brand-primary transition-colors">{displayName}</p>
-                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`text-slate-400 dark:text-slate-300 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
               </div>
-              <p className="text-[11px] text-gray-500 dark:text-slate-400">{user?.email || 'tmichael20@mail.com'}</p>
+              <p className="text-[11px] text-gray-500 dark:text-slate-300">{user?.email || 'tmichael20@mail.com'}</p>
             </div>
           </div>
 

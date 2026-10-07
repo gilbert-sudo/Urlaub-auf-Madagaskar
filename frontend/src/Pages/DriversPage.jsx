@@ -48,7 +48,7 @@ export function DriversPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">Drivers Directory</h1>
-          <p className="text-sm font-semibold text-slate-500 mt-1">Manage all your drivers and their status</p>
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Manage all your drivers and their status</p>
         </div>
         <Button variant="primary" onClick={() => handleOpenModal()}>
           <Plus size={18} /> Add Driver
@@ -60,11 +60,11 @@ export function DriversPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Driver Name</th>
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Contact Info</th>
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Vehicle Info</th>
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Actions</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Driver Name</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Contact Info</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Vehicle Info</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Status</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -94,9 +94,9 @@ export function DriversPage() {
               )}
 
               {status !== 'loading' && drivers.map(driver => (
-                <tr key={driver._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">
+                <tr key={driver._id} className="hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-all duration-200 group/row">
                   <td 
-                    className="p-5 font-bold text-slate-900 dark:text-slate-100 group-hover:text-brand-primary transition-colors cursor-pointer"
+                    className="p-5 font-bold text-slate-900 dark:text-slate-100 group-hover/row:text-brand-primary transition-colors cursor-pointer"
                     onClick={() => setViewProfileDriver(driver)}
                   >
                     <div className="flex items-center gap-3">
@@ -104,20 +104,20 @@ export function DriversPage() {
                         {driver.avatar ? (
                           <img src={driver.avatar} alt={driver.name} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-slate-500 text-sm font-bold">{driver.name.charAt(0).toUpperCase()}</span>
+                          <span className="text-slate-500 dark:text-slate-300 text-sm font-bold">{driver.name.charAt(0).toUpperCase()}</span>
                         )}
                       </div>
                       <span>{driver.name}</span>
                     </div>
                   </td>
                   <td className="p-5">
-                    <div className="flex flex-col gap-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-col gap-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-300">
                       {driver.email && <span className="flex items-center gap-2"><Mail size={14} className="text-slate-400" /> {driver.email}</span>}
                       {driver.phone && <span className="flex items-center gap-2"><Phone size={14} className="text-slate-400" /> {driver.phone}</span>}
                     </div>
                   </td>
                   <td className="p-5">
-                    <div className="flex flex-col gap-1.5 text-[13px] font-medium text-slate-500">
+                    <div className="flex flex-col gap-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400">
                       {driver.vehicleType && <span className="font-semibold text-slate-700 dark:text-slate-300">{driver.vehicleType}</span>}
                       {driver.languages && driver.languages.length > 0 && <span>{driver.languages.join(', ')}</span>}
                     </div>
@@ -135,21 +135,21 @@ export function DriversPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => setViewProfileDriver(driver)}
-                        className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
                         title="View Profile"
                       >
                         <Eye size={16} />
                       </button>
                       <button 
                         onClick={() => handleOpenModal(driver)}
-                        className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
                         title="Edit Driver"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button 
                         onClick={() => handleDelete(driver._id)}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors"
                         title="Delete Driver"
                       >
                         <Trash2 size={16} />

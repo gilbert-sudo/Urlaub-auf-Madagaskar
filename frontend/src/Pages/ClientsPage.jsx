@@ -48,7 +48,7 @@ export function ClientsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">Clients Directory</h1>
-          <p className="text-sm font-semibold text-slate-500 mt-1">Manage all your client information and history</p>
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Manage all your client information and history</p>
         </div>
         <Button variant="primary" onClick={() => handleOpenModal()}>
           <Plus size={18} /> Add Client
@@ -60,10 +60,10 @@ export function ClientsPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Client Name</th>
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Contact Info</th>
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Total Pax</th>
-                <th className="p-5 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Actions</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Client Name</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Contact Info</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Total Pax</th>
+                <th className="p-5 text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -92,39 +92,39 @@ export function ClientsPage() {
               )}
 
               {status !== 'loading' && clients.map(client => (
-                <tr key={client._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">
+                <tr key={client._id} className="hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-all duration-200 group/row">
                   <td 
-                    className="p-5 font-bold text-slate-900 dark:text-slate-100 group-hover:text-brand-primary transition-colors cursor-pointer"
+                    className="p-5 font-bold text-slate-900 dark:text-slate-100 group-hover/row:text-brand-primary transition-colors cursor-pointer"
                     onClick={() => setViewProfileClient(client)}
                   >
                     {client.name}
                   </td>
                   <td className="p-5">
-                    <div className="flex flex-col gap-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-col gap-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-300">
                       <span className="flex items-center gap-2"><Mail size={14} className="text-slate-400" /> {client.email}</span>
                       <span className="flex items-center gap-2"><Phone size={14} className="text-slate-400" /> {client.phone || 'N/A'}</span>
                     </div>
                   </td>
-                  <td className="p-5 font-bold text-slate-500">{client.paxAdults + client.paxChildren}</td>
+                  <td className="p-5 font-bold text-slate-500 dark:text-slate-400">{client.paxAdults + client.paxChildren}</td>
                   <td className="p-5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => setViewProfileClient(client)}
-                        className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
                         title="View Profile"
                       >
                         <Eye size={16} />
                       </button>
                       <button 
                         onClick={() => handleOpenModal(client)}
-                        className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
                         title="Edit Client"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button 
                         onClick={() => handleDelete(client._id)}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors"
                         title="Delete Client"
                       >
                         <Trash2 size={16} />

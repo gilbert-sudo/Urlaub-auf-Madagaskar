@@ -70,8 +70,8 @@ export function ClientModal({ isOpen, onClose, client }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-900 z-10">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl dark:ring-1 dark:ring-white/10 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800 z-10">
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
             {client ? 'Edit Client' : 'Add New Client'}
           </h2>
@@ -162,7 +162,7 @@ export function ClientModal({ isOpen, onClose, client }) {
           </form>
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-slate-900 z-10">
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-slate-800 z-10">
           <Button variant="ghost" onClick={onClose} type="button">
             Cancel
           </Button>
