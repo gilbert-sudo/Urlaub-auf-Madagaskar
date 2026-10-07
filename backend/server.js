@@ -21,12 +21,14 @@ const tripRoutes = require('./routes/trips');
 const hotelRoutes = require('./routes/hotels');
 const clientRoutes = require('./routes/clients');
 const driverRoutes = require('./routes/drivers');
+const driverEventRoutes = require('./routes/driverEvents');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/hotels', hotelRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/drivers', driverRoutes);
+app.use('/api/driver-events', driverEventRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

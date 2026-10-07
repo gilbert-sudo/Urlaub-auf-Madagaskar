@@ -3,6 +3,7 @@ import tripsReducer from './slices/tripsSlice';
 import clientsReducer from './slices/clientsSlice';
 import hotelsReducer from './slices/hotelsSlice';
 import driversReducer from './slices/driversSlice';
+import driverEventsReducer from './slices/driverEventsSlice';
 import authReducer from './slices/authSlice';
 
 // Persistence utilities
@@ -12,7 +13,10 @@ const loadState = () => {
     if (serializedState === null) {
       return undefined;
     }
-    return JSON.parse(serializedState);
+    const parsedState = JSON.parse(serializedState);
+    // Force reset driverEvents to undefined so it uses default state
+    delete parsedState.driverEvents;
+    return parsedState;
   } catch (err) {
     return undefined;
   }
@@ -35,6 +39,7 @@ export const store = configureStore({
     clients: clientsReducer,
     hotels: hotelsReducer,
     drivers: driversReducer,
+    driverEvents: driverEventsReducer,
     auth: authReducer
   },
   preloadedState: persistedState

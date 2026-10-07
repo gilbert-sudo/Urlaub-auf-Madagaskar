@@ -3,9 +3,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchDrivers, deleteDriver } from '../store/slices/driversSlice';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { Plus, Mail, Phone, Edit2, Trash2, Car, Users, Eye } from 'lucide-react';
+import { Plus, Mail, Phone, Edit2, Trash2, Car, Users, Eye, Calendar } from 'lucide-react';
 import { DriverModal } from '../Components/DriverModal';
 import { ProfileViewerModal } from '../Components/ProfileViewerModal';
+import { DriverAgendaModal } from '../Components/DriverAgendaModal';
 import { toast } from 'sonner';
 
 export function DriversPage() {
@@ -15,6 +16,7 @@ export function DriversPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [viewProfileDriver, setViewProfileDriver] = useState(null);
+  const [viewAgendaDriver, setViewAgendaDriver] = useState(null);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -141,6 +143,13 @@ export function DriversPage() {
                         <Eye size={16} />
                       </button>
                       <button 
+                        onClick={() => setViewAgendaDriver(driver)}
+                        className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-md transition-colors"
+                        title="View Agenda"
+                      >
+                        <Calendar size={16} />
+                      </button>
+                      <button 
                         onClick={() => handleOpenModal(driver)}
                         className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
                         title="Edit Driver"
@@ -173,6 +182,11 @@ export function DriversPage() {
         onClose={() => setViewProfileDriver(null)}
         data={viewProfileDriver}
         type="driver"
+      />
+      <DriverAgendaModal
+        isOpen={!!viewAgendaDriver}
+        onClose={() => setViewAgendaDriver(null)}
+        driver={viewAgendaDriver}
       />
     </div>
   );
