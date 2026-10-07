@@ -484,8 +484,8 @@ export function TripDetailsPage() {
 
   return (
     <div className={`space-y-6 max-w-6xl mx-auto relative ${activeTab === 'client' ? 'pb-4' : 'pb-20'}`}>
-      <div className="sticky top-[88px] z-[100] bg-white border border-gray-200 rounded-[2rem] shadow-sm transition-all duration-300">
-        <div className="py-2.5 px-6 sm:px-8 flex flex-col xl:flex-row justify-between items-center gap-3 w-full">
+      <div className="sticky top-[73px] md:top-[88px] z-[100] bg-gradient-to-b from-slate-50 via-slate-50/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 pb-8 pt-2 -mt-2 transition-all duration-300 pointer-events-none">
+        <div className="flex flex-col xl:flex-row justify-between items-center gap-3 w-full pointer-events-auto px-2 sm:px-4">
           <div className="flex items-center gap-4 shrink-0">
             <button onClick={() => navigate('/trips')} className="p-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors shadow-sm text-gray-600 hover:text-brand-primary group">
               <ArrowLeft size={18} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
