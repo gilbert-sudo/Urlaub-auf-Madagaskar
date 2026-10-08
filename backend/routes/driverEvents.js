@@ -23,6 +23,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get events for a specific trip
+router.get('/trip/:tripId', async (req, res) => {
+  try {
+    const events = await DriverEvent.find({ tripId: req.params.tripId }).populate('driverId');
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Create a new event
 router.post('/', async (req, res) => {
   const { driverId, title, start, end, type, tripId, notes, allDay } = req.body;

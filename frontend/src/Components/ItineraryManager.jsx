@@ -6,7 +6,6 @@ import { updateTrip } from '../store/slices/tripsSlice';
 import { setItinerary, addDay, updateDay, removeDay, setActiveDayIndex, resetItinerary } from '../store/slices/itinerarySlice';
 import { DatePicker } from './DatePicker';
 import { HotelSelect } from './HotelSelect';
-import { DriverSelect } from './DriverSelect';
 import { Button } from './Button';
 import { Plus, Trash2, Save, Map, ChevronRight, MapPin, CalendarDays, Navigation, Maximize2, X, Globe, Search } from 'lucide-react';
 import { GoogleMap, MarkerF, Autocomplete } from '@react-google-maps/api';
@@ -47,12 +46,11 @@ export function ItineraryManager({ trip }) {
         date: day.date ? new Date(day.date).toISOString().split('T')[0] : '',
         activities: day.activities || '',
         hotel: day.hotel?._id || day.hotel || '',
-        driver: day.driver?._id || day.driver || '',
         locationDetails: day.locationDetails || '',
         coordinates: day.coordinates || { lat: -18.8792, lng: 47.5079 }
       }))));
     } else {
-      dispatch(setItinerary([{ dayNumber: 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }]));
+      dispatch(setItinerary([{ dayNumber: 1, date: '', activities: '', hotel: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }]));
     }
   }, [trip, dispatch]);
 
@@ -66,7 +64,6 @@ export function ItineraryManager({ trip }) {
       date: '', 
       activities: '', 
       hotel: '', 
-      driver: '', 
       locationDetails: '', 
       coordinates: { lat: -18.8792, lng: 47.5079 }
     }));
@@ -94,8 +91,7 @@ export function ItineraryManager({ trip }) {
         client: trip.client?._id || trip.client,
         itinerary: itinerary.map(day => ({
           ...day,
-          hotel: day.hotel || undefined,
-          driver: day.driver || undefined
+          hotel: day.hotel || undefined
         }))
       };
       await dispatch(updateTrip({ id: trip._id, data: formattedTrip })).unwrap();
@@ -269,14 +265,6 @@ export function ItineraryManager({ trip }) {
                               label="Accommodation"
                               value={activeDay.hotel} 
                               onChange={(val) => handleItineraryChange(activeDayIndex, 'hotel', val)} 
-                            />
-                          </div>
-                          
-                          <div className="bg-white p-1.5 rounded-xl shadow-sm border border-gray-100">
-                            <DriverSelect
-                              label="Assigned Driver / Guide"
-                              value={activeDay.driver} 
-                              onChange={(val) => handleItineraryChange(activeDayIndex, 'driver', val)} 
                             />
                           </div>
                        </div>

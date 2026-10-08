@@ -146,6 +146,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent }) {
                   eventPropGetter={eventPropGetter}
                   onSelectEvent={onSelectEvent}
                   popup={false}
+                  showAllEvents
                   components={{ event: CustomEventComponent }}
                />
             </div>
@@ -203,7 +204,7 @@ function CompactYearView({ date, events, onSelectEvent }) {
                       const start = startOfDay(new Date(event.start));
                       const end = endOfDay(new Date(event.end));
                       return day >= start && day <= end;
-                    });
+                    }).sort((a, b) => String(a.id).localeCompare(String(b.id)));
 
                     let bgColor = 'hover:bg-slate-100 dark:hover:bg-slate-700 bg-slate-50/50 dark:bg-slate-800/50';
                     let textColor = 'text-slate-600 dark:text-slate-400';
@@ -230,20 +231,37 @@ function CompactYearView({ date, events, onSelectEvent }) {
                       >
                         <span>{format(day, 'd')}</span>
                         {dayEvents.length > 0 && (
-                          <div className="flex flex-wrap justify-center gap-[2px] mt-0.5 px-0.5 max-w-full">
+                          <div className="flex flex-col w-full gap-[2px] mt-0.5 z-20 relative">
                             {dayEvents.slice(0, 3).map((e, idx) => {
-                               let dotColor = '#cbd5e1';
+                               let barColor = '#cbd5e1';
                                if (e.resource?.type === 'tour') {
-                                  dotColor = getTourColor(e.resource.data._id || 'default');
+                                  barColor = getTourColor(e.resource.data._id || 'default');
                                } else if (e.resource?.type === 'driver_event') {
                                   const dId = typeof e.resource.data.driverId === 'object' ? e.resource.data.driverId._id : e.resource.data.driverId;
-                                  dotColor = getDriverColor(dId || 'default');
+                                  barColor = getDriverColor(dId || 'default');
                                }
+                               
+                               const eStart = startOfDay(new Date(e.start)).getTime();
+                               const eEnd = startOfDay(new Date(e.end)).getTime();
+                               const currentDay = day.getTime();
+                               
+                               const isFirstDay = eStart === currentDay;
+                               const isLastDay = eEnd === currentDay;
+                               
                                return (
                                  <div 
-                                   key={idx} 
-                                   className="w-1.5 h-1.5 rounded-full shadow-sm"
-                                   style={{ backgroundColor: dotColor }}
+                                   key={e.id || idx} 
+                                   className={`h-1.5 shadow-sm`}
+                                   style={{ 
+                                      backgroundColor: barColor,
+                                      marginLeft: isFirstDay ? '4px' : '-2px',
+                                      marginRight: isLastDay ? '4px' : '-2px',
+                                      borderTopLeftRadius: isFirstDay ? '4px' : '0px',
+                                      borderBottomLeftRadius: isFirstDay ? '4px' : '0px',
+                                      borderTopRightRadius: isLastDay ? '4px' : '0px',
+                                      borderBottomRightRadius: isLastDay ? '4px' : '0px',
+                                      opacity: e.resource?.type === 'driver_event' ? 0.7 : 1
+                                   }}
                                  ></div>
                                );
                             })}
@@ -282,12 +300,20 @@ export function CalendarPage() {
   const drivers = useSelector((state) => state.drivers.items || []);
 
   const [filter, setFilter] = useState('all'); // 'all', 'trips', 'driver_events'
+  const [currentView, setCurrentView] = useState('month');
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     dispatch(fetchTrips());
     dispatch(fetchAllDriverEvents());
     dispatch(fetchDrivers());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (currentView === 'compact' && filter === 'all') {
+      setFilter('trips');
+    }
+  }, [currentView, filter]);
 
   const events = useMemo(() => {
     let allEvents = [];
@@ -364,8 +390,6 @@ export function CalendarPage() {
   };
 
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [currentView, setCurrentView] = useState('month');
-  const [currentDate, setCurrentDate] = useState(new Date());
 
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
@@ -431,11 +455,12 @@ export function CalendarPage() {
           <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
           <button
             onClick={() => setFilter('all')}
+            disabled={currentView === 'compact'}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-2 ${
               filter === 'all' 
                 ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-            }`}
+            } ${currentView === 'compact' ? 'opacity-30 cursor-not-allowed' : ''}`}
           >
             <Filter size={14} /> All
           </button>
@@ -528,6 +553,7 @@ export function CalendarPage() {
           onNavigate={handleNavigate}
           messages={{ year: 'Big Year', compact: 'Compact Year' }}
           popup
+          showAllEvents
           components={{ event: CustomEventComponent }}
         />
         

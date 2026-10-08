@@ -9,8 +9,7 @@ exports.getAllTrips = async (req, res) => {
       .populate({
         path: 'itinerary',
         populate: [
-          { path: 'hotel' },
-          { path: 'driver' }
+          { path: 'hotel' }
         ]
       });
     res.json(trips);
@@ -26,8 +25,7 @@ exports.getTripById = async (req, res) => {
       .populate({
         path: 'itinerary',
         populate: [
-          { path: 'hotel' },
-          { path: 'driver' }
+          { path: 'hotel' }
         ]
       });
     if (!trip) return res.status(404).json({ message: 'Trip not found' });
@@ -55,7 +53,7 @@ exports.createTrip = async (req, res) => {
 
     await newTrip.populate([
       { path: 'client' },
-      { path: 'itinerary', populate: [{ path: 'hotel' }, { path: 'driver' }] }
+      { path: 'itinerary', populate: [{ path: 'hotel' }] }
     ]);
     res.status(201).json(newTrip);
   } catch (err) {
@@ -89,7 +87,7 @@ exports.updateTrip = async (req, res) => {
 
     await trip.populate([
       { path: 'client' },
-      { path: 'itinerary', populate: [{ path: 'hotel' }, { path: 'driver' }] }
+      { path: 'itinerary', populate: [{ path: 'hotel' }] }
     ]);
     res.json(trip);
   } catch (err) {
@@ -133,8 +131,7 @@ exports.getSharedTrip = async (req, res) => {
       .populate({
         path: 'itinerary',
         populate: [
-          { path: 'hotel', select: 'name address' },
-          { path: 'driver', select: 'name phone' }
+          { path: 'hotel', select: 'name address' }
         ]
       });
       

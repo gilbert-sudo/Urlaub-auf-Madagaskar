@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTripById, shareTrip } from '../store/slices/tripsSlice';
+import { fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
 import { toast } from 'sonner';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
@@ -14,6 +15,7 @@ import { ReservationsDoc } from '../Components/Documents/ReservationsDoc';
 import { HotelVoucherDoc } from '../Components/Documents/HotelVoucherDoc';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF, OverlayViewF, OverlayView } from '@react-google-maps/api';
 import { ItineraryManager } from '../Components/ItineraryManager';
+import { InclusionsExclusionsManager } from '../Components/InclusionsExclusionsManager';
 
 const libraries = ['places'];
 
@@ -22,6 +24,7 @@ export function TripDetailsPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { currentTrip: trip, loading, error } = useSelector((state) => state.trips);
+  const tripEvents = useSelector((state) => state.driverEvents?.tripEvents || []);
   
   const documentRef = useRef(null);
   const [activeTab, setActiveTab] = useState('overview'); // overview, client, driver, reservations, voucher
@@ -325,6 +328,8 @@ export function TripDetailsPage() {
   useEffect(() => {
     if (!trip || trip._id !== id) {
       dispatch(fetchTripById(id));
+    } else if (trip && trip._id === id) {
+      dispatch(fetchDriverEventsByTrip(id));
     }
   }, [dispatch, id, trip]);
 
@@ -394,8 +399,8 @@ export function TripDetailsPage() {
   const formattedClientDoc = {
     agency: "Urlaub auf Madagaskar",
     client: trip.client?.name || "Client",
-    tourLeader: trip.itinerary?.find(i => i.driver && i.driver.name !== 'Transfer')?.driver?.name || "TBD",
-    driver: trip.itinerary?.find(i => i.driver && i.driver.name !== 'Transfer')?.driver?.name || "TBD",
+    tourLeader: tripEvents.length > 0 ? tripEvents.map(e => e.driverId?.name).filter(Boolean).join(', ') : "TBD",
+    driver: tripEvents.length > 0 ? tripEvents.map(e => e.driverId?.name).filter(Boolean).join(', ') : "TBD",
     duration: `${trip.duration} Tage`,
     guests: `${(trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0)} (${trip.guestType || 'Standard'})`,
     price: `${trip.totalPrice} €`,
@@ -404,7 +409,7 @@ export function TripDetailsPage() {
       date: new Date(item.date).toLocaleDateString(),
       activity: item.activities,
       hotel: item.hotel?.name || "N/A",
-      driver: item.driver?.name || "Standard Route"
+      driver: "Standard Route"
     })) || [],
     flights: [
       trip.flights?.arrival?.date ? { id: 1, date: new Date(trip.flights.arrival.date).toLocaleDateString(), route: "Ankunft", flightNo: trip.flights.arrival.flightNumber, details: trip.flights.arrival.details } : null,
@@ -477,8 +482,8 @@ export function TripDetailsPage() {
     particularities: trip.guestType || "",
     signatures: {
       director: "Klaus Konnerth",
-      guide: trip.itinerary?.find(i => i.driver && i.driver.name !== 'Transfer')?.driver?.name || "TBD",
-      driver: trip.itinerary?.find(i => i.driver && i.driver.name !== 'Transfer')?.driver?.name || "TBD"
+      guide: tripEvents.length > 0 ? tripEvents.map(e => e.driverId?.name).filter(Boolean).join(', ') : "TBD",
+      driver: tripEvents.length > 0 ? tripEvents.map(e => e.driverId?.name).filter(Boolean).join(', ') : "TBD"
     }
   };
 
@@ -815,36 +820,51 @@ export function TripDetailsPage() {
               </div>
             </div>  </div>
 
-              {/* Inclusions & Exclusions */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
-                <div className="bg-emerald-50/50 rounded-3xl p-6 border border-emerald-100">
-                  <h3 className="text-lg font-black text-emerald-800 flex items-center gap-2 mb-4">
-                    <CheckCircle2 size={20} /> Inclusions
-                  </h3>
-                  <ul className="space-y-2">
-                    {trip.inclusions?.map((inc, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm font-bold text-gray-700">
-                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></div>
-                        <span>{inc}</span>
-                      </li>
+              {/* Assigned Drivers Section */}
+              <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 mb-8">
+                <h3 className="text-xl font-black text-gray-900 flex items-center gap-2 mb-6">
+                  <Car size={24} className="text-brand-primary" /> Assigned Drivers
+                </h3>
+                {tripEvents.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {tripEvents.map(event => (
+                      <div key={event._id} className="flex flex-col p-4 bg-gray-50/80 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                            {event.driverId?.avatar ? (
+                              <img src={event.driverId.avatar} alt={event.driverId.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-gray-500">
+                                {event.driverId?.name?.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-bold text-gray-900">{event.driverId?.name}</div>
+                            <div className="text-xs text-gray-500 font-semibold">{event.title}</div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-600 bg-white p-2 rounded-lg border border-gray-100 flex flex-col gap-1">
+                          <div><span className="font-bold">Start:</span> {new Date(event.start).toLocaleDateString()}</div>
+                          <div><span className="font-bold">End:</span> {new Date(event.end).toLocaleDateString()}</div>
+                        </div>
+                        {event.notes && (
+                          <div className="mt-2 text-xs italic text-gray-500">
+                            {event.notes}
+                          </div>
+                        )}
+                      </div>
                     ))}
-                  </ul>
-                </div>
-                
-                <div className="bg-red-50/50 rounded-3xl p-6 border border-red-100">
-                  <h3 className="text-lg font-black text-red-800 flex items-center gap-2 mb-4">
-                    <XCircle size={20} /> Exclusions
-                  </h3>
-                  <ul className="space-y-2">
-                    {trip.exclusions?.map((exc, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm font-bold text-gray-700">
-                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></div>
-                        <span>{exc}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 font-semibold py-8 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                    No drivers have been assigned to this tour yet. Assign them from the Driver Agenda UI.
+                  </div>
+                )}
               </div>
+              
+              {/* Editable Inclusions & Exclusions */}
+              <InclusionsExclusionsManager trip={trip} />
         </div>
       ) : (activeTab === 'client' && !showPdfPreview) ? (
         <ItineraryManager trip={trip} />

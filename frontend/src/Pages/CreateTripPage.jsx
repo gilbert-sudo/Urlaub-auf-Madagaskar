@@ -106,7 +106,7 @@ export function CreateTripPage() {
   }, [dispatch, id, isEditing]);
 
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = isEditing ? 4 : 1;
 
   const [tripData, setTripData] = useState({
     title: '',
@@ -215,11 +215,12 @@ export function CreateTripPage() {
       if (isEditing) {
         await dispatch(updateTrip({ id, data: formattedTrip })).unwrap();
         toast.success('Trip updated successfully!');
+        navigate('/trips');
       } else {
-        await dispatch(createTrip(formattedTrip)).unwrap();
+        const newTrip = await dispatch(createTrip(formattedTrip)).unwrap();
         toast.success('Trip created successfully!');
+        navigate(`/trips/${newTrip._id}`);
       }
-      navigate('/trips');
     } catch (err) {
       toast.error(`Failed to ${isEditing ? 'update' : 'create'} trip: ` + err.message);
     }
@@ -240,40 +241,42 @@ export function CreateTripPage() {
           </button>
           <div>
             <h1 className="text-xl font-black text-gray-800">{isEditing ? 'Edit Trip' : 'Create New Trip'}</h1>
-            <p className="text-xs font-bold text-brand-primary mt-0.5">Step {currentStep} of {totalSteps}: {stepLabels[currentStep-1]}</p>
+            {isEditing && <p className="text-xs font-bold text-brand-primary mt-0.5">Step {currentStep} of {totalSteps}: {stepLabels[currentStep-1]}</p>}
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="relative md:absolute md:left-0 md:right-0 flex justify-center pointer-events-none w-full">
-          <div className="w-full md:max-w-3xl relative flex items-center justify-between pointer-events-auto">
-            <div className="absolute top-5 md:top-1/2 left-0 w-full h-1 bg-gray-200 rounded-full md:-translate-y-1/2"></div>
-            <div className="absolute top-5 md:top-1/2 left-0 h-1 bg-brand-primary rounded-full md:-translate-y-1/2 transition-all duration-500 ease-out" style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}></div>
-          
-          {stepLabels.map((label, index) => {
-            const stepNumber = index + 1;
-            const isCompleted = currentStep > stepNumber;
-            const isCurrent = currentStep === stepNumber;
+        {/* Progress Bar - Only show when editing */}
+        {isEditing && (
+          <div className="relative md:absolute md:left-0 md:right-0 flex justify-center pointer-events-none w-full">
+            <div className="w-full md:max-w-3xl relative flex items-center justify-between pointer-events-auto">
+              <div className="absolute top-5 md:top-1/2 left-0 w-full h-1 bg-gray-200 rounded-full md:-translate-y-1/2"></div>
+              <div className="absolute top-5 md:top-1/2 left-0 h-1 bg-brand-primary rounded-full md:-translate-y-1/2 transition-all duration-500 ease-out" style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}></div>
             
-            return (
-              <div key={label} className="relative z-10 flex flex-col items-center group cursor-pointer" onClick={() => setCurrentStep(stepNumber)}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all duration-300 ${
-                  isCompleted ? 'bg-brand-primary text-white shadow-md' :
-                  isCurrent ? 'bg-white border-[3px] border-brand-primary text-brand-primary shadow-lg scale-110' :
-                  'bg-white border-2 border-gray-200 text-gray-400 bg-gray-50'
-                }`}>
-                  {isCompleted ? <Check size={18} strokeWidth={4} /> : stepNumber}
+            {stepLabels.map((label, index) => {
+              const stepNumber = index + 1;
+              const isCompleted = currentStep > stepNumber;
+              const isCurrent = currentStep === stepNumber;
+              
+              return (
+                <div key={label} className="relative z-10 flex flex-col items-center group cursor-pointer" onClick={() => setCurrentStep(stepNumber)}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all duration-300 ${
+                    isCompleted ? 'bg-brand-primary text-white shadow-md' :
+                    isCurrent ? 'bg-white border-[3px] border-brand-primary text-brand-primary shadow-lg scale-110' :
+                    'bg-white border-2 border-gray-200 text-gray-400 bg-gray-50'
+                  }`}>
+                    {isCompleted ? <Check size={18} strokeWidth={4} /> : stepNumber}
+                  </div>
+                  <span className={`absolute top-12 text-[10px] md:text-[11px] font-extrabold uppercase tracking-widest whitespace-nowrap transition-colors ${
+                    isCurrent ? 'text-brand-primary' : 'text-gray-400 group-hover:text-gray-600'
+                  }`}>
+                    {label}
+                  </span>
                 </div>
-                <span className={`absolute top-12 text-[10px] md:text-[11px] font-extrabold uppercase tracking-widest whitespace-nowrap transition-colors ${
-                  isCurrent ? 'text-brand-primary' : 'text-gray-400 group-hover:text-gray-600'
-                }`}>
-                  {label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+              );
+            })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="max-w-5xl mx-auto">
@@ -640,8 +643,8 @@ export function CreateTripPage() {
             </Button>
             
             <Button type="submit" variant="primary" className="px-8 py-2.5 rounded-full shadow-lg shadow-brand-primary/30 group">
-              {currentStep === totalSteps ? 'Complete & Save Trip' : 'Next Step'}
-              {currentStep < totalSteps && <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />}
+              {isEditing && currentStep === totalSteps ? 'Complete & Save Trip' : !isEditing ? 'Create Trip' : 'Next Step'}
+              {isEditing && currentStep < totalSteps && <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />}
             </Button>
           </div>
         </div>
