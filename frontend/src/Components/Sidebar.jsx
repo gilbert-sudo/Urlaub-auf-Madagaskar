@@ -2,10 +2,11 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
-import { Home, Map, Building, Users, FileText, Settings, LogOut, Car, Plus } from 'lucide-react';
+import { Home, Map, Building, Users, FileText, Settings, LogOut, Car, Plus, Calendar as CalendarIcon } from 'lucide-react';
 
 const menuItems = [
   { path: '/', icon: <Home size={22} />, label: 'Dashboard' },
+  { path: '/calendar', icon: <CalendarIcon size={22} />, label: 'Master Schedule' },
   { path: '/trips', icon: <Map size={22} />, label: 'Trips & Itineraries' },
   { path: '/hotels', icon: <Building size={22} />, label: 'Hotels' },
   { path: '/clients', icon: <Users size={22} />, label: 'Clients' },

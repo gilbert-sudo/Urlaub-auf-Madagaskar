@@ -11,6 +11,14 @@ export const fetchDriverEvents = createAsyncThunk(
   }
 );
 
+export const fetchAllDriverEvents = createAsyncThunk(
+  'driverEvents/fetchAllDriverEvents',
+  async () => {
+    const response = await axios.get(`${API_URL}/api/driver-events`);
+    return response.data;
+  }
+);
+
 export const addDriverEvent = createAsyncThunk(
   'driverEvents/addDriverEvent',
   async (eventData) => {
@@ -53,6 +61,17 @@ const driverEventsSlice = createSlice({
         state.events = action.payload;
       })
       .addCase(fetchDriverEvents.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+      })
+      .addCase(fetchAllDriverEvents.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchAllDriverEvents.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.events = action.payload;
+      })
+      .addCase(fetchAllDriverEvents.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
       })

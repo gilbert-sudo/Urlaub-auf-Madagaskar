@@ -12,6 +12,7 @@ import { DocumentsPage } from './Pages/DocumentsPage';
 import { LoginPage } from './Pages/LoginPage';
 import { CreateTripPage } from './Pages/CreateTripPage';
 import { SharedTripPage } from './Pages/SharedTripPage';
+import { CalendarPage } from './Pages/CalendarPage';
 
 import { Toaster } from 'sonner';
 
@@ -33,6 +34,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="calendar" element={<CalendarPage />} />
             <Route path="trips" element={<TripsPage />} />
             <Route path="trips/new" element={<CreateTripPage />} />
             <Route path="trips/:id/edit" element={<CreateTripPage />} />

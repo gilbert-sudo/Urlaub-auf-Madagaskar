@@ -5,6 +5,7 @@ import driversReducer from './slices/driversSlice';
 import hotelsReducer from './slices/hotelsSlice';
 import authReducer from './slices/authSlice';
 import itineraryReducer from './slices/itinerarySlice';
+import driverEventsReducer from './slices/driverEventsSlice';
 
 // Persistence utilities
 const loadState = () => {
@@ -13,7 +14,9 @@ const loadState = () => {
     if (serializedState === null) {
       return undefined;
     }
-    return JSON.parse(serializedState);
+    const parsedState = JSON.parse(serializedState);
+    delete parsedState.driverEvents; // Don't persist driver events
+    return parsedState;
   } catch (err) {
     return undefined;
   }
@@ -38,6 +41,7 @@ export const store = configureStore({
     hotels: hotelsReducer,
     auth: authReducer,
     itinerary: itineraryReducer,
+    driverEvents: driverEventsReducer,
   },
   preloadedState: persistedState
 });
