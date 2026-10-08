@@ -16,6 +16,7 @@ import { HotelVoucherDoc } from '../Components/Documents/HotelVoucherDoc';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF, OverlayViewF, OverlayView } from '@react-google-maps/api';
 import { ItineraryManager } from '../Components/ItineraryManager';
 import { InclusionsExclusionsManager } from '../Components/InclusionsExclusionsManager';
+import { AssignedDriversManager } from '../Components/AssignedDriversManager';
 
 const libraries = ['places'];
 
@@ -821,47 +822,7 @@ export function TripDetailsPage() {
             </div>  </div>
 
               {/* Assigned Drivers Section */}
-              <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 mb-8">
-                <h3 className="text-xl font-black text-gray-900 flex items-center gap-2 mb-6">
-                  <Car size={24} className="text-brand-primary" /> Assigned Drivers
-                </h3>
-                {tripEvents.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {tripEvents.map(event => (
-                      <div key={event._id} className="flex flex-col p-4 bg-gray-50/80 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 shrink-0">
-                            {event.driverId?.avatar ? (
-                              <img src={event.driverId.avatar} alt={event.driverId.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center font-bold text-gray-500">
-                                {event.driverId?.name?.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-900">{event.driverId?.name}</div>
-                            <div className="text-xs text-gray-500 font-semibold">{event.title}</div>
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-600 bg-white p-2 rounded-lg border border-gray-100 flex flex-col gap-1">
-                          <div><span className="font-bold">Start:</span> {new Date(event.start).toLocaleDateString()}</div>
-                          <div><span className="font-bold">End:</span> {new Date(event.end).toLocaleDateString()}</div>
-                        </div>
-                        {event.notes && (
-                          <div className="mt-2 text-xs italic text-gray-500">
-                            {event.notes}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500 font-semibold py-8 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                    No drivers have been assigned to this tour yet. Assign them from the Driver Agenda UI.
-                  </div>
-                )}
-              </div>
+              <AssignedDriversManager trip={trip} tripEvents={tripEvents} />
               
               {/* Editable Inclusions & Exclusions */}
               <InclusionsExclusionsManager trip={trip} />
