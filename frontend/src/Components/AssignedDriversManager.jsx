@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Car, Plus, Edit2, Trash2, X, Calendar as CalendarIcon } from 'lucide-react';
+import { Car, Plus, Edit2, Trash2, X, Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
 import { fetchDrivers } from '../store/slices/driversSlice';
 import { updateDriverEvent, deleteDriverEvent, fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
 import { toast } from 'sonner';
@@ -111,7 +111,7 @@ export function AssignedDriversManager({ trip, tripEvents }) {
           {tripEvents.map(event => (
             <div key={event._id} className="group relative flex flex-col p-4 bg-gray-50/80 dark:bg-slate-900/50 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
               {/* Actions */}
-              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-3 right-3 flex gap-1">
                 <button 
                   onClick={() => openEditModal(event)}
                   className="p-1.5 text-gray-500 hover:text-brand-primary hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors shadow-sm bg-gray-100 dark:bg-slate-800/80"
@@ -143,9 +143,48 @@ export function AssignedDriversManager({ trip, tripEvents }) {
                   <div className="text-xs text-gray-500 dark:text-slate-400 font-semibold truncate max-w-[150px]">{event.title}</div>
                 </div>
               </div>
-              <div className="text-xs text-gray-600 dark:text-slate-300 bg-white dark:bg-slate-800 p-2 rounded-lg border border-gray-100 dark:border-slate-700 flex flex-col gap-1">
-                <div><span className="font-bold text-gray-800 dark:text-slate-200">Start:</span> {new Date(event.start).toLocaleDateString()}</div>
-                <div><span className="font-bold text-gray-800 dark:text-slate-200">End:</span> {new Date(event.end).toLocaleDateString()}</div>
+              <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex flex-col items-center rounded-lg border border-gray-100 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 min-w-[42px] overflow-hidden shadow-sm">
+                    <div className="w-full bg-brand-primary/10 text-brand-700 dark:bg-brand-primary/20 dark:text-brand-400 text-[9px] font-black uppercase text-center py-1 tracking-widest border-b border-brand-primary/10 dark:border-brand-primary/20">
+                      {new Date(event.start).toLocaleString('default', { month: 'short' })}
+                    </div>
+                    <div className="text-sm font-black text-gray-800 dark:text-white py-1.5">
+                      {new Date(event.start).getDate()}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Start</span>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                      {new Date(event.start).toLocaleDateString(undefined, { weekday: 'short' })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex-1 px-4 flex items-center justify-center">
+                   <div className="w-full h-[2px] bg-gray-100 dark:bg-slate-700 relative flex items-center justify-center rounded-full">
+                      <div className="w-5 h-5 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 flex items-center justify-center absolute shadow-sm">
+                        <ArrowRight size={10} className="text-gray-400" />
+                      </div>
+                   </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <div className="flex flex-col text-right">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">End</span>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                      {new Date(event.end).toLocaleDateString(undefined, { weekday: 'short' })}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center rounded-lg border border-gray-100 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 min-w-[42px] overflow-hidden shadow-sm">
+                    <div className="w-full bg-brand-primary/10 text-brand-700 dark:bg-brand-primary/20 dark:text-brand-400 text-[9px] font-black uppercase text-center py-1 tracking-widest border-b border-brand-primary/10 dark:border-brand-primary/20">
+                      {new Date(event.end).toLocaleString('default', { month: 'short' })}
+                    </div>
+                    <div className="text-sm font-black text-gray-800 dark:text-white py-1.5">
+                      {new Date(event.end).getDate()}
+                    </div>
+                  </div>
+                </div>
               </div>
               {event.notes && (
                 <div className="mt-2 text-xs italic text-gray-500 line-clamp-2">
