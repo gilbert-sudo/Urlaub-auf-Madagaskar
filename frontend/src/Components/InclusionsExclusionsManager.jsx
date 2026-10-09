@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { updateTrip } from '../store/slices/tripsSlice';
 import { toast } from 'sonner';
-import { Check, Trash2, Coffee, Utensils, Bed, Car, UserCheck, Ticket, Fuel, Plane, Receipt, FileText, Shield, CreditCard, Coins, Wine, Map } from 'lucide-react';
+import { Check, Trash2, Coffee, Utensils, Bed, Car, UserCheck, Ticket, Fuel, Plane, Receipt, FileText, Shield, CreditCard, Coins, Wine, Map, ListChecks, Save, Edit2 } from 'lucide-react';
 import { Button } from './Button';
 
 const PREDEFINED_FEATURES = [
@@ -33,6 +33,7 @@ export function InclusionsExclusionsManager({ trip }) {
   const [exclusions, setExclusions] = useState(trip.exclusions || []);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleUpdate = async () => {
     try {
@@ -40,6 +41,7 @@ export function InclusionsExclusionsManager({ trip }) {
       await dispatch(updateTrip({ id: trip._id, data: { ...trip, inclusions, exclusions } })).unwrap();
       toast.success('Inclusions and exclusions updated successfully!');
       setHasChanges(false);
+      setIsEditing(false);
     } catch (err) {
       toast.error('Failed to update: ' + err.message);
     } finally {
@@ -92,19 +94,90 @@ export function InclusionsExclusionsManager({ trip }) {
   };
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100">
+    <div className="bg-white dark:bg-slate-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-slate-700 mb-8">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
-          Inclusions & Exclusions
+        <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+          <ListChecks size={24} className="text-brand-primary" /> Inclusions & Exclusions
         </h3>
-        {hasChanges && (
-          <Button onClick={handleUpdate} isLoading={isSaving} className="rounded-full px-6 text-sm font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-            Save Changes
-          </Button>
+        {!isEditing ? (
+          <button 
+            onClick={() => setIsEditing(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 dark:bg-brand-primary/10 text-brand-700 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-primary/20 font-bold text-sm rounded-xl transition-colors"
+          >
+            <Edit2 size={16} /> Edit
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button 
+              onClick={() => {
+                setInclusions(trip.inclusions || []);
+                setExclusions(trip.exclusions || []);
+                setHasChanges(false);
+                setIsEditing(false);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 font-bold text-sm rounded-xl transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleUpdate}
+              disabled={isSaving || !hasChanges}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 dark:bg-brand-primary/10 text-brand-700 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-primary/20 font-bold text-sm rounded-xl transition-colors disabled:opacity-50"
+            >
+              <Save size={16} /> {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
         )}
       </div>
 
-      <div className="space-y-8">
+      {!isEditing ? (
+        <div className="space-y-6">
+          {inclusions.length === 0 && exclusions.length === 0 ? (
+            <div className="text-sm text-gray-500 italic bg-gray-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 text-center">
+              No inclusions or exclusions specified yet. Click Edit to add them.
+            </div>
+          ) : (
+            <>
+              {inclusions.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-extrabold text-emerald-800 dark:text-emerald-500 mb-3 uppercase tracking-wider">Included</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {inclusions.map((item, index) => {
+                      const predefined = PREDEFINED_FEATURES.find(p => p.label === item);
+                      const Icon = predefined ? predefined.icon : Check;
+                      return (
+                        <div key={index} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shadow-sm border border-emerald-100 dark:border-emerald-500/20">
+                          <Icon size={14} className="text-emerald-500" strokeWidth={2} />
+                          <span className="font-bold text-xs">{item}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {exclusions.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-extrabold text-red-800 dark:text-red-500 mb-3 uppercase tracking-wider">Excluded</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {exclusions.map((item, index) => {
+                      const predefined = PREDEFINED_FEATURES.find(p => p.label === item);
+                      const Icon = predefined ? predefined.icon : Trash2;
+                      return (
+                        <div key={index} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 shadow-sm border border-red-100 dark:border-red-500/20">
+                          <Icon size={14} className="text-red-500" strokeWidth={2} />
+                          <span className="font-bold text-xs">{item}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-8 animate-in fade-in duration-300">
         {/* Inclusions */}
         <div>
           <h4 className="text-sm font-extrabold text-emerald-800 mb-3 uppercase tracking-wider">What's included?</h4>
@@ -214,7 +287,8 @@ export function InclusionsExclusionsManager({ trip }) {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
