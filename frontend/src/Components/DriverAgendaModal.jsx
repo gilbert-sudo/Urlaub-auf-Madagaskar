@@ -12,7 +12,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
 const DnDCalendar = withDragAndDrop(Calendar);
-import { X, Calendar as CalendarIcon, Clock, Briefcase, User, MapPin, Trash2, Save, Plus, Map, Car } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Clock, Briefcase, User, MapPin, Trash2, Save, Plus, Map, Car, Check } from 'lucide-react';
 import { Button } from './Button';
 import { toast } from 'sonner';
 
@@ -31,24 +31,70 @@ const localizer = dateFnsLocalizer({
 const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
   const isTour = event.type === 'tour';
   return (
-    <div className="flex items-center justify-between w-full h-full overflow-hidden whitespace-nowrap">
-      <div className="flex items-center gap-1.5 overflow-hidden text-ellipsis">
-        {!continuesPrior ? (
-          <>
-            {isTour ? <Map size={12} className="shrink-0" /> : <Car size={12} className="shrink-0" />}
-            <span className="truncate font-bold">{event.title}</span>
-          </>
+    <>
+      {event.isPreview && event.onSave && event.onCancel && !continuesPrior && (
+        <div 
+          className="absolute -top-[3.25rem] left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 pointer-events-auto"
+          onMouseDown={(e) => e.stopPropagation()} 
+        >
+          <button 
+            onClick={(e) => { e.stopPropagation(); event.onSave(); }} 
+            className="flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
+            title="Save"
+          >
+            <Check size={16} strokeWidth={3} />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); event.onCancel(); }} 
+            className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
+            title="Cancel"
+          >
+            <X size={16} strokeWidth={3} />
+          </button>
+        </div>
+      )}
+      <div 
+        data-event-id={event._id || event.id}
+        className={`flex items-center justify-between w-full h-full overflow-hidden whitespace-nowrap ${!continuesPrior ? 'pl-7' : 'pl-2'} ${!continuesAfter ? 'pr-7' : 'pr-2'} relative`}
+      >
+        {/* Left Resize Grip */}
+        {!continuesPrior && (
+          <div className="absolute left-1.5 top-1/2 -translate-y-1/2 h-3.5 w-[3px] flex justify-between opacity-50 pointer-events-none">
+            <div className="w-px h-full bg-white rounded-full"></div>
+            <div className="w-px h-full bg-white rounded-full"></div>
+          </div>
+        )}
+        
+        {/* Right Resize Grip */}
+        {!continuesAfter && (
+          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-[3px] flex justify-between opacity-50 pointer-events-none">
+            <div className="w-px h-full bg-white rounded-full"></div>
+            <div className="w-px h-full bg-white rounded-full"></div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-1.5 overflow-hidden text-ellipsis">
+          {!continuesPrior ? (
+            <>
+              {isTour ? <Map size={12} className="shrink-0" /> : <Car size={12} className="shrink-0" />}
+              <span className="truncate font-bold">{event.title}</span>
+            </>
+          ) : (
+            <span className="opacity-50 ml-1 text-xs font-black">←</span>
+          )}
+        </div>
+        
+        {!continuesAfter ? (
+           <div className="flex items-center gap-1 shrink-0 mr-1 z-10 relative">
+              {!event.isPreview && (
+                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-75"></div>
+              )}
+           </div>
         ) : (
-          <span className="opacity-50 ml-1 text-xs font-black">←</span>
+           <span className="opacity-50 mr-1 text-xs font-black">→</span>
         )}
       </div>
-      
-      {!continuesAfter ? (
-         <div className="w-1.5 h-1.5 rounded-full bg-current opacity-75 shrink-0 mr-1"></div>
-      ) : (
-         <span className="opacity-50 mr-1 text-xs font-black">→</span>
-      )}
-    </div>
+    </>
   );
 };
 
@@ -57,26 +103,38 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   const dispatch = useDispatch();
 
   const handleEventDrop = async ({ event, start, end, isAllDay: droppedOnAllDaySlot }) => {
+    const originalEvent = { ...event };
+    const updatedEvent = { ...event, start, end };
+    if (droppedOnAllDaySlot !== undefined) {
+      updatedEvent.allDay = droppedOnAllDaySlot;
+    }
+    
+    // Optimistic update
+    window.dispatchEvent(new CustomEvent('update-local-event', { detail: updatedEvent }));
+
     try {
-      const updatedEvent = { ...event, start, end };
-      if (droppedOnAllDaySlot !== undefined) {
-        updatedEvent.allDay = droppedOnAllDaySlot;
-      }
       const savedEvent = await dispatch(updateDriverEvent({ id: event._id, ...updatedEvent })).unwrap();
       window.dispatchEvent(new CustomEvent('update-local-event', { detail: savedEvent }));
       toast.success('Event moved');
     } catch (err) {
+      window.dispatchEvent(new CustomEvent('update-local-event', { detail: originalEvent }));
       toast.error('Failed to move event');
     }
   };
 
   const handleEventResize = async ({ event, start, end }) => {
+    const originalEvent = { ...event };
+    const updatedEvent = { ...event, start, end };
+    
+    // Optimistic update
+    window.dispatchEvent(new CustomEvent('update-local-event', { detail: updatedEvent }));
+
     try {
-      const updatedEvent = { ...event, start, end };
       const savedEvent = await dispatch(updateDriverEvent({ id: event._id, ...updatedEvent })).unwrap();
       window.dispatchEvent(new CustomEvent('update-local-event', { detail: savedEvent }));
       toast.success('Event resized');
     } catch (err) {
+      window.dispatchEvent(new CustomEvent('update-local-event', { detail: originalEvent }));
       toast.error('Failed to resize event');
     }
   };
@@ -310,6 +368,41 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
   const [dragCurrent, setDragCurrent] = useState(null);
   
   const activeEvents = localEvents || events;
+  
+  // Track the exact day cell where the user clicked for drag-and-drop offset correction
+  useEffect(() => {
+    const handleGlobalMouseDown = (e) => {
+      const elements = document.elementsFromPoint(e.clientX, e.clientY);
+      const dayCell = elements.find(el => el.hasAttribute('data-date'));
+      const eventInner = elements.find(el => el.hasAttribute('data-event-id'));
+      
+      // If we clicked on an event and there's a day cell under it, record the date
+      if (dayCell && eventInner) {
+        const clickedDate = new Date(dayCell.getAttribute('data-date'));
+        window.__lastClickedDate = clickedDate;
+        
+        // Calculate visual drag offset to prevent the ghost from jumping to the tip
+        const eventId = eventInner.getAttribute('data-event-id');
+        const eventObj = activeEvents.find(ev => (ev._id && ev._id === eventId) || (ev.id && ev.id === eventId) || (eventId === 'preview-event' && ev.isPreview));
+        
+        if (eventObj) {
+          const grabOffsetDays = Math.round((startOfDay(clickedDate).getTime() - startOfDay(eventObj.start).getTime()) / (1000 * 60 * 60 * 24));
+          const row = eventInner.closest('.rbc-month-row');
+          if (row && grabOffsetDays > 0) {
+            const cellWidth = row.offsetWidth / 7;
+            const shiftPx = -1 * grabOffsetDays * cellWidth;
+            document.documentElement.style.setProperty('--drag-shift-px', `${shiftPx}px`);
+          } else {
+            document.documentElement.style.setProperty('--drag-shift-px', '0px');
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('mousedown', handleGlobalMouseDown, true);
+    return () => window.removeEventListener('mousedown', handleGlobalMouseDown, true);
+  }, [activeEvents]);
+
   const [formData, setFormData] = useState({
     title: '',
     start: new Date(),
@@ -382,12 +475,7 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
 
   if (!isOpen || !driver) return null;
 
-  const calendarEvents = activeEvents.map(e => ({
-    ...e,
-    id: e._id,
-    start: new Date(e.start),
-    end: new Date(e.end),
-  }));
+
 
   const handleSelectSlot = ({ start, end }) => {
     setFormData({
@@ -418,22 +506,24 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
   };
 
   const handleSaveEvent = async () => {
-    if (!formData.title || !formData.start || !formData.end) {
-      toast.error('Please fill all required fields');
-      return;
-    }
-
     const submitData = { ...formData };
     
     if (submitData.type === 'tour') {
       const selectedTrip = trips.find(t => t._id === submitData.tripId);
       if (selectedTrip) {
         submitData.title = selectedTrip.title;
+      } else {
+        submitData.title = 'Tour'; // Fallback title
       }
     }
 
     if (submitData.type !== 'tour' || !submitData.tripId) {
       submitData.tripId = null;
+    }
+
+    if (!submitData.title || !submitData.start || !submitData.end) {
+      toast.error('Please fill all required fields');
+      return;
     }
 
     try {
@@ -481,45 +571,124 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
     }
   };
 
+  const handleCancelEvent = () => {
+    setShowEventForm(false);
+    setSelectedEvent(null);
+  };
+
+  const calendarEvents = activeEvents.map(e => {
+    if (showEventForm && selectedEvent && e._id === selectedEvent._id) {
+      return {
+        ...e,
+        id: e._id,
+        title: formData.title || e.title,
+        start: new Date(formData.start),
+        end: new Date(formData.end),
+        type: formData.type,
+      };
+    }
+    return {
+      ...e,
+      id: e._id,
+      start: new Date(e.start),
+      end: new Date(e.end),
+    };
+  });
+
+  if (showEventForm && !selectedEvent && formData.start && formData.end) {
+    calendarEvents.push({
+      id: 'preview-event',
+      title: formData.title || (formData.type === 'tour' ? 'New Tour' : 'New Event'),
+      start: new Date(formData.start),
+      end: new Date(formData.end),
+      type: formData.type,
+      allDay: formData.allDay,
+      isPreview: true,
+      onSave: handleSaveEvent,
+      onCancel: handleCancelEvent
+    });
+  }
+
   const handleEventDrop = async ({ event, start, end, isAllDay: droppedOnAllDaySlot }) => {
-    try {
-      const updatedEvent = { ...event, start, end };
-      if (droppedOnAllDaySlot !== undefined) {
-        updatedEvent.allDay = droppedOnAllDaySlot;
+    let correctedStart = start;
+    let correctedEnd = end;
+    
+    if (window.__lastClickedDate) {
+      const grabOffsetMs = startOfDay(window.__lastClickedDate).getTime() - startOfDay(event.start).getTime();
+      const eventDurationMs = event.end.getTime() - event.start.getTime();
+      
+      if (grabOffsetMs >= 0 && grabOffsetMs <= eventDurationMs) {
+        correctedStart = new Date(start.getTime() - grabOffsetMs);
+        correctedEnd = new Date(correctedStart.getTime() + eventDurationMs);
       }
+      
+      window.__lastClickedDate = null;
+    }
+
+    if (event.isPreview || (selectedEvent && event._id === selectedEvent._id)) {
+      setFormData(prev => ({
+        ...prev,
+        start: correctedStart,
+        end: correctedEnd,
+        allDay: droppedOnAllDaySlot !== undefined ? droppedOnAllDaySlot : prev.allDay
+      }));
+      if (event.isPreview) return;
+    }
+    const originalEvent = { ...event };
+    const updatedEvent = { ...event, start: correctedStart, end: correctedEnd };
+    if (droppedOnAllDaySlot !== undefined) {
+      updatedEvent.allDay = droppedOnAllDaySlot;
+    }
+    
+    // Optimistic update
+    if (localEvents) {
+      setLocalEvents(localEvents.map(e => e._id === updatedEvent._id ? { ...e, ...updatedEvent } : e));
+    }
+
+    try {
       const savedEvent = await dispatch(updateDriverEvent({ id: event._id, ...updatedEvent })).unwrap();
       if (localEvents) {
         setLocalEvents(localEvents.map(e => e._id === savedEvent._id ? savedEvent : e));
       }
       toast.success('Event moved');
     } catch (err) {
+      if (localEvents) {
+        setLocalEvents(localEvents.map(e => e._id === originalEvent._id ? originalEvent : e));
+      }
       toast.error('Failed to move event');
     }
   };
 
   const handleEventResize = async ({ event, start, end }) => {
+    if (event.isPreview || (selectedEvent && event._id === selectedEvent._id)) {
+      setFormData(prev => ({
+        ...prev,
+        start,
+        end
+      }));
+      if (event.isPreview) return;
+    }
+    const originalEvent = { ...event };
+    const updatedEvent = { ...event, start, end };
+    
+    // Optimistic update
+    if (localEvents) {
+      setLocalEvents(localEvents.map(e => e._id === updatedEvent._id ? { ...e, ...updatedEvent } : e));
+    }
+
     try {
-      const updatedEvent = { ...event, start, end };
       const savedEvent = await dispatch(updateDriverEvent({ id: event._id, ...updatedEvent })).unwrap();
       if (localEvents) {
         setLocalEvents(localEvents.map(e => e._id === savedEvent._id ? savedEvent : e));
       }
       toast.success('Event resized');
     } catch (err) {
+      if (localEvents) {
+        setLocalEvents(localEvents.map(e => e._id === originalEvent._id ? originalEvent : e));
+      }
       toast.error('Failed to resize event');
     }
   };
-
-  const tourColors = [
-    '#10b981', // emerald
-    '#06b6d4', // cyan
-    '#3b82f6', // blue
-    '#8b5cf6', // violet
-    '#d946ef', // fuchsia
-    '#ec4899', // pink
-    '#f97316', // orange
-    '#14b8a6', // teal
-  ];
 
   const getStringHash = (str) => {
     let hash = 0;
@@ -531,17 +700,30 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
   };
 
   const getEventColor = (event) => {
-    if (event.type === 'tour') {
-      const colorIndex = getStringHash(event.title || event._id) % tourColors.length;
-      return tourColors[colorIndex];
-    }
-    if (event.type === 'unavailable') return '#ef4444'; // red
-    if (event.type === 'personal') return '#f59e0b'; // amber
-    return '#3b82f6'; // default blue
+    const idStr = event._id || event.id || event.title || event.type || 'preview';
+    const hash = getStringHash(idStr.toString());
+    const hue = hash % 360;
+    return `hsl(${hue}, 70%, 50%)`;
   };
 
   const eventStyleGetter = (event) => {
     const backgroundColor = getEventColor(event);
+    
+    if (event.isPreview) {
+      return {
+        style: {
+          backgroundColor,
+          borderRadius: '4px',
+          opacity: 0.6,
+          color: 'white',
+          border: '2px dashed rgba(255, 255, 255, 0.9)',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+          display: 'block',
+          boxSizing: 'border-box'
+        }
+      };
+    }
+    
     return {
       style: {
         backgroundColor,
@@ -550,7 +732,8 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
         color: 'white',
         border: '1px solid rgba(255, 255, 255, 0.4)',
         boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-        display: 'block'
+        display: 'block',
+        boxSizing: 'border-box'
       }
     };
   };
@@ -565,9 +748,12 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
     if (hasEvent) {
       return {
         className: 'booked-day',
+        'data-date': date.toISOString()
       };
     }
-    return {};
+    return {
+      'data-date': date.toISOString()
+    };
   };
 
   if (!isOpen || !driver) return null;
@@ -955,7 +1141,13 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
           border-color: #e2e8f0;
           background: white;
           border-radius: 0.5rem;
-          overflow: hidden;
+          overflow: visible;
+        }
+        
+        .custom-calendar .rbc-month-row,
+        .custom-calendar .rbc-row,
+        .custom-calendar .rbc-row-content {
+          overflow: visible !important;
         }
         .dark .custom-calendar .rbc-month-view,
         .dark .custom-calendar .rbc-time-view,
@@ -1052,18 +1244,46 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
           transition: top 0.2s cubic-bezier(0.4, 0, 0.2, 1), left 0.2s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s cubic-bezier(0.4, 0, 0.2, 1), height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
+        /* Show original event as a ghost while dragging/resizing */
+        .custom-calendar .rbc-addons-dnd-dragged-event {
+          opacity: 0.5 !important;
+          filter: grayscale(80%);
+          border: 1px dashed rgba(0,0,0,0.5) !important;
+        }
+        .dark .custom-calendar .rbc-addons-dnd-dragged-event {
+          border: 1px dashed rgba(255,255,255,0.5) !important;
+        }
+
         /* Disable transition during active drag/resize to prevent lag */
         .custom-calendar .rbc-addons-dnd-drag-preview,
         .custom-calendar .rbc-addons-dnd-is-dragging,
         .custom-calendar .rbc-addons-dnd-is-resizing {
           transition: none !important;
         }
+
+        /* Shift the drag preview by the exact pixel offset to stop it from jumping to the tip */
+        .custom-calendar .rbc-addons-dnd-drag-preview {
+          transform: translateX(var(--drag-shift-px, 0px)) !important;
+        }
         
         /* Expand horizontal resize hitboxes (Month view) */
         .custom-calendar .rbc-addons-dnd-resize-ew-anchor {
-          width: 16px !important;
+          width: 32px !important;
           cursor: col-resize !important;
-          z-index: 10;
+          z-index: 100 !important;
+          margin-left: -2px !important;
+          margin-right: -2px !important;
+        }
+
+        /* Eliminate invisible phantom margins or outlines that capture drags outside the border */
+        .custom-calendar .rbc-addons-dnd-resizable {
+          margin: 0 !important;
+          padding: 0 !important;
+          outline: none !important;
+        }
+        .custom-calendar .rbc-event {
+          margin: 0 !important;
+          outline: none !important;
         }
 
         /* Expand vertical resize hitboxes (Week/Day view) */
@@ -1075,8 +1295,7 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
 
         /* Add padding so the text doesn't sit exactly under the invisible resize handles */
         .custom-calendar .rbc-event-content {
-          padding-left: 6px;
-          padding-right: 6px;
+          padding: 0;
         }
       `}</style>
     </div>,
