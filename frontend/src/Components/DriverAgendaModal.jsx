@@ -30,6 +30,11 @@ const localizer = dateFnsLocalizer({
 
 const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
   const isTour = event.type === 'tour';
+  
+  const displayTitle = event.type === 'tour' && event.relatedTourTitle 
+    ? `${event.title} - ${event.relatedTourTitle}`
+    : event.title;
+
   return (
     <>
       {event.isPreview && event.onSave && event.onCancel && !continuesPrior && (
@@ -77,7 +82,7 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
           {!continuesPrior ? (
             <>
               {isTour ? <Map size={12} className="shrink-0" /> : <Car size={12} className="shrink-0" />}
-              <span className="truncate font-bold">{event.title}</span>
+              <span className="truncate font-bold">{displayTitle}</span>
             </>
           ) : (
             <span className="opacity-50 ml-1 text-xs font-black">←</span>
@@ -103,6 +108,10 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   const dispatch = useDispatch();
 
   const handleEventDrop = async ({ event, start, end, isAllDay: droppedOnAllDaySlot }) => {
+    if (event.isReadOnly) {
+      toast.error('You cannot modify events not related to the current tour.');
+      return;
+    }
     const originalEvent = { ...event };
     const updatedEvent = { ...event, start, end };
     if (droppedOnAllDaySlot !== undefined) {
@@ -123,6 +132,10 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   };
 
   const handleEventResize = async ({ event, start, end }) => {
+    if (event.isReadOnly) {
+      toast.error('You cannot modify events not related to the current tour.');
+      return;
+    }
     const originalEvent = { ...event };
     const updatedEvent = { ...event, start, end };
     
@@ -577,10 +590,27 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
   };
 
   const calendarEvents = activeEvents.map(e => {
+    const currentTripId = e.tripId?._id || e.tripId;
+    const isRelated = defaultTripId ? currentTripId === defaultTripId : true;
+    const isReadOnly = defaultTripId ? currentTripId !== defaultTripId : false;
+    
+    let relatedTourTitle = '';
+    if (e.type === 'tour' && currentTripId) {
+       const trip = trips.find(t => t._id === currentTripId) || e.tripId;
+       relatedTourTitle = trip?.title || 'Unknown Tour';
+    }
+
+    const baseEvent = {
+      ...e,
+      id: e._id,
+      isReadOnly,
+      isRelatedToCurrentTour: isRelated,
+      relatedTourTitle,
+    };
+
     if (showEventForm && selectedEvent && e._id === selectedEvent._id) {
       return {
-        ...e,
-        id: e._id,
+        ...baseEvent,
         title: formData.title || e.title,
         start: new Date(formData.start),
         end: new Date(formData.end),
@@ -588,8 +618,7 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
       };
     }
     return {
-      ...e,
-      id: e._id,
+      ...baseEvent,
       start: new Date(e.start),
       end: new Date(e.end),
     };
@@ -610,6 +639,11 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
   }
 
   const handleEventDrop = async ({ event, start, end, isAllDay: droppedOnAllDaySlot }) => {
+    if (event.isReadOnly) {
+      toast.error('You cannot modify events not related to the current tour.');
+      return;
+    }
+    
     let correctedStart = start;
     let correctedEnd = end;
     
@@ -660,6 +694,11 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
   };
 
   const handleEventResize = async ({ event, start, end }) => {
+    if (event.isReadOnly) {
+      toast.error('You cannot modify events not related to the current tour.');
+      return;
+    }
+    
     if (event.isPreview || (selectedEvent && event._id === selectedEvent._id)) {
       setFormData(prev => ({
         ...prev,
@@ -724,6 +763,24 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
       };
     }
     
+    if (event.isReadOnly) {
+      return {
+        style: {
+          backgroundColor: '#94a3b8',
+          borderRadius: '4px',
+          opacity: 0.65,
+          color: 'white',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: 'none',
+          display: 'block',
+          boxSizing: 'border-box',
+          cursor: 'not-allowed',
+          filter: 'grayscale(30%)'
+        },
+        className: 'read-only-event'
+      };
+    }
+
     return {
       style: {
         backgroundColor,
@@ -1005,7 +1062,7 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
               <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
                 <h3 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                   <CalendarIcon size={18} className="text-brand-primary" />
-                  {selectedEvent ? 'Edit Event' : 'New Event'}
+                  {selectedEvent ? (selectedEvent.isReadOnly ? 'Event Details' : 'Edit Event') : 'New Event'}
                 </h3>
                 <button onClick={() => { setShowEventForm(false); setSelectedEvent(null); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1">
                   <X size={18} />
@@ -1020,7 +1077,8 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value})}
-                      className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary dark:bg-slate-800 dark:text-slate-200 text-sm"
+                      disabled={selectedEvent?.isReadOnly}
+                      className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary dark:bg-slate-800 dark:text-slate-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="E.g., Doctor Appointment, Tour A"
                     />
                   </div>
@@ -1032,7 +1090,8 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({...formData, type: e.target.value})}
-                      className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary dark:bg-slate-800 dark:text-slate-200 text-sm"
+                      disabled={selectedEvent?.isReadOnly}
+                      className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary dark:bg-slate-800 dark:text-slate-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="personal">Personal Time</option>
                       <option value="tour">Tour / Trip</option>
@@ -1063,7 +1122,8 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
                     id="allDay"
                     checked={formData.allDay}
                     onChange={(e) => setFormData({...formData, allDay: e.target.checked})}
-                    className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary"
+                    disabled={selectedEvent?.isReadOnly}
+                    className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <label htmlFor="allDay" className="text-sm font-medium text-slate-700 dark:text-slate-300">All Day Event</label>
                 </div>
@@ -1075,7 +1135,8 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
                       type={formData.allDay ? "date" : "datetime-local"}
                       value={format(formData.start, formData.allDay ? "yyyy-MM-dd" : "yyyy-MM-dd'T'HH:mm")}
                       onChange={(e) => setFormData({...formData, start: new Date(e.target.value)})}
-                      className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-slate-800 dark:text-slate-200 text-xs"
+                      disabled={selectedEvent?.isReadOnly}
+                      className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-slate-800 dark:text-slate-200 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -1084,7 +1145,8 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
                       type={formData.allDay ? "date" : "datetime-local"}
                       value={format(formData.end, formData.allDay ? "yyyy-MM-dd" : "yyyy-MM-dd'T'HH:mm")}
                       onChange={(e) => setFormData({...formData, end: new Date(e.target.value)})}
-                      className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-slate-800 dark:text-slate-200 text-xs"
+                      disabled={selectedEvent?.isReadOnly}
+                      className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-slate-800 dark:text-slate-200 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -1094,8 +1156,9 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                    disabled={selectedEvent?.isReadOnly}
                     rows="3"
-                    className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-slate-800 dark:text-slate-200 text-sm resize-none"
+                    className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-slate-800 dark:text-slate-200 text-sm resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Add any extra details here..."
                   ></textarea>
                 </div>
@@ -1114,18 +1177,20 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
               </div>
 
               <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between gap-2">
-                {selectedEvent ? (
+                {selectedEvent && !selectedEvent.isReadOnly ? (
                   <Button variant="danger" onClick={handleDeleteEvent} className="px-3" title="Delete Event">
                     <Trash2 size={18} />
                   </Button>
                 ) : <div></div>}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => { setShowEventForm(false); setSelectedEvent(null); }}>
-                    Cancel
+                    {selectedEvent?.isReadOnly ? 'Close' : 'Cancel'}
                   </Button>
-                  <Button variant="primary" onClick={handleSaveEvent} className="flex items-center gap-1">
-                    <Save size={16} /> Save
-                  </Button>
+                  {!selectedEvent?.isReadOnly && (
+                    <Button variant="primary" onClick={handleSaveEvent} className="flex items-center gap-1">
+                      <Save size={16} /> Save
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
