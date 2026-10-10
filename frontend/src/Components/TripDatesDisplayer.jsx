@@ -62,13 +62,14 @@ export function TripDatesDisplayer({ startDate, endDate }) {
 
       <div className="font-sans m-0 relative w-full flex flex-col justify-center overflow-hidden pointer-events-none pr-2 lg:pr-6">
         <DayPicker
+          key={`${startDate}-${endDate}`}
           mode="range"
           selected={{
             from: startDate ? new Date(startDate) : undefined,
             to: endDate ? new Date(endDate) : undefined
           }}
           numberOfMonths={2}
-          defaultMonth={startDate ? new Date(startDate) : undefined}
+          month={startDate ? new Date(startDate) : undefined}
           showOutsideDays
           fixedWeeks
           disableNavigation

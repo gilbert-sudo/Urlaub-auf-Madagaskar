@@ -6,7 +6,7 @@ import { Calendar as CalendarIcon, X, CalendarDays, Clock, ArrowRight } from 'lu
 import { motion, AnimatePresence } from 'framer-motion';
 import 'react-day-picker/style.css';
 
-export function DateRangePicker({ startDate, endDate, onChange }) {
+export function DateRangePicker({ startDate, endDate, onChange, customTrigger }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('start');
 
@@ -106,16 +106,23 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
 
   return (
     <div className="relative w-full">
-      <div className="flex items-center gap-2 ml-2 mb-1.5">
-        <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider block">Trip Dates</label>
-        {startDate && endDate && (
-          <span className="bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded-md text-[9px] font-black tracking-widest">
-            {differenceInDays(new Date(endDate), new Date(startDate)) + 1} DAYS
-          </span>
-        )}
-      </div>
+      {!customTrigger && (
+        <div className="flex items-center gap-2 ml-2 mb-1.5">
+          <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider block">Trip Dates</label>
+          {startDate && endDate && (
+            <span className="bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded-md text-[9px] font-black tracking-widest">
+              {differenceInDays(new Date(endDate), new Date(startDate)) + 1} DAYS
+            </span>
+          )}
+        </div>
+      )}
       
       {/* Trigger Button - Premium Split Design */}
+      {customTrigger ? (
+        <div onClick={() => { setActiveTab('start'); setIsOpen(true); }} className="inline-block">
+          {customTrigger}
+        </div>
+      ) : (
       <div className="flex bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
         <div 
           onClick={() => { setActiveTab('start'); setIsOpen(true); }}
@@ -161,6 +168,7 @@ export function DateRangePicker({ startDate, endDate, onChange }) {
           </div>
         )}
       </div>
+      )}
 
       {isClient && document.body && createPortal(
         <AnimatePresence>

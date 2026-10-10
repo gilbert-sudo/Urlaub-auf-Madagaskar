@@ -19,6 +19,7 @@ import { InclusionsExclusionsManager } from '../Components/InclusionsExclusionsM
 import { AssignedDriversManager } from '../Components/AssignedDriversManager';
 import { DateRangePicker } from '../Components/DateRangePicker';
 import { TripDatesDisplayer } from '../Components/TripDatesDisplayer';
+import { TripAgendaModal } from '../Components/TripAgendaModal';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 
@@ -35,6 +36,7 @@ export function TripDetailsPage() {
   const [activeTab, setActiveTab] = useState('overview'); // overview, client, driver, reservations, voucher
   const [isEditing, setIsEditing] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [isAgendaOpen, setIsAgendaOpen] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -667,6 +669,14 @@ export function TripDetailsPage() {
                   {trip.duration} Days • {trip.itinerary?.length || 0} Destinations
                 </p>
               </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsAgendaOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 dark:bg-brand-primary/10 text-brand-700 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-primary/20 font-bold text-sm rounded-xl transition-colors"
+                >
+                  <Calendar size={16} /> Edit Dates
+                </button>
+              </div>
             </div>
 
             {/* Split Content: Itinerary Days (Left) & Map (Right) */}
@@ -953,6 +963,13 @@ export function TripDetailsPage() {
           </div>
         </div>
       )}
+
+      {/* Agenda Modal */}
+      <TripAgendaModal 
+        isOpen={isAgendaOpen}
+        onClose={() => setIsAgendaOpen(false)}
+        currentTrip={trip}
+      />
     </div>
   );
 }
