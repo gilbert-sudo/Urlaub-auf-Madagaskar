@@ -181,11 +181,25 @@ export function TripDetailsPage() {
 
   useEffect(() => {
     if (mapRef.current && activeStoryDay !== null && trip?.itinerary && trip.itinerary[activeStoryDay]?.coordinates) {
-      mapRef.current.panTo(trip.itinerary[activeStoryDay].coordinates);
-      mapRef.current.setZoom(9);
+      if (isMapExpanded) {
+        mapRef.current.panTo(trip.itinerary[activeStoryDay].coordinates);
+        mapRef.current.setZoom(9);
+      } else {
+        const bounds = new window.google.maps.LatLngBounds();
+        let hasPoints = false;
+        trip.itinerary.forEach(item => {
+          if (item.coordinates) {
+            bounds.extend(item.coordinates);
+            hasPoints = true;
+          }
+        });
+        if (hasPoints) {
+          mapRef.current.fitBounds(bounds);
+        }
+      }
       setActiveMarker(activeStoryDay);
     }
-  }, [activeStoryDay, trip?.itinerary]);
+  }, [activeStoryDay, trip?.itinerary, isMapExpanded]);
 
   useEffect(() => {
     if (!trip?.itinerary || activeStoryDay === null) return;
@@ -708,11 +722,45 @@ export function TripDetailsPage() {
                     )}
                     
                     <GoogleMap
-                      onLoad={(map) => { mapRef.current = map; }}
+                      onLoad={(map) => { 
+                        mapRef.current = map; 
+                        if (!isMapExpanded && trip?.itinerary) {
+                          const bounds = new window.google.maps.LatLngBounds();
+                          let hasPoints = false;
+                          trip.itinerary.forEach(item => {
+                            if (item.coordinates) {
+                              bounds.extend(item.coordinates);
+                              hasPoints = true;
+                            }
+                          });
+                          if (hasPoints) {
+                            map.fitBounds(bounds);
+                          }
+                        }
+                      }}
                       mapContainerStyle={{ width: '100%', height: '100%' }}
                       center={trip.itinerary?.find(i => i.coordinates)?.coordinates || { lat: -18.8792, lng: 47.5079 }}
                       zoom={6}
-                      options={{ disableDefaultUI: false, zoomControl: true, streetViewControl: false, mapTypeControl: false, fullscreenControl: false, gestureHandling: 'greedy' }}
+                      options={{ 
+                        disableDefaultUI: !isMapExpanded, 
+                        zoomControl: isMapExpanded, 
+                        streetViewControl: false, 
+                        mapTypeControl: false, 
+                        fullscreenControl: false, 
+                        gestureHandling: isMapExpanded ? 'greedy' : 'none',
+                        keyboardShortcuts: isMapExpanded,
+                        minZoom: 5,
+                        maxZoom: 15,
+                        restriction: {
+                          latLngBounds: {
+                            north: -11.0,
+                            south: -26.0,
+                            west: 42.0,
+                            east: 51.5,
+                          },
+                          strictBounds: false,
+                        }
+                      }}
                     >
                   {directionsResponses.map((path, idx) => (
                     <PolylineF 
@@ -750,7 +798,7 @@ export function TripDetailsPage() {
                           </div>
                         </OverlayViewF>
                         
-                        {activeMarker === index && (
+                        {isMapExpanded && activeMarker === index && (
                           <InfoWindowF 
                             position={item.coordinates}
                             onCloseClick={() => setActiveMarker(null)}
