@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTripById, shareTrip } from '../store/slices/tripsSlice';
+import { fetchTripById, shareTrip, updateTrip } from '../store/slices/tripsSlice';
 import { fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
 import { toast } from 'sonner';
 import { Card } from '../Components/Card';
@@ -17,6 +17,10 @@ import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF, OverlayView
 import { ItineraryManager } from '../Components/ItineraryManager';
 import { InclusionsExclusionsManager } from '../Components/InclusionsExclusionsManager';
 import { AssignedDriversManager } from '../Components/AssignedDriversManager';
+import { DateRangePicker } from '../Components/DateRangePicker';
+import { TripDatesDisplayer } from '../Components/TripDatesDisplayer';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/style.css';
 
 const libraries = ['places'];
 
@@ -173,7 +177,7 @@ export function TripDetailsPage() {
     return () => {
       if (observerRef.current) observerRef.current.disconnect();
     };
-  }, [trip?.itinerary, activeTab]);
+  }, [trip?.itinerary, activeTab, isMapExpanded]);
 
   useEffect(() => {
     if (mapRef.current && activeStoryDay !== null && trip?.itinerary && trip.itinerary[activeStoryDay]?.coordinates) {
@@ -385,6 +389,16 @@ export function TripDetailsPage() {
       toast.success('Share link copied to clipboard!');
     } catch (err) {
       toast.error('Failed to generate share link');
+    }
+  };
+
+  const handleDateChange = async ({ startDate, endDate, duration }) => {
+    try {
+      await dispatch(updateTrip({ id, data: { startDate, endDate, duration } })).unwrap();
+      toast.success('Trip dates updated successfully');
+      dispatch(fetchTripById(id));
+    } catch (err) {
+      toast.error('Failed to update trip dates');
     }
   };
 
@@ -620,45 +634,86 @@ export function TripDetailsPage() {
               </div>
             </div>
           </div>
-          <div className="space-y-8">
-            {/* Scroll-Telling Map Journey */}
-            
-            {isMapExpanded && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150] transition-opacity duration-500" onClick={() => setIsMapExpanded(false)}></div>}
-            
-            <div className={
-              isMapExpanded 
-              ? "fixed inset-4 md:inset-8 z-[200] bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col overflow-hidden transition-all duration-500 animate-in zoom-in-95"
-              : "relative w-full h-[700px] rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100 group bg-gray-100 transition-all duration-500"
-            }>
-              
-              {isMapExpanded && (
-                <button 
-                  onClick={() => setIsMapExpanded(false)}
-                  className="absolute top-6 right-6 z-[210] w-12 h-12 rounded-full bg-white text-gray-900 hover:bg-gray-100 shadow-xl flex items-center justify-center transition-colors"
-                >
-                  <X size={24} strokeWidth={2.5} />
-                </button>
+          {/* Merged Section: Trip Itinerary & Map */}
+          {isMapExpanded && (
+            <div 
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150] transition-opacity duration-500" 
+              onClick={() => setIsMapExpanded(false)}
+            />
+          )}
+
+          <div className={`bg-white dark:bg-slate-800 rounded-[2rem] shadow-sm border border-gray-100 dark:border-slate-700 ${!isMapExpanded ? 'overflow-hidden' : ''} mb-8`}>
+            {/* Section Header */}
+            <div className="p-6 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-700">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                  <Map size={24} className="text-brand-primary" /> Trip Itinerary
+                </h3>
+                <p className="text-xs font-bold text-gray-500 dark:text-slate-400">
+                  {trip.duration} Days • {trip.itinerary?.length || 0} Destinations
+                </p>
+              </div>
+            </div>
+
+            {/* Split Content: Itinerary Days (Left) & Map (Right) */}
+            <div className={isMapExpanded ? "" : "flex flex-col lg:flex-row items-stretch lg:h-[580px]"}>
+              {/* Left Side: Compact Calendar */}
+              {!isMapExpanded && (
+                <div className="w-full lg:w-2/3 flex flex-col p-4 sm:p-5 bg-white dark:bg-slate-800 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-slate-700 overflow-hidden items-center justify-center">
+                  <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+                    <TripDatesDisplayer 
+                      startDate={trip.startDate} 
+                      endDate={trip.endDate} 
+                      onDateChange={handleDateChange}
+                    />
+                  </div>
+                </div>
               )}
 
-              {!isMapExpanded && (
-                <button 
-                  onClick={() => setIsMapExpanded(true)}
-                  className="absolute top-6 right-6 z-[20] w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm text-gray-900 hover:bg-white shadow-xl flex items-center justify-center transition-transform hover:scale-110 opacity-0 group-hover:opacity-100"
-                  title="Fullscreen Map"
-                >
-                  <Maximize2 size={20} strokeWidth={2.5} />
-                </button>
-              )}
+              {/* Right Side: Map */}
+              <div className={
+                isMapExpanded 
+                ? "fixed inset-4 md:inset-8 z-[200] bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col overflow-hidden transition-all duration-500 animate-in zoom-in-95"
+                : "relative w-full lg:w-1/3 h-[400px] lg:h-full transition-all duration-500 overflow-hidden"
+              }
+              >
+                
+                {isMapExpanded && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsMapExpanded(false); }}
+                    className="absolute top-6 right-6 z-[210] w-12 h-12 rounded-full bg-white text-gray-900 hover:bg-gray-100 shadow-xl flex items-center justify-center transition-colors"
+                  >
+                    <X size={24} strokeWidth={2.5} />
+                  </button>
+                )}
 
               {/* The Base Map */}
               {isLoaded ? (
-                <GoogleMap
-                  onLoad={(map) => { mapRef.current = map; }}
-                  mapContainerStyle={{ width: '100%', height: '100%' }}
-                  center={trip.itinerary?.find(i => i.coordinates)?.coordinates || { lat: -18.8792, lng: 47.5079 }}
-                  zoom={6}
-                  options={{ disableDefaultUI: false, zoomControl: true, streetViewControl: false, mapTypeControl: false, fullscreenControl: false, gestureHandling: 'greedy' }}
-                >
+                <div className={!isMapExpanded ? "w-full h-full p-2 sm:p-4" : "w-full h-full"}>
+                  <div 
+                    className={`w-full h-full relative ${!isMapExpanded ? 'group rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 dark:border-slate-700 cursor-pointer' : ''}`}
+                    onClick={() => !isMapExpanded && setIsMapExpanded(true)}
+                  >
+                    {!isMapExpanded && (
+                      <div 
+                        className="absolute inset-0 z-[20] flex items-center justify-center bg-transparent group-hover:bg-black/5 transition-colors"
+                      >
+                        <button 
+                          className="w-16 h-16 rounded-full bg-white/90 backdrop-blur-sm text-gray-900 shadow-xl flex items-center justify-center transition-transform group-hover:scale-110 opacity-0 group-hover:opacity-100 pointer-events-none"
+                          title="Fullscreen Map"
+                        >
+                          <Maximize2 size={24} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    )}
+                    
+                    <GoogleMap
+                      onLoad={(map) => { mapRef.current = map; }}
+                      mapContainerStyle={{ width: '100%', height: '100%' }}
+                      center={trip.itinerary?.find(i => i.coordinates)?.coordinates || { lat: -18.8792, lng: 47.5079 }}
+                      zoom={6}
+                      options={{ disableDefaultUI: false, zoomControl: true, streetViewControl: false, mapTypeControl: false, fullscreenControl: false, gestureHandling: 'greedy' }}
+                    >
                   {directionsResponses.map((path, idx) => (
                     <PolylineF 
                       key={`osrm-${idx}`}
@@ -767,11 +822,14 @@ export function TripDetailsPage() {
                     )
                   ))}
                 </GoogleMap>
+                  </div>
+                </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">Loading Map...</div>
               )}
 
               {/* The Floating Story Overlay */}
+              {isMapExpanded && (
               <div 
                 id="story-scroll-container"
                 className="absolute md:inset-y-0 md:left-0 bottom-0 left-0 w-full md:w-[460px] h-[45%] md:h-full z-10 overflow-x-auto md:overflow-y-auto overflow-y-hidden no-scrollbar scroll-smooth pointer-events-auto px-4 md:px-8 pt-4 md:pt-8 pb-4 md:pb-[500px] transition-colors duration-500 md:bg-gradient-to-r md:from-white/95 md:via-white/80 md:to-transparent bg-gradient-to-t from-white/95 via-white/90 to-transparent flex md:block items-end md:items-stretch snap-x snap-mandatory"
@@ -819,7 +877,10 @@ export function TripDetailsPage() {
                   ))}
                 </div>
               </div>
-            </div>  </div>
+              )}
+            </div>
+          </div>
+        </div>
 
               {/* Assigned Drivers Section */}
               <AssignedDriversManager trip={trip} tripEvents={tripEvents} />
