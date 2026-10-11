@@ -45,7 +45,24 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
     } else {
       setShouldShowBelow(true);
     }
-  }, [event]);
+
+    const isValidationActive = Boolean(
+      (event.isPreview || event.isEditing) && (event.onSave || event.onReset || event.onCancel) && !continuesPrior
+    );
+
+    if (isValidationActive) {
+      const elevatedList = [];
+      let current = eventEl;
+      while (current && !current.classList?.contains('custom-calendar') && !current.classList?.contains('year-view')) {
+        current.classList.add('rbc-validation-elevated');
+        elevatedList.push(current);
+        current = current.parentElement;
+      }
+      return () => {
+        elevatedList.forEach(el => el.classList.remove('rbc-validation-elevated'));
+      };
+    }
+  }, [event, continuesPrior]);
 
   const { onEventResize } = useContext(AgendaContext);
 
@@ -78,8 +95,9 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
     <>
       {(event.isPreview || event.isEditing) && (event.onSave || event.onReset || event.onCancel) && !continuesPrior && (
         <div 
-          className={`event-validation-ui absolute ${shouldShowBelow ? 'top-[calc(100%+0.5rem)] schedule-ui-below' : '-top-[3.25rem]'} left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 bg-white dark:bg-slate-800 py-1 px-2.5 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 pointer-events-auto animate-in fade-in zoom-in-95 duration-200 transition-all select-none`}
+          className={`event-validation-ui absolute ${shouldShowBelow ? 'top-[calc(100%+0.5rem)] schedule-ui-below' : '-top-[3.25rem]'} left-1/2 -translate-x-1/2 z-[1000000] flex items-center gap-1.5 bg-white dark:bg-slate-800 py-1 px-2.5 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 pointer-events-auto animate-in fade-in zoom-in-95 duration-200 transition-all select-none cursor-default isolate`}
           onMouseDown={(e) => e.stopPropagation()} 
+          onClick={(e) => e.stopPropagation()}
         >
           {durationDays && (
             <span className="text-[11px] font-black tracking-tight text-slate-600 dark:text-slate-300 px-1 whitespace-nowrap">
@@ -88,6 +106,7 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
           )}
           {event.onSave && (
             <button 
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); event.onSave(); }} 
               className="flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
               title="Save changes"
@@ -97,7 +116,8 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
           )}
           {hasResetOption && (
             <button 
-              onClick={handleReset} 
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); handleReset(e); }} 
               className="flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
               title="Reset to initial dates"
             >
@@ -106,6 +126,7 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
           )}
           {event.onCancel && (
             <button 
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); event.onCancel(); }} 
               className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
               title="Cancel changes"
@@ -964,12 +985,33 @@ export function AgendaModal({
         }
         .custom-calendar .rbc-month-row, .custom-calendar .rbc-row, .custom-calendar .rbc-row-content,
         .year-view .rbc-month-row, .year-view .rbc-row, .year-view .rbc-row-content,
-        .rbc-month-row, .rbc-row, .rbc-row-content {
+        .rbc-month-row, .rbc-row, .rbc-row-content, .rbc-row-segment, .rbc-addons-dnd-resizable, .rbc-event {
           overflow: visible !important;
         }
         .rbc-month-row { z-index: 1; }
         .rbc-month-row:hover, .rbc-month-row:focus-within { z-index: 50 !important; }
-        .rbc-month-row:has(.event-validation-ui), .rbc-row:has(.event-validation-ui) { z-index: 9999 !important; }
+
+        /* Ensure ANY container or ancestor of .event-validation-ui sits above all other rows and schedules */
+        .rbc-validation-elevated,
+        .rbc-month-row:has(.event-validation-ui),
+        .rbc-row-content:has(.event-validation-ui),
+        .rbc-row-content-scroll-container:has(.event-validation-ui),
+        .rbc-addons-dnd-row-body:has(.event-validation-ui),
+        .rbc-row:has(.event-validation-ui),
+        .rbc-row-segment:has(.event-validation-ui),
+        .rbc-addons-dnd-resizable:has(.event-validation-ui),
+        .rbc-event:has(.event-validation-ui) {
+          position: relative !important;
+          z-index: 999999 !important;
+          overflow: visible !important;
+        }
+
+        /* Floating schedule validation toolbar sits atop everything in the app */
+        .event-validation-ui {
+          position: absolute !important;
+          z-index: 1000000 !important;
+          pointer-events: auto !important;
+        }
         
         /* Floating schedule validation toolbar */
         .rbc-addons-dnd-row-body > .rbc-row:nth-child(1) .event-validation-ui,
