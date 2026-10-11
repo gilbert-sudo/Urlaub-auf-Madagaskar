@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { addDriverEvent, updateDriverEvent, deleteDriverEvent, fetchDriverEvents } from '../store/slices/driverEventsSlice';
+import { addDriverEvent, updateDriverEvent, deleteDriverEvent, fetchDriverEvents, fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
 import { fetchTrips } from '../store/slices/tripsSlice';
 import axios from 'axios';
 import { startOfDay, endOfDay, format, addHours, differenceInDays } from 'date-fns';
@@ -17,7 +17,7 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
 
   const [localEvents, setLocalEvents] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarView, setCalendarView] = useState('month');
+  const [calendarView, setCalendarView] = useState('year');
 
   // Staged modifications on an existing event (matches TripAgendaModal)
   const [modifiedEvent, setModifiedEvent] = useState(null);
@@ -64,6 +64,7 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
       setIsCreating(false);
       setSelectedEvent(null);
       setShowEventForm(false);
+      setCalendarView('year');
     }
   }, [isOpen, driver, dispatch, tripsStatus]);
 
@@ -147,6 +148,9 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
       if (localEvents) {
         setLocalEvents(localEvents.map(e => e._id === saved._id ? saved : e));
       }
+      if (defaultTripId) {
+        dispatch(fetchDriverEventsByTrip(defaultTripId));
+      }
       setModifiedEvent(null);
       toast.success('Schedule updated successfully');
     } catch (err) {
@@ -212,6 +216,9 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
       if (localEvents) {
         setLocalEvents([...localEvents, saved]);
       }
+      if (defaultTripId) {
+        dispatch(fetchDriverEventsByTrip(defaultTripId));
+      }
       setIsCreating(false);
       setShowEventForm(false);
       toast.success('Schedule created successfully');
@@ -268,6 +275,9 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
       if (localEvents) {
         setLocalEvents(localEvents.map(e => e._id === saved._id ? saved : e));
       }
+      if (defaultTripId) {
+        dispatch(fetchDriverEventsByTrip(defaultTripId));
+      }
       setSelectedEvent(null);
       setShowEventForm(false);
       toast.success('Event updated successfully');
@@ -283,6 +293,9 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
         await dispatch(deleteDriverEvent(selectedEvent._id)).unwrap();
         if (localEvents) {
           setLocalEvents(localEvents.filter(e => e._id !== selectedEvent._id));
+        }
+        if (defaultTripId) {
+          dispatch(fetchDriverEventsByTrip(defaultTripId));
         }
         setSelectedEvent(null);
         setShowEventForm(false);
@@ -698,8 +711,8 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
       dayPropGetter={dayPropGetter}
       headerActions={HeaderActions}
       sidebarContent={showEventForm ? SidebarContent : null}
-      availableViews={['month', 'week', 'day', 'year', 'agenda']}
-      defaultView="month"
+      availableViews={['year', 'month', 'week', 'day', 'agenda']}
+      defaultView="year"
     />
   );
 }

@@ -158,6 +158,8 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
       onEventDrop={handleEventDrop}
       onEventResize={handleEventResize}
       eventStyleGetter={eventStyleGetter}
+      availableViews={['year', 'month', 'week', 'day', 'agenda']}
+      defaultView="year"
       headerActions={
         isModified && (
           <div className="flex items-center gap-2">

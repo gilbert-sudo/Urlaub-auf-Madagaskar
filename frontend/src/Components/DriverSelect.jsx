@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createDriver } from '../store/slices/driversSlice';
 import { toast } from 'sonner';
 
-export function DriverSelect({ value, onChange, required, label = 'Driver', compact = false }) {
+export function DriverSelect({ value, onChange, required, label = 'Driver', compact = false, modalZIndex = 'z-[100010]' }) {
   const dispatch = useDispatch();
   const { items: drivers } = useSelector(state => state.drivers);
   
@@ -136,7 +136,7 @@ export function DriverSelect({ value, onChange, required, label = 'Driver', comp
       {isClient && document.body && createPortal(
         <AnimatePresence>
           {isOpen && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 md:p-12">
+            <div className={`fixed inset-0 ${modalZIndex} flex items-center justify-center p-4 sm:p-6 md:p-12`}>
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

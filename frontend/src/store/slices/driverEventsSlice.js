@@ -89,15 +89,23 @@ const driverEventsSlice = createSlice({
       })
       .addCase(addDriverEvent.fulfilled, (state, action) => {
         state.events.push(action.payload);
+        if (action.payload.tripId) {
+          state.tripEvents.push(action.payload);
+        }
       })
       .addCase(updateDriverEvent.fulfilled, (state, action) => {
         const index = state.events.findIndex((e) => e._id === action.payload._id);
         if (index !== -1) {
-          state.events[index] = action.payload;
+          state.events[index] = { ...state.events[index], ...action.payload };
+        }
+        const tripIdx = state.tripEvents.findIndex((e) => e._id === action.payload._id);
+        if (tripIdx !== -1) {
+          state.tripEvents[tripIdx] = { ...state.tripEvents[tripIdx], ...action.payload };
         }
       })
       .addCase(deleteDriverEvent.fulfilled, (state, action) => {
         state.events = state.events.filter((e) => e._id !== action.payload);
+        state.tripEvents = state.tripEvents.filter((e) => e._id !== action.payload);
       });
   },
 });

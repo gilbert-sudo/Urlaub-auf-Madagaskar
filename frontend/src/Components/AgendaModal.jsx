@@ -795,10 +795,18 @@ export function AgendaModal({
   customMainContent,
   headerActions,
   components = {},
-  availableViews = ['month', 'week', 'day', 'year', 'agenda'],
-  defaultView = 'month'
+  availableViews = ['year', 'month', 'week', 'day', 'agenda'],
+  defaultView = 'year'
 }) {
   const [calendarView, setCalendarView] = useState(defaultView);
+
+  // Always reset to defaultView (year mode) whenever the modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCalendarView(defaultView);
+    }
+  }, [isOpen, defaultView]);
+
   const calendarViews = useMemo(() => {
     const views = {};
     if (availableViews.includes('year')) views.year = YearView;

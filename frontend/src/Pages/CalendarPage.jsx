@@ -300,7 +300,7 @@ export function CalendarPage() {
   const drivers = useSelector((state) => state.drivers.items || []);
 
   const [filter, setFilter] = useState('all'); // 'all', 'trips', 'driver_events'
-  const [currentView, setCurrentView] = useState('month');
+  const [currentView, setCurrentView] = useState('year');
   const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
