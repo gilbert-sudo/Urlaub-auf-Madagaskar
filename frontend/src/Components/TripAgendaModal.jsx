@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchTrips, updateTrip } from '../store/slices/tripsSlice';
 import { differenceInDays } from 'date-fns';
-import { Map, CalendarIcon } from 'lucide-react';
+import { Map, CalendarIcon, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgendaModal } from './AgendaModal';
 
@@ -66,6 +66,16 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
     }
   };
 
+  const handleReset = () => {
+    if (!currentTrip) return;
+    setLocalTrip({
+      ...currentTrip,
+      start: new Date(currentTrip.startDate),
+      end: new Date(currentTrip.endDate)
+    });
+    toast.info('Schedule reset to initial state');
+  };
+
   const handleCancel = () => {
     setLocalTrip({
       ...currentTrip,
@@ -88,6 +98,7 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
          isReadOnly: false,
          isEditing: isModified,
          onSave: handleSave,
+         onReset: handleReset,
          onCancel: handleCancel
        };
     }
@@ -150,6 +161,13 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
       headerActions={
         isModified && (
           <div className="flex items-center gap-2">
+            <button 
+              onClick={handleReset} 
+              className="px-3 py-1.5 text-xs font-bold text-amber-600 hover:text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors flex items-center gap-1"
+              title="Reset to initial dates"
+            >
+              <RotateCcw size={14} /> Reset
+            </button>
             <button onClick={handleCancel} className="px-4 py-2 font-bold text-gray-600 hover:text-gray-900 transition-colors">Cancel</button>
             <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-brand-600 transition-all hover:-translate-y-0.5">
               Save Changes

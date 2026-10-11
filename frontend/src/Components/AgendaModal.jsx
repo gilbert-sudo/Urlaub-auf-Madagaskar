@@ -6,7 +6,7 @@ import { format, parse, startOfWeek, getDay, startOfDay, endOfDay, differenceInD
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import { X, Check } from 'lucide-react';
+import { X, Check, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const locales = { 'en-US': enUS };
@@ -47,14 +47,36 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
     }
   }, [event]);
 
+  const { onEventResize } = useContext(AgendaContext);
+
   const durationDays = useMemo(() => {
     if (!event?.start || !event?.end) return null;
     return Math.max(1, differenceInDays(new Date(event.end), new Date(event.start)) + 1);
   }, [event?.start, event?.end]);
 
+  const hasResetOption = Boolean(
+    event.onReset || 
+    (event.startDate && event.endDate) || 
+    (event.initialStart && event.initialEnd)
+  );
+
+  const handleReset = (e) => {
+    e.stopPropagation();
+    if (event.onReset) {
+      event.onReset();
+      return;
+    }
+    const initialStart = event.initialStart ? new Date(event.initialStart) : (event.startDate ? new Date(event.startDate) : null);
+    const initialEnd = event.initialEnd ? new Date(event.initialEnd) : (event.endDate ? new Date(event.endDate) : null);
+    if (initialStart && initialEnd && onEventResize) {
+      onEventResize({ event, start: initialStart, end: initialEnd });
+      toast.info('Schedule reset to initial state');
+    }
+  };
+
   return (
     <>
-      {(event.isPreview || event.isEditing) && event.onSave && event.onCancel && !continuesPrior && (
+      {(event.isPreview || event.isEditing) && (event.onSave || event.onReset || event.onCancel) && !continuesPrior && (
         <div 
           className={`event-validation-ui absolute ${shouldShowBelow ? 'top-[calc(100%+0.5rem)] schedule-ui-below' : '-top-[3.25rem]'} left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 bg-white dark:bg-slate-800 py-1 px-2.5 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 pointer-events-auto animate-in fade-in zoom-in-95 duration-200 transition-all select-none`}
           onMouseDown={(e) => e.stopPropagation()} 
@@ -64,25 +86,41 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
               {durationDays}d
             </span>
           )}
-          <button 
-            onClick={(e) => { e.stopPropagation(); event.onSave(); }} 
-            className="flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
-            title="Save changes"
-          >
-            <Check size={14} strokeWidth={3} />
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); event.onCancel(); }} 
-            className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
-            title="Cancel changes"
-          >
-            <X size={14} strokeWidth={3} />
-          </button>
+          {event.onSave && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); event.onSave(); }} 
+              className="flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
+              title="Save changes"
+            >
+              <Check size={14} strokeWidth={3} />
+            </button>
+          )}
+          {hasResetOption && (
+            <button 
+              onClick={handleReset} 
+              className="flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
+              title="Reset to initial dates"
+            >
+              <RotateCcw size={14} strokeWidth={2.5} />
+            </button>
+          )}
+          {event.onCancel && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); event.onCancel(); }} 
+              className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
+              title="Cancel changes"
+            >
+              <X size={14} strokeWidth={3} />
+            </button>
+          )}
         </div>
       )}
       <div 
         ref={contentRef}
-        data-event-id={event._id || event.id}
+        data-event-id={event._id || event.id || (event.isPreview ? 'preview-event' : '')}
+        data-event-title={event.title || event.displayTitle || ''}
+        data-event-start={event.start ? new Date(event.start).toISOString() : ''}
+        data-event-end={event.end ? new Date(event.end).toISOString() : ''}
         className={`flex items-center justify-between w-full h-full overflow-hidden whitespace-nowrap ${!continuesPrior ? 'pl-7' : 'pl-2'} ${!continuesAfter ? 'pr-7' : 'pr-2'} relative`}
       >
         {!continuesPrior && (
@@ -132,6 +170,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
     return Array.from({ length: 12 }, (_, i) => new Date(currentYear, i, 1));
   }, [currentYear]);
 
+  // Slot range selection (empty cells)
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragCurrent, setDragCurrent] = useState(null);
@@ -139,6 +178,22 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   const cellsRef = useRef([]);
   const containerRef = useRef(null);
   const initialScrollRef = useRef(0);
+
+  // Cross-month schedule resizing state
+  const [resizeState, setResizeState] = useState(null);
+  const resizeStateRef = useRef(null);
+  resizeStateRef.current = resizeState;
+
+  const [tooltipInfo, setTooltipInfo] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    start: null,
+    end: null,
+  });
+
+  const lastMousePos = useRef({ x: 0, y: 0 });
+  const scrollAnimRef = useRef(null);
 
   // Auto-scroll to the active month when switching to Year view or changing dates
   useEffect(() => {
@@ -152,10 +207,351 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
       return () => clearTimeout(timer);
     }
   }, [date, currentYear]);
+
+  // Live events reflecting cross-month resizing across all 12 month calendars
+  const displayEvents = useMemo(() => {
+    if (!resizeState) return events;
+    return events.map(ev => {
+      const isTarget = 
+        ev === resizeState.event ||
+        (ev._id && resizeState.event._id && String(ev._id) === String(resizeState.event._id)) ||
+        (ev.id && resizeState.event.id && String(ev.id) === String(resizeState.event.id)) ||
+        (resizeState.event.isPreview && ev.isPreview) ||
+        (ev.title && ev.title === resizeState.event.title && 
+         new Date(ev.start).getTime() === new Date(resizeState.initialStart).getTime());
+
+      if (isTarget) {
+        return {
+          ...ev,
+          start: resizeState.currentStart,
+          end: resizeState.currentEnd,
+          isEditing: true,
+          isPreview: true,
+        };
+      }
+      return ev;
+    });
+  }, [events, resizeState]);
+
+  // Resolves coordinates anywhere in YearView to a specific date
+  const getDateAtPoint = useCallback((clientX, clientY) => {
+    // 1. Direct hit on data-date element
+    const elements = document.elementsFromPoint(clientX, clientY);
+    for (const el of elements) {
+      if (el.hasAttribute && el.hasAttribute('data-date')) {
+        const dStr = el.getAttribute('data-date');
+        if (dStr) return new Date(dStr);
+      }
+    }
+
+    // 2. Fallback: closest date cell in the nearest month card
+    const container = containerRef.current;
+    if (!container) return null;
+
+    const monthCards = container.querySelectorAll('.year-month-card');
+    if (!monthCards.length) return null;
+
+    let targetCard = null;
+    let minCardDist = Infinity;
+    for (const card of monthCards) {
+      const r = card.getBoundingClientRect();
+      if (clientY >= r.top && clientY <= r.bottom) {
+        targetCard = card;
+        break;
+      }
+      const dist = Math.min(Math.abs(clientY - r.top), Math.abs(clientY - r.bottom));
+      if (dist < minCardDist) {
+        minCardDist = dist;
+        targetCard = card;
+      }
+    }
+
+    if (!targetCard) targetCard = monthCards[0];
+
+    const cells = targetCard.querySelectorAll('[data-date]');
+    if (!cells.length) return null;
+
+    let closestDate = null;
+    let minDist = Infinity;
+    for (const cell of cells) {
+      const r = cell.getBoundingClientRect();
+      const dx = Math.max(r.left - clientX, 0, clientX - r.right);
+      const dy = Math.max(r.top - clientY, 0, clientY - r.bottom);
+      const dist = Math.hypot(dx, dy);
+      if (dist < minDist) {
+        minDist = dist;
+        closestDate = new Date(cell.getAttribute('data-date'));
+      }
+    }
+
+    return closestDate;
+  }, []);
+
+  // Update resizing preview dates based on cursor position
+  const updateResizingDate = useCallback((clientX, clientY) => {
+    const state = resizeStateRef.current;
+    if (!state) return;
+
+    const hoveredDate = getDateAtPoint(clientX, clientY);
+    if (!hoveredDate) return;
+
+    const { direction, initialStart, initialEnd } = state;
+    let nextStart = new Date(state.currentStart);
+    let nextEnd = new Date(state.currentEnd);
+
+    if (direction === 'END') {
+      const targetDate = new Date(hoveredDate.getFullYear(), hoveredDate.getMonth(), hoveredDate.getDate(), 23, 59, 59, 999);
+      if (targetDate.getTime() < initialStart.getTime()) {
+        nextEnd = new Date(initialStart.getFullYear(), initialStart.getMonth(), initialStart.getDate(), 23, 59, 59, 999);
+      } else {
+        nextEnd = targetDate;
+      }
+      nextStart = new Date(initialStart);
+    } else {
+      const targetDate = new Date(hoveredDate.getFullYear(), hoveredDate.getMonth(), hoveredDate.getDate(), 0, 0, 0, 0);
+      if (targetDate.getTime() > initialEnd.getTime()) {
+        nextStart = new Date(initialEnd.getFullYear(), initialEnd.getMonth(), initialEnd.getDate(), 0, 0, 0, 0);
+      } else {
+        nextStart = targetDate;
+      }
+      nextEnd = new Date(initialEnd);
+    }
+
+    const currentS = state.currentStart;
+    const currentE = state.currentEnd;
+
+    if (
+      nextStart.getFullYear() !== currentS.getFullYear() ||
+      nextStart.getMonth() !== currentS.getMonth() ||
+      nextStart.getDate() !== currentS.getDate() ||
+      nextEnd.getFullYear() !== currentE.getFullYear() ||
+      nextEnd.getMonth() !== currentE.getMonth() ||
+      nextEnd.getDate() !== currentE.getDate()
+    ) {
+      const updated = {
+        ...state,
+        currentStart: nextStart,
+        currentEnd: nextEnd,
+      };
+      resizeStateRef.current = updated;
+      setResizeState(updated);
+    }
+
+    setTooltipInfo({
+      visible: true,
+      x: clientX,
+      y: clientY,
+      start: nextStart,
+      end: nextEnd,
+    });
+  }, [getDateAtPoint]);
+
+  // Smooth auto-scroll when dragging near viewport edges in Year view
+  const checkAutoScroll = useCallback(() => {
+    if (!resizeStateRef.current || !containerRef.current) {
+      scrollAnimRef.current = null;
+      return;
+    }
+
+    const container = containerRef.current;
+    const rect = container.getBoundingClientRect();
+    const { x, y } = lastMousePos.current;
+
+    const edgeZone = 85;
+    let scrollDelta = 0;
+
+    if (y > rect.bottom - edgeZone) {
+      const intensity = Math.min(1, (y - (rect.bottom - edgeZone)) / edgeZone);
+      scrollDelta = Math.max(3, Math.round(intensity * 26));
+    } else if (y < rect.top + edgeZone) {
+      const intensity = Math.min(1, ((rect.top + edgeZone) - y) / edgeZone);
+      scrollDelta = -Math.max(3, Math.round(intensity * 26));
+    }
+
+    if (scrollDelta !== 0) {
+      container.scrollTop += scrollDelta;
+      updateResizingDate(x, y);
+    }
+
+    scrollAnimRef.current = requestAnimationFrame(checkAutoScroll);
+  }, [updateResizingDate]);
+
+  // Find target event from clicked anchor element
+  const findTargetEventFromAnchor = useCallback((anchorEl) => {
+    const resizableEl = anchorEl.closest('.rbc-addons-dnd-resizable') || anchorEl.closest('.rbc-event') || anchorEl.parentElement;
+    const eventEl = resizableEl?.querySelector('[data-event-id]') || 
+                    anchorEl.closest('.rbc-row-segment')?.querySelector('[data-event-id]') ||
+                    anchorEl.parentElement?.querySelector('[data-event-id]');
+
+    const eventId = eventEl?.getAttribute('data-event-id');
+    const eventTitle = eventEl?.getAttribute('data-event-title');
+    const eventStartStr = eventEl?.getAttribute('data-event-start');
+    const eventEndStr = eventEl?.getAttribute('data-event-end');
+
+    let target = null;
+    if (eventId && eventId !== 'preview-event') {
+      target = events.find(ev => (ev._id && String(ev._id) === String(eventId)) || (ev.id && String(ev.id) === String(eventId)));
+    }
+    if (!target && eventId === 'preview-event') {
+      target = events.find(ev => ev.isPreview);
+    }
+    if (!target && eventStartStr && eventEndStr) {
+      target = events.find(ev => 
+        ev.start && ev.end &&
+        new Date(ev.start).toISOString() === eventStartStr &&
+        new Date(ev.end).toISOString() === eventEndStr
+      );
+    }
+    if (!target && eventStartStr) {
+      target = events.find(ev => ev.start && new Date(ev.start).toISOString() === eventStartStr);
+    }
+    if (!target && eventTitle) {
+      target = events.find(ev => (ev.title || ev.displayTitle) === eventTitle);
+    }
+    if (!target && events.length === 1) {
+      target = events[0];
+    }
+
+    return target;
+  }, [events]);
+
+  // Determine if anchor is start handle (left) or end handle (right)
+  const getAnchorDirection = (anchorEl) => {
+    const resizableEl = anchorEl.closest('.rbc-addons-dnd-resizable') || anchorEl.parentElement;
+    const isFirstChild = !anchorEl.previousElementSibling || anchorEl.matches(':first-child') || anchorEl.classList.contains('rbc-addons-dnd-resize-ew-anchor-left');
+    const isLastChild = !anchorEl.nextElementSibling || anchorEl.matches(':last-child') || anchorEl.classList.contains('rbc-addons-dnd-resize-ew-anchor-right');
+
+    if (isFirstChild && !isLastChild) return 'START';
+    if (isLastChild && !isFirstChild) return 'END';
+
+    if (resizableEl) {
+      const resizableRect = resizableEl.getBoundingClientRect();
+      const anchorRect = anchorEl.getBoundingClientRect();
+      return (anchorRect.left + anchorRect.width / 2) < (resizableRect.left + resizableRect.width / 2) ? 'START' : 'END';
+    }
+
+    return 'END';
+  };
+
+  // Complete cross-month resizing
+  const handleResizeMouseUp = useCallback(() => {
+    if (scrollAnimRef.current) {
+      cancelAnimationFrame(scrollAnimRef.current);
+      scrollAnimRef.current = null;
+    }
+
+    document.body.classList.remove('rbc-is-resizing');
+
+    const state = resizeStateRef.current;
+    if (!state) return;
+
+    const { event, currentStart, currentEnd, initialStart, initialEnd } = state;
+    
+    resizeStateRef.current = null;
+    setResizeState(null);
+    setTooltipInfo(prev => ({ ...prev, visible: false }));
+
+    const hasChanged = 
+      startOfDay(currentStart).getTime() !== startOfDay(initialStart).getTime() ||
+      startOfDay(currentEnd).getTime() !== startOfDay(initialEnd).getTime();
+
+    if (hasChanged && onEventResize) {
+      onEventResize({
+        event,
+        start: currentStart,
+        end: currentEnd
+      });
+    }
+  }, [onEventResize]);
+
+  // Capture mousedown on resize handles to initiate cross-month resize
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleContainerMouseDown = (e) => {
+      if (e.button !== 0) return;
+      const anchorEl = e.target.closest('.rbc-addons-dnd-resize-ew-anchor, .rbc-addons-dnd-resize-ew-icon');
+      if (!anchorEl) return;
+
+      const targetEvent = findTargetEventFromAnchor(anchorEl);
+      if (!targetEvent || targetEvent.isReadOnly) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) {
+        e.stopImmediatePropagation();
+      }
+
+      const direction = getAnchorDirection(anchorEl);
+      const origStart = new Date(targetEvent.start);
+      const origEnd = new Date(targetEvent.end);
+
+      const initial = {
+        event: targetEvent,
+        direction,
+        initialStart: origStart,
+        initialEnd: origEnd,
+        currentStart: origStart,
+        currentEnd: origEnd,
+      };
+
+      resizeStateRef.current = initial;
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+      setResizeState(initial);
+
+      document.documentElement.style.setProperty('--drag-shift-px', '0px');
+      document.body.classList.add('rbc-is-resizing');
+      document.body.classList.remove('rbc-is-moving');
+
+      setTooltipInfo({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY,
+        start: origStart,
+        end: origEnd,
+      });
+    };
+
+    container.addEventListener('mousedown', handleContainerMouseDown, true);
+    return () => {
+      container.removeEventListener('mousedown', handleContainerMouseDown, true);
+    };
+  }, [events, findTargetEventFromAnchor]);
+
+  // Global mousemove and mouseup listeners during active resize
+  useEffect(() => {
+    if (!resizeState) return;
+
+    const onMouseMove = (e) => {
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+      updateResizingDate(e.clientX, e.clientY);
+
+      if (!scrollAnimRef.current) {
+        checkAutoScroll();
+      }
+    };
+
+    const onMouseUp = () => {
+      handleResizeMouseUp();
+    };
+
+    window.addEventListener('mousemove', onMouseMove, { passive: false });
+    window.addEventListener('mouseup', onMouseUp, { passive: false });
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      if (scrollAnimRef.current) {
+        cancelAnimationFrame(scrollAnimRef.current);
+        scrollAnimRef.current = null;
+      }
+    };
+  }, [resizeState, updateResizingDate, checkAutoScroll, handleResizeMouseUp]);
   
+  // Existing slot dragging handlers
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
-    // Don't intercept clicks on events or resize anchors
     if (e.target.closest('.rbc-event, .rbc-addons-dnd-resizable, [class*="rbc-addons-dnd-resize"]')) return;
 
     const container = containerRef.current;
@@ -268,7 +664,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
       onMouseDown={handleMouseDown}
     >
       {months.map((monthDate, idx) => {
-        const monthEventsCount = events.filter(ev => {
+        const monthEventsCount = displayEvents.filter(ev => {
           const m = monthDate.getMonth();
           const y = monthDate.getFullYear();
           const s = new Date(ev.start);
@@ -292,7 +688,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
             <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-2 sm:p-4">
                <DnDCalendar
                   localizer={localizer}
-                  events={events}
+                  events={displayEvents}
                   date={monthDate}
                   view="month"
                   toolbar={false}
@@ -318,6 +714,31 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
           </div>
         );
       })}
+
+      {tooltipInfo.visible && tooltipInfo.start && tooltipInfo.end && createPortal(
+        <div 
+          className="fixed pointer-events-none z-[10000] flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 dark:bg-slate-800/95 text-white shadow-2xl border border-white/20 backdrop-blur-md text-xs font-bold tracking-tight animate-in fade-in zoom-in-95 duration-100 select-none"
+          style={{
+            left: `${tooltipInfo.x}px`,
+            top: `${tooltipInfo.y < 60 ? tooltipInfo.y + 24 : tooltipInfo.y - 42}px`,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <span className="flex items-center gap-1.5">
+            <span>{format(tooltipInfo.start, 'MMM d')}</span>
+            <span className="opacity-50">→</span>
+            <span>
+              {tooltipInfo.start.getFullYear() === tooltipInfo.end.getFullYear()
+                ? format(tooltipInfo.end, 'MMM d, yyyy')
+                : format(tooltipInfo.end, 'MMM d, yyyy')}
+            </span>
+          </span>
+          <span className="bg-emerald-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-sm">
+            {Math.max(1, differenceInDays(tooltipInfo.end, tooltipInfo.start) + 1)}d
+          </span>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -642,6 +1063,12 @@ export function AgendaModal({
         body.rbc-is-moving .rbc-event,
         body.rbc-is-moving .rbc-row-segment {
           transition: none !important;
+        }
+
+        body.rbc-is-resizing,
+        body.rbc-is-resizing * {
+          cursor: col-resize !important;
+          user-select: none !important;
         }
 
         /* Ghost of original event while resizing or dragging */
