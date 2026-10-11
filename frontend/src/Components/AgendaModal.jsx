@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import { format, parse, startOfWeek, getDay, startOfDay, endOfDay } from 'date-fns';
+import { format, parse, startOfWeek, getDay, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
@@ -16,30 +16,72 @@ const DnDCalendar = withDragAndDrop(Calendar);
 export const AgendaContext = createContext({});
 
 const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
+  const contentRef = useRef(null);
+  const [shouldShowBelow, setShouldShowBelow] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!contentRef.current) return;
+    const eventEl = contentRef.current.closest('.rbc-event');
+    if (!eventEl) return;
+
+    const eventRow = eventEl.closest('.rbc-row');
+    if (!eventRow) return;
+
+    const monthRow = eventEl.closest('.rbc-month-row');
+    if (monthRow) {
+      const allEventRows = Array.from(monthRow.querySelectorAll('.rbc-row')).filter(
+        r => !r.querySelector('.rbc-date-cell') && !r.classList?.contains('rbc-addons-dnd-drag-row')
+      );
+      const rowIndex = allEventRows.indexOf(eventRow);
+      if (rowIndex !== -1) {
+        setShouldShowBelow(rowIndex === 0 || rowIndex === 1);
+      } else {
+        const siblings = Array.from(eventRow.parentElement?.children || []).filter(
+          r => r.classList?.contains('rbc-row') && !r.querySelector('.rbc-date-cell')
+        );
+        const sibIndex = siblings.indexOf(eventRow);
+        setShouldShowBelow(sibIndex === 0 || sibIndex === 1);
+      }
+    } else {
+      setShouldShowBelow(true);
+    }
+  }, [event]);
+
+  const durationDays = useMemo(() => {
+    if (!event?.start || !event?.end) return null;
+    return Math.max(1, differenceInDays(new Date(event.end), new Date(event.start)) + 1);
+  }, [event?.start, event?.end]);
+
   return (
     <>
       {(event.isPreview || event.isEditing) && event.onSave && event.onCancel && !continuesPrior && (
         <div 
-          className="absolute -top-[3.25rem] left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 pointer-events-auto"
+          className={`event-validation-ui absolute ${shouldShowBelow ? 'top-[calc(100%+0.5rem)] schedule-ui-below' : '-top-[3.25rem]'} left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 bg-white dark:bg-slate-800 py-1 px-2.5 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 pointer-events-auto animate-in fade-in zoom-in-95 duration-200 transition-all select-none`}
           onMouseDown={(e) => e.stopPropagation()} 
         >
+          {durationDays && (
+            <span className="text-[11px] font-black tracking-tight text-slate-600 dark:text-slate-300 px-1 whitespace-nowrap">
+              {durationDays}d
+            </span>
+          )}
           <button 
             onClick={(e) => { e.stopPropagation(); event.onSave(); }} 
             className="flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
-            title="Save"
+            title="Save changes"
           >
-            <Check size={16} strokeWidth={3} />
+            <Check size={14} strokeWidth={3} />
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); event.onCancel(); }} 
             className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-sm transition-all hover:scale-110 active:scale-95"
-            title="Cancel"
+            title="Cancel changes"
           >
-            <X size={16} strokeWidth={3} />
+            <X size={14} strokeWidth={3} />
           </button>
         </div>
       )}
       <div 
+        ref={contentRef}
         data-event-id={event._id || event.id}
         className={`flex items-center justify-between w-full h-full overflow-hidden whitespace-nowrap ${!continuesPrior ? 'pl-7' : 'pl-2'} ${!continuesAfter ? 'pr-7' : 'pr-2'} relative`}
       >
@@ -84,48 +126,11 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
 
 function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onSelectSlot }) {
   const currentYear = date.getFullYear();
-  const { onEventDrop, onEventResize } = useContext(AgendaContext);
+  const { onEventDrop, onEventResize, eventStyleGetter, dayPropGetter, components = {} } = useContext(AgendaContext);
 
   const months = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => new Date(currentYear, i, 1));
   }, [currentYear]);
-
-  const getMonthHeight = useMemo(() => {
-    return (monthDate) => {
-      const month = monthDate.getMonth();
-      const year = monthDate.getFullYear();
-      let maxOverlapping = 0;
-      
-      const startDate = new Date(year, month, 1);
-      startDate.setDate(startDate.getDate() - 7);
-      const endDate = new Date(year, month + 1, 0);
-      endDate.setDate(endDate.getDate() + 7);
-      
-      const monthEvents = events.filter(e => {
-        return new Date(e.end) >= startDate && new Date(e.start) <= endDate;
-      });
-
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-         let overlapping = 0;
-         for (let i = 0; i < monthEvents.length; i++) {
-            const e = monthEvents[i];
-            const start = new Date(e.start);
-            const end = new Date(e.end);
-            start.setHours(0,0,0,0);
-            end.setHours(23,59,59,999);
-            if (start <= d && end >= d) {
-               overlapping++;
-            }
-         }
-         if (overlapping > maxOverlapping) {
-            maxOverlapping = overlapping;
-         }
-      }
-      
-      const calculatedHeight = 6 * (maxOverlapping * 28 + 40);
-      return Math.max(450, calculatedHeight);
-    };
-  }, [events]);
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
@@ -134,10 +139,24 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   const cellsRef = useRef([]);
   const containerRef = useRef(null);
   const initialScrollRef = useRef(0);
+
+  // Auto-scroll to the active month when switching to Year view or changing dates
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const targetMonthIndex = date ? date.getMonth() : new Date().getMonth();
+    const monthElements = containerRef.current.querySelectorAll('.year-month-card');
+    if (monthElements[targetMonthIndex]) {
+      const timer = setTimeout(() => {
+        monthElements[targetMonthIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [date, currentYear]);
   
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('.rbc-event')) return;
+    // Don't intercept clicks on events or resize anchors
+    if (e.target.closest('.rbc-event, .rbc-addons-dnd-resizable, [class*="rbc-addons-dnd-resize"]')) return;
 
     const container = containerRef.current;
     if (!container) return;
@@ -245,17 +264,32 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   return (
     <div 
       ref={containerRef}
-      className="year-view overflow-y-auto h-full pr-2 space-y-10 pb-10 select-none"
+      className="year-view overflow-y-auto h-full pr-2 space-y-10 pb-10 select-none custom-scrollbar"
       onMouseDown={handleMouseDown}
     >
       {months.map((monthDate, idx) => {
-        const height = getMonthHeight(monthDate);
+        const monthEventsCount = events.filter(ev => {
+          const m = monthDate.getMonth();
+          const y = monthDate.getFullYear();
+          const s = new Date(ev.start);
+          const e = new Date(ev.end);
+          return (s.getFullYear() <= y && e.getFullYear() >= y) &&
+                 (s.getMonth() <= m && e.getMonth() >= m);
+        }).length;
+
         return (
-          <div key={idx} className="flex flex-col" style={{ height: `${height + 60}px` }}> 
-            <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white pl-4 border-l-4 border-brand-primary">
-              {localizer.format(monthDate, 'MMMM yyyy')}
-            </h3>
-            <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-slate-700">
+          <div key={idx} className="year-month-card flex flex-col h-[88vh] min-h-[680px] mb-8"> 
+            <div className="flex items-center justify-between mb-3 pl-4 border-l-4 border-brand-primary">
+              <h3 className="text-xl font-black text-slate-800 dark:text-white">
+                {localizer.format(monthDate, 'MMMM yyyy')}
+              </h3>
+              {monthEventsCount > 0 && (
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/60 px-2.5 py-1 rounded-full mr-2">
+                  {monthEventsCount} schedule{monthEventsCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-2 sm:p-4">
                <DnDCalendar
                   localizer={localizer}
                   events={events}
@@ -264,7 +298,8 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
                   toolbar={false}
                   onNavigate={() => {}}
                   onView={() => {}}
-                  eventPropGetter={eventPropGetter}
+                  eventPropGetter={eventPropGetter || eventStyleGetter}
+                  dayPropGetter={dayPropGetter}
                   onSelectEvent={onSelectEvent}
                   selectable={true}
                   resizable
@@ -272,9 +307,11 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
                   onEventResize={onEventResize}
                   popup={false}
                   showAllEvents
+                  className="w-full h-full font-sans custom-calendar"
                   components={{ 
                     event: CustomEventComponent,
-                    dateCellWrapper: CustomDateCellWrapper
+                    dateCellWrapper: CustomDateCellWrapper,
+                    ...components
                   }}
                />
             </div>
@@ -349,15 +386,37 @@ export function AgendaModal({
   const [dragStart, setDragStart] = useState(null);
   const [dragCurrent, setDragCurrent] = useState(null);
 
-  // Global mouse down tracking for drag offset
+  // Global mouse down tracking for drag offset and resize state detection
   useEffect(() => {
     if (!isOpen) return;
     const handleGlobalMouseDown = (e) => {
       const elements = document.elementsFromPoint(e.clientX, e.clientY);
+      const isResizeHandle = Boolean(
+        e.target.closest(
+          '.rbc-addons-dnd-resize-ew-anchor, .rbc-addons-dnd-resize-ns-anchor, .rbc-addons-dnd-resize-ew-icon, .rbc-addons-dnd-resize-ns-icon, [class*="rbc-addons-dnd-resize"]'
+        ) ||
+        elements.some(el => 
+          el.classList?.contains('rbc-addons-dnd-resize-ew-anchor') || 
+          el.classList?.contains('rbc-addons-dnd-resize-ns-anchor') ||
+          el.classList?.contains('rbc-addons-dnd-resize-ew-icon')
+        )
+      );
+
+      if (isResizeHandle) {
+        document.documentElement.style.setProperty('--drag-shift-px', '0px');
+        window.__lastClickedDate = null;
+        document.body.classList.add('rbc-is-resizing');
+        document.body.classList.remove('rbc-is-moving');
+        return;
+      }
+
       const dayCell = elements.find(el => el.hasAttribute('data-date'));
       const eventInner = elements.find(el => el.hasAttribute('data-event-id'));
       
       if (dayCell && eventInner) {
+        document.body.classList.add('rbc-is-moving');
+        document.body.classList.remove('rbc-is-resizing');
+
         const clickedDate = new Date(dayCell.getAttribute('data-date'));
         window.__lastClickedDate = clickedDate;
         
@@ -385,6 +444,9 @@ export function AgendaModal({
   useEffect(() => {
     if (!isOpen) return;
     const handleMouseUp = () => {
+      document.body.classList.remove('rbc-is-resizing', 'rbc-is-moving');
+      document.documentElement.style.setProperty('--drag-shift-px', '0px');
+
       if (isDragging) {
         if (dragStart && dragCurrent) {
           if (dragStart.getTime() !== dragCurrent.getTime()) {
@@ -437,7 +499,7 @@ export function AgendaModal({
       <div className={`flex-1 flex overflow-hidden ${sidebarContent ? 'relative' : ''}`}>
         <div className="flex-1 overflow-hidden relative flex bg-gray-50/50 dark:bg-slate-900">
            {customMainContent ? customMainContent : (
-             <AgendaContext.Provider value={{ onEventDrop, onEventResize }}>
+             <AgendaContext.Provider value={{ onEventDrop, onEventResize, eventStyleGetter, dayPropGetter, components }}>
                <DnDCalendar
                  localizer={localizer}
                  events={events}
@@ -450,6 +512,7 @@ export function AgendaModal({
                  dayPropGetter={dayPropGetter}
                  selectable={!!onSelectSlot}
                  resizable
+                 messages={{ year: 'Year' }}
                  onSelectSlot={onSelectSlot}
                  onSelectEvent={onSelectEvent}
                  onEventDrop={onEventDrop}
@@ -470,91 +533,248 @@ export function AgendaModal({
       
       {/* Global styles for calendar */}
       <style>{`
+        .rbc-calendar { overflow: visible !important; }
         .custom-calendar .rbc-month-view,
         .custom-calendar .rbc-time-view,
-        .custom-calendar .rbc-agenda-view {
-          border-color: #e2e8f0; background: white; border-radius: 0.5rem; overflow: visible;
+        .custom-calendar .rbc-agenda-view,
+        .year-view .rbc-month-view,
+        .rbc-month-view {
+          border-color: #e2e8f0; background: white; border-radius: 0.5rem; overflow: visible !important;
         }
-        .custom-calendar .rbc-month-row, .custom-calendar .rbc-row, .custom-calendar .rbc-row-content {
+        .custom-calendar .rbc-month-row, .custom-calendar .rbc-row, .custom-calendar .rbc-row-content,
+        .year-view .rbc-month-row, .year-view .rbc-row, .year-view .rbc-row-content,
+        .rbc-month-row, .rbc-row, .rbc-row-content {
           overflow: visible !important;
         }
-        .dark .custom-calendar .rbc-month-view, .dark .custom-calendar .rbc-time-view, .dark .custom-calendar .rbc-agenda-view {
+        .rbc-month-row { z-index: 1; }
+        .rbc-month-row:hover, .rbc-month-row:focus-within { z-index: 50 !important; }
+        .rbc-month-row:has(.event-validation-ui), .rbc-row:has(.event-validation-ui) { z-index: 9999 !important; }
+        
+        /* Floating schedule validation toolbar */
+        .rbc-addons-dnd-row-body > .rbc-row:nth-child(1) .event-validation-ui,
+        .rbc-addons-dnd-row-body > .rbc-row:nth-child(2) .event-validation-ui,
+        .rbc-row-content-scroll-container .rbc-row:nth-child(1) .event-validation-ui,
+        .rbc-row-content-scroll-container .rbc-row:nth-child(2) .event-validation-ui,
+        .rbc-row-content > .rbc-row:nth-child(2) .event-validation-ui,
+        .rbc-row-content > .rbc-row:nth-child(3) .event-validation-ui,
+        .rbc-time-header-content .rbc-row-content > .rbc-row:first-child .event-validation-ui,
+        .rbc-time-header-content .rbc-row-content > .rbc-row:nth-child(2) .event-validation-ui,
+        .event-validation-ui.schedule-ui-below {
+          top: calc(100% + 0.5rem) !important;
+          bottom: auto !important;
+          margin-top: 0 !important;
+        }
+
+        /* Seamlessly hide validation UI during active resize/drag interaction so it never obstructs */
+        .rbc-addons-dnd-is-dragging .event-validation-ui,
+        body.rbc-is-resizing .event-validation-ui,
+        body.rbc-is-moving .event-validation-ui {
+          opacity: 0 !important;
+          pointer-events: none !important;
+          transform: translate(-50%, 4px) scale(0.92) !important;
+          transition: opacity 0.15s ease, transform 0.15s ease !important;
+        }
+        
+        .dark .custom-calendar .rbc-month-view, .dark .custom-calendar .rbc-time-view, .dark .custom-calendar .rbc-agenda-view,
+        .dark .year-view .rbc-month-view, .dark .rbc-month-view {
           border-color: #334155; background: #1e293b;
         }
-        .custom-calendar .rbc-header {
+        .custom-calendar .rbc-header, .year-view .rbc-header {
           padding: 10px 0; font-weight: 700; color: #64748b; border-bottom-color: #e2e8f0;
         }
-        .dark .custom-calendar .rbc-header {
+        .dark .custom-calendar .rbc-header, .dark .year-view .rbc-header {
           color: #94a3b8; border-bottom-color: #334155; border-left-color: #334155;
         }
-        .dark .custom-calendar .rbc-day-bg + .rbc-day-bg { border-left-color: #334155; }
-        .dark .custom-calendar .rbc-month-row + .rbc-month-row { border-top-color: #334155; }
+        .dark .custom-calendar .rbc-day-bg + .rbc-day-bg, .dark .year-view .rbc-day-bg + .rbc-day-bg { border-left-color: #334155; }
+        .dark .custom-calendar .rbc-month-row + .rbc-month-row, .dark .year-view .rbc-month-row + .rbc-month-row { border-top-color: #334155; }
         .dark .custom-calendar .rbc-time-content { border-top-color: #334155; }
         .dark .custom-calendar .rbc-time-header-content { border-left-color: #334155; }
         .dark .custom-calendar .rbc-timeslot-group { border-bottom-color: #334155; }
         .dark .custom-calendar .rbc-day-slot .rbc-time-slot { border-top-color: #475569; }
-        .dark .custom-calendar .rbc-off-range-bg { background: #0f172a; }
-        .dark .custom-calendar .rbc-today { background: rgba(59, 130, 246, 0.1); }
+        .dark .custom-calendar .rbc-off-range-bg, .dark .year-view .rbc-off-range-bg { background: #0f172a; }
+        .dark .custom-calendar .rbc-today, .dark .year-view .rbc-today { background: rgba(59, 130, 246, 0.1); }
         
-        .custom-calendar .booked-day {
+        .custom-calendar .booked-day, .year-view .booked-day {
           background-color: rgba(59, 130, 246, 0.08); box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
         }
-        .dark .custom-calendar .booked-day {
+        .dark .custom-calendar .booked-day, .dark .year-view .booked-day {
           background-color: rgba(59, 130, 246, 0.15); box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
         }
 
-        .custom-calendar .rbc-day-bg:hover, .custom-calendar .rbc-time-slot:hover {
+        .custom-calendar .rbc-day-bg:hover, .custom-calendar .rbc-time-slot:hover,
+        .year-view .rbc-day-bg:hover {
           background-color: rgba(245, 158, 11, 0.15) !important; cursor: pointer;
           box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.4) !important; transition: all 0.2s ease;
         }
-        .dark .custom-calendar .rbc-day-bg:hover, .dark .custom-calendar .rbc-time-slot:hover {
+        .dark .custom-calendar .rbc-day-bg:hover, .dark .custom-calendar .rbc-time-slot:hover,
+        .dark .year-view .rbc-day-bg:hover {
           background-color: rgba(245, 158, 11, 0.25) !important; box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.6) !important;
         }
 
-        .custom-calendar .rbc-slot-selection, .custom-calendar .rbc-day-bg.rbc-selected-cell {
+        .custom-calendar .rbc-slot-selection, .custom-calendar .rbc-day-bg.rbc-selected-cell,
+        .year-view .rbc-slot-selection, .year-view .rbc-day-bg.rbc-selected-cell {
           background-color: rgba(16, 185, 129, 0.2) !important;
           box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.8) !important; border-radius: 4px;
         }
-        .dark .custom-calendar .rbc-slot-selection, .dark .custom-calendar .rbc-day-bg.rbc-selected-cell {
+        .dark .custom-calendar .rbc-slot-selection, .dark .custom-calendar .rbc-day-bg.rbc-selected-cell,
+        .dark .year-view .rbc-slot-selection, .dark .year-view .rbc-day-bg.rbc-selected-cell {
           background-color: rgba(16, 185, 129, 0.3) !important;
         }
 
-        .custom-calendar .rbc-event {
-          transition: top 0.2s cubic-bezier(0.4, 0, 0.2, 1), left 0.2s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s cubic-bezier(0.4, 0, 0.2, 1), height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Smooth resting transition when schedule is settled or resized */
+        .custom-calendar .rbc-event,
+        .year-view .rbc-event,
+        .custom-calendar .rbc-row-segment,
+        .year-view .rbc-row-segment {
+          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
         
-        .custom-calendar .rbc-addons-dnd-dragged-event {
-          opacity: 0.5 !important; filter: grayscale(80%); border: 1px dashed rgba(0,0,0,0.5) !important;
-        }
-        .dark .custom-calendar .rbc-addons-dnd-dragged-event {
-          border: 1px dashed rgba(255,255,255,0.5) !important;
-        }
-
-        .custom-calendar .rbc-addons-dnd-drag-preview, .custom-calendar .rbc-addons-dnd-is-dragging, .custom-calendar .rbc-addons-dnd-is-resizing {
+        /* Eliminate any transition during active drag or resize to avoid lag/jitter */
+        .rbc-addons-dnd-is-dragging .rbc-event,
+        .rbc-addons-dnd-is-dragging .rbc-row-segment,
+        .rbc-addons-dnd-is-dragging .rbc-addons-dnd-drag-preview,
+        .rbc-addons-dnd-drag-preview,
+        .rbc-addons-dnd-drag-row,
+        .rbc-addons-dnd-drag-row .rbc-event,
+        .rbc-addons-dnd-drag-row .rbc-row-segment,
+        body.rbc-is-resizing .rbc-event,
+        body.rbc-is-resizing .rbc-row-segment,
+        body.rbc-is-moving .rbc-event,
+        body.rbc-is-moving .rbc-row-segment {
           transition: none !important;
         }
 
-        .custom-calendar .rbc-addons-dnd-drag-preview {
+        /* Ghost of original event while resizing or dragging */
+        .custom-calendar .rbc-addons-dnd-dragged-event,
+        .year-view .rbc-addons-dnd-dragged-event {
+          opacity: 0.35 !important;
+          filter: grayscale(60%) !important;
+          border: 2px dashed rgba(255, 255, 255, 0.7) !important;
+          box-shadow: none !important;
+        }
+        .dark .custom-calendar .rbc-addons-dnd-dragged-event,
+        .dark .year-view .rbc-addons-dnd-dragged-event {
+          border: 2px dashed rgba(255, 255, 255, 0.5) !important;
+        }
+
+        /* Drag preview position: ONLY shift when moving, NEVER during resize! */
+        body.rbc-is-moving .custom-calendar .rbc-addons-dnd-drag-preview,
+        body.rbc-is-moving .year-view .rbc-addons-dnd-drag-preview {
           transform: translateX(var(--drag-shift-px, 0px)) !important;
         }
+        body.rbc-is-resizing .custom-calendar .rbc-addons-dnd-drag-preview,
+        body.rbc-is-resizing .year-view .rbc-addons-dnd-drag-preview,
+        .rbc-addons-dnd-drag-preview {
+          transform: none !important;
+        }
+
+        /* Elevated visual style for active resize / drag preview */
+        .custom-calendar .rbc-addons-dnd-drag-preview,
+        .year-view .rbc-addons-dnd-drag-preview,
+        .custom-calendar .rbc-addons-dnd-drag-row .rbc-event,
+        .year-view .rbc-addons-dnd-drag-row .rbc-event {
+          opacity: 0.95 !important;
+          box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.9) !important;
+          border-radius: 6px !important;
+          z-index: 100 !important;
+        }
+        .dark .custom-calendar .rbc-addons-dnd-drag-preview,
+        .dark .year-view .rbc-addons-dnd-drag-preview,
+        .dark .custom-calendar .rbc-addons-dnd-drag-row .rbc-event,
+        .dark .year-view .rbc-addons-dnd-drag-row .rbc-event {
+          box-shadow: 0 14px 30px -4px rgba(0, 0, 0, 0.65), 0 0 0 2px rgba(255, 255, 255, 0.7) !important;
+        }
         
-        .custom-calendar .rbc-addons-dnd-resize-ew-anchor {
-          width: 32px !important; cursor: col-resize !important; z-index: 100 !important;
-          margin-left: -2px !important; margin-right: -2px !important;
+        /* Horizontal resize anchors (Month view & Year view) */
+        .custom-calendar .rbc-addons-dnd-resize-ew-anchor,
+        .year-view .rbc-addons-dnd-resize-ew-anchor {
+          top: 0 !important;
+          bottom: 0 !important;
+          height: 100% !important;
+          width: 24px !important;
+          cursor: col-resize !important;
+          z-index: 90 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        }
+        .custom-calendar .rbc-addons-dnd-resize-ew-anchor:first-child,
+        .year-view .rbc-addons-dnd-resize-ew-anchor:first-child {
+          left: 0 !important;
+          margin-left: 0 !important;
+        }
+        .custom-calendar .rbc-addons-dnd-resize-ew-anchor:last-child,
+        .year-view .rbc-addons-dnd-resize-ew-anchor:last-child {
+          right: 0 !important;
+          margin-right: 0 !important;
         }
 
-        .custom-calendar .rbc-addons-dnd-resizable {
-          margin: 0 !important; padding: 0 !important; outline: none !important;
+        /* Modern pill grip icon inside resize anchors */
+        .custom-calendar .rbc-addons-dnd-resize-ew-icon,
+        .year-view .rbc-addons-dnd-resize-ew-icon {
+          display: block !important;
+          border: none !important;
+          width: 4px !important;
+          height: 14px !important;
+          border-radius: 9999px !important;
+          background-color: rgba(255, 255, 255, 0.75) !important;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+          margin: 0 !important;
+          cursor: col-resize !important;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          opacity: 0.6 !important;
         }
-        .custom-calendar .rbc-event {
-          margin: 0 !important; outline: none !important;
+        .custom-calendar .rbc-event:hover .rbc-addons-dnd-resize-ew-icon,
+        .year-view .rbc-event:hover .rbc-addons-dnd-resize-ew-icon {
+          opacity: 0.9 !important;
+          transform: scaleY(1.15);
+        }
+        .custom-calendar .rbc-addons-dnd-resize-ew-anchor:hover .rbc-addons-dnd-resize-ew-icon,
+        .year-view .rbc-addons-dnd-resize-ew-anchor:hover .rbc-addons-dnd-resize-ew-icon {
+          opacity: 1 !important;
+          width: 5px !important;
+          height: 18px !important;
+          background-color: #ffffff !important;
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+          transform: scaleY(1.25) scaleX(1.1);
         }
 
-        .custom-calendar .rbc-addons-dnd-resize-ns-anchor {
-          height: 16px !important; cursor: row-resize !important; z-index: 10;
+        .custom-calendar .rbc-addons-dnd-resizable,
+        .year-view .rbc-addons-dnd-resizable {
+          margin: 0 !important; padding: 0 !important; outline: none !important; overflow: visible !important;
+        }
+        .custom-calendar .rbc-event,
+        .year-view .rbc-event {
+          margin: 0 !important; outline: none !important; overflow: visible !important;
         }
 
-        .custom-calendar .rbc-event-content { padding: 0; }
+        /* Vertical resize anchors (Week/Day views) */
+        .custom-calendar .rbc-addons-dnd-resize-ns-anchor,
+        .year-view .rbc-addons-dnd-resize-ns-anchor {
+          height: 16px !important; cursor: row-resize !important; z-index: 90 !important;
+          display: flex !important; align-items: center !important; justify-content: center !important;
+        }
+        .custom-calendar .rbc-addons-dnd-resize-ns-icon,
+        .year-view .rbc-addons-dnd-resize-ns-icon {
+          display: block !important; border: none !important; width: 14px !important; height: 4px !important;
+          border-radius: 9999px !important; background-color: rgba(255, 255, 255, 0.75) !important;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important; margin: 0 !important;
+          cursor: row-resize !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; opacity: 0.6 !important;
+        }
+        .custom-calendar .rbc-event:hover .rbc-addons-dnd-resize-ns-icon,
+        .year-view .rbc-event:hover .rbc-addons-dnd-resize-ns-icon {
+          opacity: 0.9 !important; transform: scaleX(1.15);
+        }
+        .custom-calendar .rbc-addons-dnd-resize-ns-anchor:hover .rbc-addons-dnd-resize-ns-icon,
+        .year-view .rbc-addons-dnd-resize-ns-anchor:hover .rbc-addons-dnd-resize-ns-icon {
+          opacity: 1 !important; width: 18px !important; height: 5px !important;
+          background-color: #ffffff !important; box-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        .custom-calendar .rbc-event-content,
+        .year-view .rbc-event-content {
+          padding: 0; overflow: visible !important;
+        }
       `}</style>
     </div>,
     document.body
