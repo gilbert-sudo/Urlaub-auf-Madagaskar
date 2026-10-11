@@ -164,12 +164,13 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
     if (!event.isReadOnly) {
       return {
         style: {
-          backgroundColor: '#3b82f6',
-          borderRadius: '4px',
+          background: 'linear-gradient(135deg, #09090b 0%, #18181b 100%)',
+          borderRadius: '8px',
           opacity: 1,
-          color: 'white',
-          border: event.isEditing ? '2px dashed rgba(255, 255, 255, 0.9)' : '1px solid rgba(255, 255, 255, 0.4)',
-          boxShadow: event.isEditing ? '0 4px 6px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.15)',
+          color: '#ffffff',
+          fontWeight: '900',
+          border: event.isEditing ? '2px dashed #E8B72F' : '1.5px solid #27272a',
+          boxShadow: event.isEditing ? '0 4px 12px rgba(0,0,0,0.5)' : '0 2px 6px rgba(0,0,0,0.35)',
           display: 'block',
           boxSizing: 'border-box',
           zIndex: 50
@@ -180,7 +181,7 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
     return {
       style: {
         backgroundColor: '#94a3b8',
-        borderRadius: '4px',
+        borderRadius: '6px',
         opacity: 0.65,
         color: 'white',
         border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -222,7 +223,7 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
               <RotateCcw size={14} /> Reset
             </button>
             <button onClick={handleCancel} className="px-4 py-2 font-bold text-gray-600 hover:text-gray-900 transition-colors">Cancel</button>
-            <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-brand-600 transition-all hover:-translate-y-0.5">
+            <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2 bg-gray-950 hover:bg-black text-white font-bold rounded-xl shadow-lg border border-gray-800 transition-all hover:-translate-y-0.5">
               Save Changes
             </button>
           </div>

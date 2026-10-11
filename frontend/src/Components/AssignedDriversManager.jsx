@@ -21,7 +21,7 @@ import { fetchDrivers } from '../store/slices/driversSlice';
 import { deleteDriverEvent, fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
 import { toast } from 'sonner';
 import { DriverAgendaModal } from './DriverAgendaModal';
-import { AllDriversAgendaModal } from './AllDriversAgendaModal';
+import { TourAgendaModal } from './TourAgendaModal';
 import { DriverSelect } from './DriverSelect';
 
 const DRIVER_PALETTES = [
@@ -222,13 +222,13 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
             </div>
           )}
 
-          {/* All Drivers Agenda Modal Button */}
+          {/* Tour Agenda Modal Button */}
           <button 
             onClick={() => setIsAllDriversAgendaOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-brand-primary to-emerald-600 hover:from-brand-600 hover:to-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-primary/20 hover:shadow-lg transition-all hover:-translate-y-0.5"
-            title="Open unified multi-driver calendar agenda to see and edit all assignments together"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-950 hover:bg-black text-white font-bold text-xs rounded-xl shadow-md border border-gray-800 hover:border-gray-700 transition-all hover:-translate-y-0.5"
+            title="Open comprehensive Tour Agenda calendar"
           >
-            <CalendarIcon size={14} /> All Drivers Agenda
+            <CalendarCheck size={14} className="text-brand-accent" /> Tour Agenda
           </button>
 
           {/* Assign Driver Button */}
@@ -385,9 +385,9 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
                 </span>
                 <button
                   onClick={() => setIsAllDriversAgendaOpen(true)}
-                  className="px-2.5 py-1 text-xs font-bold bg-brand-primary hover:bg-brand-600 text-white rounded-lg transition-all"
+                  className="px-2.5 py-1 text-xs font-bold bg-brand-primary hover:bg-brand-secondary text-white rounded-lg transition-all shadow-xs"
                 >
-                  Edit on Master Calendar
+                  Edit on Tour Agenda
                 </button>
               </div>
             </div>
@@ -471,9 +471,9 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
               </span>
               <button
                 onClick={() => setIsAllDriversAgendaOpen(true)}
-                className="font-bold text-brand-primary hover:text-brand-600 underline flex items-center gap-1"
+                className="font-bold text-brand-primary hover:text-brand-secondary underline flex items-center gap-1"
               >
-                <CalendarIcon size={13} /> Open All Drivers Agenda Modal
+                <CalendarCheck size={13} /> Open Tour Agenda
               </button>
             </div>
           </div>
@@ -555,8 +555,8 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
         defaultTripId={trip?._id}
       />
 
-      {/* All Drivers Agenda Modal (Unified Multi-Driver Agenda View & Edit) */}
-      <AllDriversAgendaModal
+      {/* Tour Agenda Modal (Unified Tour & Driver Schedule Management) */}
+      <TourAgendaModal
         isOpen={isAllDriversAgendaOpen}
         onClose={handleCloseAllDriversAgenda}
         trip={trip}

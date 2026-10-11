@@ -4,7 +4,7 @@ import { addDriverEvent, updateDriverEvent, deleteDriverEvent, fetchDriverEvents
 import { fetchTrips } from '../store/slices/tripsSlice';
 import axios from 'axios';
 import { startOfDay, endOfDay, format, addHours, differenceInDays } from 'date-fns';
-import { CalendarIcon, Car, Map, Trash2, X, Briefcase, Plus, RotateCcw, Check } from 'lucide-react';
+import { CalendarIcon, Car, Map, Trash2, X, Briefcase, Plus, RotateCcw, Check, CalendarCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgendaModal } from './AgendaModal';
 
@@ -78,6 +78,11 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
 
   // Staged drag-and-drop & resize handlers (matches TripAgendaModal)
   const handleEventDrop = ({ event, start, end }) => {
+    if (event.isTourSchedule) {
+      toast.info('Tour dates are managed in the Tour Agenda.');
+      return;
+    }
+
     if (event.isReadOnly) {
       toast.error('You cannot modify events not related to the current tour.');
       return;
@@ -103,6 +108,11 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
   };
 
   const handleEventResize = ({ event, start, end }) => {
+    if (event.isTourSchedule) {
+      toast.info('Tour dates are managed in the Tour Agenda.');
+      return;
+    }
+
     if (event.isReadOnly) {
       toast.error('You cannot modify events not related to the current tour.');
       return;
@@ -364,6 +374,27 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
       };
     });
 
+    // If opened in context of a specific tour (defaultTripId), also display the tour's official schedule!
+    if (defaultTripId) {
+      const currentTrip = trips.find(t => t._id === defaultTripId);
+      if (currentTrip?.startDate && currentTrip?.endDate) {
+        list.unshift({
+          id: `tour-schedule-${currentTrip._id}`,
+          _id: `tour-schedule-${currentTrip._id}`,
+          isTourSchedule: true,
+          title: `Tour Schedule: ${currentTrip.title}`,
+          displayTitle: `🚩 Tour: ${currentTrip.title}`,
+          start: new Date(currentTrip.startDate),
+          end: new Date(currentTrip.endDate),
+          startDate: currentTrip.startDate,
+          endDate: currentTrip.endDate,
+          isReadOnly: true,
+          allDay: true,
+          icon: <CalendarCheck size={12} className="shrink-0 text-white" />
+        });
+      }
+    }
+
     if (isCreating && newEventData.start && newEventData.end) {
       const trip = trips.find(t => t._id === newEventData.tripId);
       list.push({
@@ -391,6 +422,23 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
 
   // Clean event styling (matches TripAgendaModal with distinct color accents)
   const eventStyleGetter = (event) => {
+    if (event.isTourSchedule) {
+      return {
+        style: {
+          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+          borderRadius: '4px',
+          color: 'white',
+          fontWeight: '800',
+          border: '1.5px solid #334155',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+          display: 'block',
+          boxSizing: 'border-box',
+          cursor: 'pointer',
+          zIndex: 20
+        }
+      };
+    }
+
     if (event.isReadOnly) {
       return {
         style: {
@@ -517,12 +565,19 @@ export function DriverAgendaModal({ isOpen, onClose, driver, defaultTripId = nul
         </div>
 
         <div className="p-4 flex-1 overflow-y-auto space-y-4">
-          {selectedEvent?.isReadOnly && (
+          {selectedEvent?.isTourSchedule ? (
+            <div className="p-3 bg-slate-900 text-white rounded-xl border border-slate-700 text-xs">
+              <span className="font-bold text-blue-300 block mb-0.5 flex items-center gap-1.5">
+                <CalendarCheck size={14} className="text-blue-400" /> Official Tour Schedule
+              </span>
+              This event represents the overall span of this tour ({currentDuration} days). Driver assignments should cover this timeline.
+            </div>
+          ) : selectedEvent?.isReadOnly ? (
             <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
               <span className="font-bold text-slate-700 dark:text-slate-200 block mb-0.5">Linked Tour Schedule</span>
               This event is linked to another tour. It cannot be edited from this tour context.
             </div>
-          )}
+          ) : null}
 
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Title</label>

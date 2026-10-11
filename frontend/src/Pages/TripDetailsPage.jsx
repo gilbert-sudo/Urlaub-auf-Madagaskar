@@ -3,10 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTripById, shareTrip, updateTrip } from '../store/slices/tripsSlice';
 import { fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
+import { fetchDrivers } from '../store/slices/driversSlice';
 import { toast } from 'sonner';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle, Share2, Maximize2, X } from 'lucide-react';
+import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle, Share2, Maximize2, X, CalendarCheck } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { ClientItineraryDoc } from '../Components/Documents/ClientItineraryDoc';
@@ -20,6 +21,7 @@ import { AssignedDriversManager } from '../Components/AssignedDriversManager';
 import { DateRangePicker } from '../Components/DateRangePicker';
 import { TripDatesDisplayer } from '../Components/TripDatesDisplayer';
 import { TripAgendaModal } from '../Components/TripAgendaModal';
+import { TourAgendaModal } from '../Components/TourAgendaModal';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 
@@ -31,12 +33,14 @@ export function TripDetailsPage() {
   const navigate = useNavigate();
   const { currentTrip: trip, loading, error } = useSelector((state) => state.trips);
   const tripEvents = useSelector((state) => state.driverEvents?.tripEvents || []);
+  const drivers = useSelector((state) => state.drivers?.items || []);
   
   const documentRef = useRef(null);
   const [activeTab, setActiveTab] = useState('overview'); // overview, client, driver, reservations, voucher
   const [isEditing, setIsEditing] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [isAgendaOpen, setIsAgendaOpen] = useState(false);
+  const [isTourAgendaOpen, setIsTourAgendaOpen] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -347,6 +351,10 @@ export function TripDetailsPage() {
   }, [activeStoryDay, trip?.itinerary]);
 
   useEffect(() => {
+    dispatch(fetchDrivers());
+  }, [dispatch]);
+
+  useEffect(() => {
     if (!trip || trip._id !== id) {
       dispatch(fetchTripById(id));
     } else if (trip && trip._id === id) {
@@ -640,13 +648,21 @@ export function TripDetailsPage() {
               </div>
               <div className="hidden md:flex flex-col items-end text-right">
                 <div className="text-sm font-bold text-white/80 mb-1">Total Price</div>
-                <div className="text-3xl font-black mb-4">€{trip.totalPrice}</div>
-                <button 
-                  onClick={handleShareTrip}
-                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-xl transition-colors font-bold text-sm shadow-sm border border-white/20"
-                >
-                  <Share2 size={16} /> Share Itinerary
-                </button>
+                <div className="text-3xl font-black mb-3">€{trip.totalPrice}</div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setIsTourAgendaOpen(true)}
+                    className="flex items-center gap-2 bg-gray-950 hover:bg-black text-white px-4 py-2 rounded-xl transition-all font-bold text-sm shadow-md border border-white/20 hover:border-white/40 hover:-translate-y-0.5"
+                  >
+                    <CalendarCheck size={16} className="text-brand-accent" /> Tour Agenda
+                  </button>
+                  <button 
+                    onClick={handleShareTrip}
+                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-xl transition-colors font-bold text-sm shadow-sm border border-white/20"
+                  >
+                    <Share2 size={16} /> Share Itinerary
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -669,12 +685,20 @@ export function TripDetailsPage() {
                   {trip.duration} Days • {trip.itinerary?.length || 0} Destinations
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <button 
+                  onClick={() => setIsTourAgendaOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-950 hover:bg-black text-white font-bold text-sm rounded-xl shadow-md border border-gray-800 hover:border-gray-700 transition-all hover:-translate-y-0.5"
+                  title="Open comprehensive Tour Agenda with master tour dates and driver schedules"
+                >
+                  <CalendarCheck size={16} className="text-brand-accent" /> Tour Agenda
+                </button>
                 <button 
                   onClick={() => setIsAgendaOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 dark:bg-brand-primary/10 text-brand-700 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-primary/20 font-bold text-sm rounded-xl transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:text-brand-primary border border-gray-200 dark:border-slate-700 font-bold text-xs rounded-xl transition-colors shadow-2xs hover:shadow-xs"
+                  title="Adjust Tour Start & End Dates"
                 >
-                  <Calendar size={16} /> Edit Dates
+                  <Edit2 size={13} /> Edit Dates
                 </button>
               </div>
             </div>
@@ -969,6 +993,20 @@ export function TripDetailsPage() {
         isOpen={isAgendaOpen}
         onClose={() => setIsAgendaOpen(false)}
         currentTrip={trip}
+      />
+
+      {/* Tour Agenda Modal */}
+      <TourAgendaModal 
+        isOpen={isTourAgendaOpen}
+        onClose={() => {
+          setIsTourAgendaOpen(false);
+          if (id) {
+            dispatch(fetchDriverEventsByTrip(id));
+          }
+        }}
+        trip={trip}
+        tripEvents={tripEvents}
+        drivers={drivers}
       />
     </div>
   );
