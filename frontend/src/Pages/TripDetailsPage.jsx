@@ -493,9 +493,9 @@ export function TripDetailsPage() {
       children: trip.client?.paxChildren || 0
     },
     dates: {
-      arrival: new Date(trip.startDate).toLocaleDateString(),
-      departure: new Date(trip.endDate).toLocaleDateString(),
-      nights: trip.duration,
+      arrival: trip.startDate ? new Date(trip.startDate).toLocaleDateString() : 'TBD',
+      departure: trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'TBD',
+      nights: trip.duration || 1,
       dayUse: ""
     },
     rooms: {

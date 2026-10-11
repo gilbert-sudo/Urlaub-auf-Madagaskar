@@ -21,15 +21,43 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
 
   useEffect(() => {
     if (currentTrip && isOpen) {
-      setLocalTrip({
-        ...currentTrip,
-        start: new Date(currentTrip.startDate),
-        end: new Date(currentTrip.endDate)
-      });
+      if (currentTrip.startDate && currentTrip.endDate) {
+        setLocalTrip({
+          ...currentTrip,
+          start: new Date(currentTrip.startDate),
+          end: new Date(currentTrip.endDate)
+        });
+      } else {
+        setLocalTrip(null);
+      }
     }
   }, [currentTrip, isOpen]);
 
   if (!isOpen || !currentTrip) return null;
+
+  const handleSelectSlot = ({ start, end }) => {
+    const startDate = new Date(start);
+    let endDate = new Date(end);
+
+    // If end is at midnight and greater than start (standard RBC slot selection)
+    if (endDate.getHours() === 0 && endDate.getMinutes() === 0 && endDate.getTime() > startDate.getTime()) {
+      const daysSelected = differenceInDays(endDate, startDate);
+      if (daysSelected === 1 && currentTrip.duration && currentTrip.duration > 1) {
+        endDate = new Date(startDate.getTime() + (currentTrip.duration - 1) * 86400000);
+      } else {
+        endDate = new Date(endDate.getTime() - 86400000);
+      }
+    } else if (endDate.getTime() <= startDate.getTime()) {
+      const daysToAdd = Math.max(1, currentTrip.duration || 1) - 1;
+      endDate = new Date(startDate.getTime() + daysToAdd * 86400000);
+    }
+
+    setLocalTrip({
+      ...currentTrip,
+      start: startDate,
+      end: endDate
+    });
+  };
 
   const handleEventDrop = ({ event, start, end }) => {
     if (event.isReadOnly) {
@@ -68,51 +96,69 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
 
   const handleReset = () => {
     if (!currentTrip) return;
-    setLocalTrip({
-      ...currentTrip,
-      start: new Date(currentTrip.startDate),
-      end: new Date(currentTrip.endDate)
-    });
-    toast.info('Schedule reset to initial state');
+    if (currentTrip.startDate && currentTrip.endDate) {
+      setLocalTrip({
+        ...currentTrip,
+        start: new Date(currentTrip.startDate),
+        end: new Date(currentTrip.endDate)
+      });
+      toast.info('Schedule reset to initial state');
+    } else {
+      setLocalTrip(null);
+      toast.info('Selection cleared');
+    }
   };
 
   const handleCancel = () => {
-    setLocalTrip({
-      ...currentTrip,
-      start: new Date(currentTrip.startDate),
-      end: new Date(currentTrip.endDate)
-    });
+    if (currentTrip && currentTrip.startDate && currentTrip.endDate) {
+      setLocalTrip({
+        ...currentTrip,
+        start: new Date(currentTrip.startDate),
+        end: new Date(currentTrip.endDate)
+      });
+    } else {
+      setLocalTrip(null);
+    }
     onClose();
   };
 
-  const isModified = localTrip && (localTrip.start.getTime() !== new Date(currentTrip.startDate).getTime() || localTrip.end.getTime() !== new Date(currentTrip.endDate).getTime());
+  const hasOriginalDates = Boolean(currentTrip?.startDate && currentTrip?.endDate);
+  const isModified = Boolean(
+    localTrip && (
+      !hasOriginalDates ||
+      localTrip.start.getTime() !== new Date(currentTrip.startDate).getTime() ||
+      localTrip.end.getTime() !== new Date(currentTrip.endDate).getTime()
+    )
+  );
 
-  const calendarEvents = allTrips.map(trip => {
-    if (trip._id === currentTrip._id) {
-       if (!localTrip) return null;
-       return {
-         ...localTrip,
-         id: localTrip._id,
-         title: localTrip.title,
-         icon: <Map size={12} />,
-         isReadOnly: false,
-         isEditing: isModified,
-         onSave: handleSave,
-         onReset: handleReset,
-         onCancel: handleCancel
-       };
-    }
-    
-    return {
-      ...trip,
-      id: trip._id,
-      title: trip.title,
-      icon: <Map size={12} />,
-      start: new Date(trip.startDate),
-      end: new Date(trip.endDate),
-      isReadOnly: true
-    };
-  }).filter(Boolean);
+  const calendarEvents = allTrips
+    .filter(trip => trip._id === currentTrip._id || (trip.startDate && trip.endDate))
+    .map(trip => {
+      if (trip._id === currentTrip._id) {
+         if (!localTrip) return null;
+         return {
+           ...localTrip,
+           id: localTrip._id,
+           title: localTrip.title || 'Current Trip',
+           icon: <Map size={12} />,
+           isReadOnly: false,
+           isEditing: isModified,
+           onSave: handleSave,
+           onReset: handleReset,
+           onCancel: handleCancel
+         };
+      }
+      
+      return {
+        ...trip,
+        id: trip._id,
+        title: trip.title,
+        icon: <Map size={12} />,
+        start: new Date(trip.startDate),
+        end: new Date(trip.endDate),
+        isReadOnly: true
+      };
+    }).filter(Boolean);
 
   const eventStyleGetter = (event) => {
     if (!event.isReadOnly) {
@@ -146,15 +192,20 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
     };
   };
 
+  const defaultCalendarDate = currentTrip?.startDate 
+    ? new Date(currentTrip.startDate) 
+    : new Date();
+
   return (
     <AgendaModal
       isOpen={isOpen}
       onClose={onClose}
       title="Trip Agenda"
-      subtitle="Drag or resize to adjust dates"
+      subtitle={localTrip ? "Drag or resize to adjust dates" : "Click or drag across days to schedule this trip"}
       icon={CalendarIcon}
       events={calendarEvents}
-      defaultDate={new Date(currentTrip.startDate)}
+      defaultDate={defaultCalendarDate}
+      onSelectSlot={handleSelectSlot}
       onEventDrop={handleEventDrop}
       onEventResize={handleEventResize}
       eventStyleGetter={eventStyleGetter}

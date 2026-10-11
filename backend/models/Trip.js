@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const tripSchema = new mongoose.Schema({
   title: { type: String, required: true },
   client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client' },
-  duration: { type: Number, required: true }, // in days
-  startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true },
+  duration: { type: Number, default: 1 }, // in days
+  startDate: { type: Date },
+  endDate: { type: Date },
   guestType: { type: String }, // e.g., Honeymoon
   totalPrice: { type: Number },
   status: { type: String, enum: ['Inquiry', 'Proposal', 'Booked', 'Active', 'Completed'], default: 'Inquiry' },

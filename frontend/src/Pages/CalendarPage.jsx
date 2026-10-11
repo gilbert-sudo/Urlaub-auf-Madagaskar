@@ -319,7 +319,9 @@ export function CalendarPage() {
     let allEvents = [];
 
     if (filter === 'all' || filter === 'trips') {
-      const tripEvents = trips.map(trip => ({
+      const tripEvents = trips
+        .filter(trip => trip.startDate && trip.endDate)
+        .map(trip => ({
         id: trip._id,
         title: `Tour: ${trip.title}`,
         start: new Date(trip.startDate),

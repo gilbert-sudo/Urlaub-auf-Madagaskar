@@ -9,7 +9,6 @@ import { fetchHotels } from '../store/slices/hotelsSlice';
 import { fetchDrivers } from '../store/slices/driversSlice';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { DateRangePicker } from '../Components/DateRangePicker';
 import { ClientSelect } from '../Components/ClientSelect';
 import { DriverSelect } from '../Components/DriverSelect';
 import { HotelSelect } from '../Components/HotelSelect';
@@ -203,13 +202,35 @@ export function CreateTripPage() {
       return;
     }
 
+    const cleanFlights = { ...tripData.flights };
+    if (cleanFlights?.arrival) {
+      cleanFlights.arrival = {
+        ...cleanFlights.arrival,
+        date: cleanFlights.arrival.date || undefined
+      };
+    }
+    if (cleanFlights?.departure) {
+      cleanFlights.departure = {
+        ...cleanFlights.departure,
+        date: cleanFlights.departure.date || undefined
+      };
+    }
+
     const formattedTrip = {
       ...tripData,
-      itinerary: itinerary.map(day => ({
-        ...day,
-        hotel: day.hotel || undefined,
-        driver: day.driver || undefined
-      }))
+      startDate: tripData.startDate || undefined,
+      endDate: tripData.endDate || undefined,
+      totalPrice: tripData.totalPrice ? Number(tripData.totalPrice) : undefined,
+      client: tripData.client || undefined,
+      flights: cleanFlights,
+      itinerary: isEditing 
+        ? itinerary.map(day => ({
+            ...day,
+            date: day.date || undefined,
+            hotel: day.hotel || undefined,
+            driver: day.driver || undefined
+          }))
+        : []
     };
     try {
       if (isEditing) {
@@ -298,38 +319,8 @@ export function CreateTripPage() {
                 onChange={handleTripDataChange} 
               />
               <div className="relative">
-                <DateRangePicker 
-                  startDate={tripData.startDate}
-                  endDate={tripData.endDate}
-                  onChange={(range) => setTripData(prev => ({ ...prev, ...range }))}
-                />
-              </div>
-              <div className="relative">
                 <label className={SHARED_LABEL_CLASS}>Guest Type</label>
                 <input name="guestType" value={tripData.guestType} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS} placeholder="e.g. Honeymoon, Family" />
-              </div>
-              <div className="relative">
-                <label className={SHARED_LABEL_CLASS}>Total Price</label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-1.5 top-1.5 bottom-1.5 w-10 bg-white rounded-full shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-500 font-black border border-gray-100/80 z-10">
-                    €
-                  </div>
-                  <input 
-                    type="number" 
-                    min="0"
-                    step="any"
-                    name="totalPrice" 
-                    value={tripData.totalPrice} 
-                    onChange={handleTripDataChange} 
-                    onKeyDown={(e) => {
-                      if (e.key === '-' || e.key === 'e') {
-                        e.preventDefault();
-                      }
-                    }}
-                    className="w-full pl-14 pr-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-black text-lg text-gray-800 placeholder:text-gray-300 relative z-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
-                    placeholder="0.00"
-                  />
-                </div>
               </div>
               <div className="relative">
                 <label className={SHARED_LABEL_CLASS}>Status</label>

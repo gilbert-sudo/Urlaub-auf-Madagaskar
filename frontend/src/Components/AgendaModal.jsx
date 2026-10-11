@@ -764,7 +764,10 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   );
 }
 
-YearView.title = (date, { localizer }) => localizer.format(date, 'yyyy');
+YearView.title = (date, { localizer }) => {
+  const safeDate = date instanceof Date && !isNaN(date.getTime()) ? date : new Date();
+  return localizer.format(safeDate, 'yyyy');
+};
 YearView.navigate = (date, action) => {
   switch (action) {
     case 'PREV': return new Date(date.getFullYear() - 1, date.getMonth(), 1);
@@ -817,7 +820,19 @@ export function AgendaModal({
     return views;
   }, [availableViews]);
 
-  const [currentDate, setCurrentDate] = useState(defaultDate);
+  const isValidDate = (d) => d instanceof Date && !isNaN(d.getTime());
+  const initialDate = isValidDate(defaultDate) ? defaultDate : new Date();
+  const [currentDate, setCurrentDate] = useState(initialDate);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (isValidDate(defaultDate)) {
+        setCurrentDate(defaultDate);
+      } else {
+        setCurrentDate(new Date());
+      }
+    }
+  }, [isOpen, defaultDate]);
 
   const activeDate = controlledDate !== undefined ? controlledDate : currentDate;
   const activeView = controlledView !== undefined ? controlledView : calendarView;

@@ -326,7 +326,9 @@ export function SharedTripPage() {
               <div className="bg-black/20 backdrop-blur-sm rounded-[1.5rem] p-3 flex flex-col gap-1 border border-white/10">
                 <span className="text-xs font-extrabold uppercase text-white/70 tracking-widest flex items-center gap-1"><Calendar size={14}/> Dates</span>
                 <span className="text-base md:text-lg font-black tracking-tight drop-shadow-sm whitespace-nowrap">
-                  {new Date(trip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})} - {new Date(trip.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
+                  {trip.startDate && trip.endDate 
+                    ? `${new Date(trip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})} - ${new Date(trip.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}`
+                    : 'Dates TBD'}
                 </span>
               </div>
               <div className="bg-black/20 backdrop-blur-sm rounded-[1.5rem] p-3 flex flex-col gap-1 border border-white/10">
