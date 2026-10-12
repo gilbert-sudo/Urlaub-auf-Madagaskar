@@ -693,7 +693,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   return (
     <div 
       ref={containerRef}
-      className="year-view overflow-y-auto h-full pr-2 space-y-10 pb-10 select-none custom-scrollbar"
+      className="year-view overflow-y-auto flex-1 min-h-0 h-full pr-2 space-y-10 pb-10 select-none custom-scrollbar overscroll-contain"
       onMouseDown={handleMouseDown}
     >
       {months.map((monthDate, idx) => {
@@ -849,6 +849,20 @@ export function AgendaModal({
   const activeDate = controlledDate !== undefined ? controlledDate : currentDate;
   const activeView = controlledView !== undefined ? controlledView : calendarView;
 
+  // Prevent background page from scrolling while modal is open
+  useEffect(() => {
+    if (!isOpen) {
+      document.body.style.overflow = '';
+      return;
+    }
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  const lastWheelNavTime = useRef(0);
+
   const handleNavigate = (newDate) => {
     setCurrentDate(newDate);
     if (controlledOnNavigate) controlledOnNavigate(newDate);
@@ -951,7 +965,7 @@ export function AgendaModal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-white dark:bg-slate-900 z-[9999] flex flex-col animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 bg-white dark:bg-slate-900 z-[9999] flex flex-col animate-in fade-in zoom-in duration-300 overscroll-contain">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm z-10">
         <div className="flex items-center gap-4">
           {Icon && (
@@ -974,7 +988,24 @@ export function AgendaModal({
       </div>
 
       <div className={`flex-1 flex overflow-hidden ${sidebarContent ? 'relative' : ''}`}>
-        <div className="flex-1 overflow-hidden relative flex bg-gray-50/50 dark:bg-slate-900">
+        <div 
+          className="flex-1 overflow-hidden relative flex bg-gray-50/50 dark:bg-slate-900 overscroll-contain"
+          onWheel={(e) => {
+            if (activeView === 'month') {
+              if (isDragging || document.body.classList.contains('rbc-is-resizing') || document.body.classList.contains('rbc-is-moving')) return;
+              const now = Date.now();
+              if (now - lastWheelNavTime.current < 250) return;
+              if (Math.abs(e.deltaY) > 20) {
+                lastWheelNavTime.current = now;
+                if (e.deltaY > 0) {
+                  handleNavigate(new Date(activeDate.getFullYear(), activeDate.getMonth() + 1, 1));
+                } else {
+                  handleNavigate(new Date(activeDate.getFullYear(), activeDate.getMonth() - 1, 1));
+                }
+              }
+            }
+          }}
+        >
            {customMainContent ? customMainContent : (
              <AgendaContext.Provider value={{ onEventDrop, onEventResize, eventStyleGetter, dayPropGetter, components }}>
                <DnDCalendar

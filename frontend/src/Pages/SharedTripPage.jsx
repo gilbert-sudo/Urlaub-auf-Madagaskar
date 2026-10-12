@@ -450,28 +450,28 @@ export function SharedTripPage() {
             {/* Included / Excluded (Compact Grid) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
               {trip.inclusions?.length > 0 && (
-                <div className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
-                  <h4 className="text-sm font-black text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                    <CheckCircle2 size={16} className="text-emerald-600"/> Included
+                <div className="bg-white p-5 rounded-[2rem] border border-[#D5E3DA] shadow-sm">
+                  <h4 className="text-sm font-black text-[#214834] uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    <CheckCircle2 size={16} className="text-[#25523A]"/> Included
                   </h4>
                   <ul className="space-y-2">
                     {trip.inclusions.map((inc, i) => (
                       <li key={i} className="text-[15px] font-medium text-gray-700 flex items-start gap-2 leading-tight">
-                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span> {inc}
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#25523A] shrink-0"></span> {inc}
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
               {trip.exclusions?.length > 0 && (
-                <div className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
-                  <h4 className="text-sm font-black text-red-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                    <XCircle size={16} className="text-red-500"/> Excluded
+                <div className="bg-white p-5 rounded-[2rem] border border-brand-100 shadow-sm">
+                  <h4 className="text-sm font-black text-brand-primary uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    <XCircle size={16} className="text-brand-primary"/> Excluded
                   </h4>
                   <ul className="space-y-2">
                     {trip.exclusions.map((exc, i) => (
                       <li key={i} className="text-[15px] font-medium text-gray-700 flex items-start gap-2 leading-tight">
-                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></span> {exc}
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-primary shrink-0"></span> {exc}
                       </li>
                     ))}
                   </ul>

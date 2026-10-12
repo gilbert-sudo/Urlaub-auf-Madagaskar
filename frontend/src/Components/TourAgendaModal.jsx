@@ -158,6 +158,7 @@ export function TourAgendaModal({
   // Modal for slot click quick chooser
   const [slotActionModal, setSlotActionModal] = useState(null);
 
+
   // Load hotels and reset states when opened/closed
   useEffect(() => {
     if (isOpen) {
@@ -1071,8 +1072,8 @@ export function TourAgendaModal({
 
   // Sidebar content
   const sidebarContent = (
-    <div className="h-full flex flex-col justify-between p-4 overflow-y-auto custom-scrollbar">
-      <div className="space-y-6">
+    <div className="h-full flex flex-col justify-between overflow-hidden overscroll-contain">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6 overscroll-contain">
         {/* Unsaved changes alert if an event is staged */}
         {modifiedEvent && (
           <div className="p-4 bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl animate-in fade-in duration-200">
@@ -1268,8 +1269,10 @@ export function TourAgendaModal({
             </div>
           )}
         </div>
+      </div>
 
-        {/* Calendar Legend */}
+      {/* Calendar Legend sticky at bottom */}
+      <div className="p-4 pt-3 border-t border-gray-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 sticky bottom-0 z-10 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
         <div className="p-3 bg-gray-50/80 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-700">
           <div className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
             Editable Calendar Layers
@@ -1304,21 +1307,6 @@ export function TourAgendaModal({
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
-        <button
-          onClick={() => openAddStopModal()}
-          className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
-        >
-          <Plus size={14} /> Add Itinerary Stop
-        </button>
-        <button
-          onClick={() => openAssignModal()}
-          className="w-full py-2.5 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-xl shadow-md shadow-brand-primary/20 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
-        >
-          <Plus size={14} /> Assign Another Driver
-        </button>
       </div>
     </div>
   );
@@ -1413,7 +1401,7 @@ export function TourAgendaModal({
 
       {/* Selected Event Details Drawer / Slide-Over */}
       {selectedEvent && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white dark:bg-slate-900 shadow-2xl z-[100000] border-l border-gray-200 dark:border-slate-800 p-6 flex flex-col justify-between animate-in slide-in-from-right duration-200 overflow-y-auto">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white dark:bg-slate-900 shadow-2xl z-[100000] border-l border-gray-200 dark:border-slate-800 p-6 flex flex-col justify-between animate-in slide-in-from-right duration-200 overflow-y-auto overscroll-contain">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-6">
               <h3 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">

@@ -145,30 +145,30 @@ export function ClientItineraryDoc({ data, isEditing }) {
 
       {/* Inclusions / Exclusions */}
       <div className="grid grid-cols-2 gap-8">
-        <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100/50">
-          <h4 className="text-sm font-black text-emerald-800 mb-4 flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+        <div className="bg-[#F7FAF8] p-6 rounded-2xl border border-[#D5E3DA]">
+          <h4 className="text-sm font-black text-[#1E3E2D] mb-4 flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-[#25523A]" />
             Im Grundpreis inbegriffen
           </h4>
           <ul className="space-y-3">
             {docData.inclusions.map((item, idx) => (
               <li key={idx} className="text-sm text-gray-700 font-medium flex items-start gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#25523A] mt-1.5 shrink-0" />
                 <span contentEditable={isEditing} suppressContentEditableWarning>{item}</span>
               </li>
             ))}
           </ul>
         </div>
         
-        <div className="bg-rose-50/50 p-6 rounded-2xl border border-rose-100/50">
-          <h4 className="text-sm font-black text-rose-800 mb-4 flex items-center gap-2">
-            <XCircle className="w-5 h-5 text-rose-500" />
+        <div className="bg-[#FCF8F7] p-6 rounded-2xl border border-brand-100">
+          <h4 className="text-sm font-black text-brand-primary mb-4 flex items-center gap-2">
+            <XCircle className="w-5 h-5 text-brand-primary" />
             Nicht im Grundpreis enthalten
           </h4>
           <ul className="space-y-3">
             {docData.exclusions.map((item, idx) => (
               <li key={idx} className="text-sm text-gray-700 font-medium flex items-start gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-brand-primary mt-1.5 shrink-0" />
                 <span contentEditable={isEditing} suppressContentEditableWarning>{item}</span>
               </li>
             ))}

@@ -554,12 +554,12 @@ export function CreateTripPage() {
                         isIncluded
                           ? 'opacity-40 cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
                           : isSelected
-                            ? 'border-red-500 bg-red-500/5 text-red-600 shadow-sm scale-[0.98]'
+                            ? 'border-brand-primary bg-brand-primary/5 text-brand-primary shadow-sm scale-[0.98]'
                             : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600 hover:bg-gray-50 hover:shadow-sm'
                       }`}
                     >
-                      <item.icon size={18} className={`transition-colors ${isIncluded ? 'text-gray-400' : isSelected ? 'text-red-500' : 'text-gray-500'}`} strokeWidth={2} />
-                      <span className={`font-bold text-sm transition-colors ${isIncluded ? 'text-gray-400' : isSelected ? 'text-red-600' : 'text-gray-700'}`}>{item.label}</span>
+                      <item.icon size={18} className={`transition-colors ${isIncluded ? 'text-gray-400' : isSelected ? 'text-brand-primary' : 'text-gray-500'}`} strokeWidth={2} />
+                      <span className={`font-bold text-sm transition-colors ${isIncluded ? 'text-gray-400' : isSelected ? 'text-brand-primary' : 'text-gray-700'}`}>{item.label}</span>
                     </button>
                   )
                 })}
@@ -571,14 +571,14 @@ export function CreateTripPage() {
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-3">
                     {tripData.exclusions.filter(exc => exc !== '' && !PREDEFINED_FEATURES.find(p => p.label === exc)).map((exc, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm group hover:border-red-500/30 transition-colors">
-                          <div className="w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                      <div key={index} className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm group hover:border-brand-primary/30 transition-colors">
+                          <div className="w-5 h-5 rounded-full bg-brand-primary/10 flex items-center justify-center flex-shrink-0">
+                            <div className="w-1.5 h-1.5 bg-brand-primary rounded-full" />
                           </div>
                           <span className="font-bold text-sm text-gray-700 max-w-[200px] sm:max-w-xs truncate">{exc}</span>
                           <button type="button" onClick={() => {
                             setTripData(prev => ({ ...prev, exclusions: prev.exclusions.filter(i => i !== exc) }));
-                          }} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors ml-1"><Trash2 size={14}/></button>
+                          }} className="p-1 text-gray-400 hover:text-brand-primary hover:bg-brand-50 rounded-full transition-colors ml-1"><Trash2 size={14}/></button>
                       </div>
                     ))}
                   </div>

@@ -7,7 +7,7 @@ import { fetchDrivers } from '../store/slices/driversSlice';
 import { toast } from 'sonner';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle, Share2, Maximize2, X, CalendarCheck } from 'lucide-react';
+import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle, Share2, Maximize2, X, CalendarCheck, Check } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { ClientItineraryDoc } from '../Components/Documents/ClientItineraryDoc';
@@ -41,6 +41,48 @@ export function TripDetailsPage() {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [isAgendaOpen, setIsAgendaOpen] = useState(false);
   const [isTourAgendaOpen, setIsTourAgendaOpen] = useState(false);
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
+  const [priceDraft, setPriceDraft] = useState('');
+  const [isSavingPrice, setIsSavingPrice] = useState(false);
+
+  // Ensure body scroll is never stuck on TripDetailsPage
+  useEffect(() => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }, []);
+
+  useEffect(() => {
+    if (trip?.totalPrice !== undefined && trip?.totalPrice !== null) {
+      setPriceDraft(String(trip.totalPrice));
+    } else {
+      setPriceDraft('0');
+    }
+  }, [trip?.totalPrice]);
+
+  const openPriceModal = () => {
+    setPriceDraft(trip?.totalPrice !== undefined && trip?.totalPrice !== null ? String(trip.totalPrice) : '0');
+    setIsPriceModalOpen(true);
+  };
+
+  const handleSavePrice = async (customValue) => {
+    const val = customValue !== undefined ? customValue : priceDraft;
+    const num = Number(val);
+    if (isNaN(num) || num < 0) {
+      toast.error('Please enter a valid price (greater than or equal to 0)');
+      return;
+    }
+    try {
+      setIsSavingPrice(true);
+      await dispatch(updateTrip({ id, data: { totalPrice: num } })).unwrap();
+      toast.success(`Total price updated to €${num.toLocaleString()}`);
+      setIsPriceModalOpen(false);
+      dispatch(fetchTripById(id));
+    } catch (err) {
+      toast.error('Failed to update total price: ' + (err.message || ''));
+    } finally {
+      setIsSavingPrice(false);
+    }
+  };
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -654,7 +696,14 @@ export function TripDetailsPage() {
               </div>
               <div className="hidden md:flex flex-col items-end text-right">
                 <div className="text-sm font-bold text-white/80 mb-1">Total Price</div>
-                <div className="text-3xl font-black mb-3">€{trip.totalPrice}</div>
+                <div 
+                  onClick={openPriceModal}
+                  className="text-3xl font-black mb-3 cursor-pointer hover:text-amber-300 transition-colors flex items-center gap-2 group"
+                  title="Click to edit total price"
+                >
+                  <span>€{trip.totalPrice}</span>
+                  <Edit2 size={16} className="opacity-0 group-hover:opacity-100 transition-opacity text-amber-300" />
+                </div>
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => setIsTourAgendaOpen(true)}
@@ -1007,6 +1056,120 @@ export function TripDetailsPage() {
         tripEvents={tripEvents}
         drivers={drivers}
       />
+      {/* Quick Price Modal */}
+      {isPriceModalOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsPriceModalOpen(false)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 p-6 max-w-md w-full animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-lg">
+                  €
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-gray-900 dark:text-white">Edit Total Price</h3>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+                    {trip.title} • {trip.duration} Days
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPriceModalOpen(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5">
+                  Total Price (EUR)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 font-bold text-lg">
+                    €
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="10"
+                    value={priceDraft}
+                    onChange={(e) => setPriceDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSavePrice();
+                      if (e.key === 'Escape') setIsPriceModalOpen(false);
+                    }}
+                    autoFocus
+                    className="w-full pl-9 pr-4 py-3 bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-2xl font-black text-2xl text-gray-900 dark:text-white outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              {/* Quick Presets */}
+              <div>
+                <div className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                  Quick Adjustments
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[50, 100, 250, 500].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setPriceDraft(String(Math.max(0, (Number(priceDraft) || 0) + amt)))}
+                      className="py-1.5 px-2 bg-gray-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-gray-700 dark:text-slate-300 transition-all text-center cursor-pointer"
+                    >
+                      +{amt} €
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Breakdown Stats */}
+              <div className="p-3.5 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-700/60 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-gray-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Day</span>
+                  <span className="font-extrabold text-gray-800 dark:text-slate-200 text-sm">
+                    €{Math.round((Number(priceDraft) || 0) / (trip.duration || 1)).toLocaleString()} / day
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Person</span>
+                  <span className="font-extrabold text-gray-800 dark:text-slate-200 text-sm">
+                    {((trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0)) > 0
+                      ? `€${Math.round((Number(priceDraft) || 0) / ((trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0))).toLocaleString()} / pax`
+                      : 'N/A'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsPriceModalOpen(false)}
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 font-bold text-sm rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSavePrice()}
+                disabled={isSavingPrice}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 disabled:opacity-50 cursor-pointer"
+              >
+                <Check size={16} strokeWidth={3} /> {isSavingPrice ? 'Saving...' : 'Save Price'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
