@@ -222,15 +222,6 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
             </div>
           )}
 
-          {/* Tour Agenda Modal Button */}
-          <button 
-            onClick={() => setIsAllDriversAgendaOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-950 hover:bg-black text-white font-bold text-xs rounded-xl shadow-md border border-gray-800 hover:border-gray-700 transition-all hover:-translate-y-0.5"
-            title="Open comprehensive Tour Agenda calendar"
-          >
-            <CalendarCheck size={14} className="text-brand-accent" /> Tour Agenda
-          </button>
-
           {/* Assign Driver Button */}
           <button 
             onClick={openDriverSelect}

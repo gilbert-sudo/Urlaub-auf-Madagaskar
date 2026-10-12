@@ -362,8 +362,8 @@ export function TripDetailsPage() {
     }
   }, [dispatch, id, trip]);
 
-  if (loading) return <div className="p-8">Loading trip details...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (loading && !trip) return <div className="p-8">Loading trip details...</div>;
+  if (error && !trip) return <div className="p-8 text-red-500">Error: {error}</div>;
   if (!trip) return <div className="p-8">Trip not found.</div>;
 
   const generatePDF = async () => {
@@ -643,7 +643,13 @@ export function TripDetailsPage() {
                 <div className="flex items-center gap-4 text-sm md:text-base font-semibold text-white/90">
                   <span className="flex items-center gap-1"><Map size={18}/> Madagascar</span>
                   <span className="flex items-center gap-1"><Calendar size={18}/> {trip.duration} Tage</span>
-                  <span className="flex items-center gap-1"><Users size={18}/> {trip.guestType || 'Standard'}</span>
+                  <span className="flex items-center gap-1">
+                    <Users size={18}/> {
+                      trip.client 
+                        ? `${(trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0)} ${(trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0) === 1 ? 'Person' : 'Personen'}`
+                        : (trip.guestType || 'Standard')
+                    }
+                  </span>
                 </div>
               </div>
               <div className="hidden md:flex flex-col items-end text-right">
@@ -652,9 +658,9 @@ export function TripDetailsPage() {
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => setIsTourAgendaOpen(true)}
-                    className="flex items-center gap-2 bg-gray-950 hover:bg-black text-white px-4 py-2 rounded-xl transition-all font-bold text-sm shadow-md border border-white/20 hover:border-white/40 hover:-translate-y-0.5"
+                    className="flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black px-4 py-2 rounded-xl transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 active:translate-y-0 text-sm border border-amber-300/40"
                   >
-                    <CalendarCheck size={16} className="text-brand-accent" /> Tour Agenda
+                    <CalendarCheck size={17} className="text-slate-950 stroke-[2.5]" /> Tour Agenda
                   </button>
                   <button 
                     onClick={handleShareTrip}
@@ -686,13 +692,6 @@ export function TripDetailsPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2.5">
-                <button 
-                  onClick={() => setIsTourAgendaOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-950 hover:bg-black text-white font-bold text-sm rounded-xl shadow-md border border-gray-800 hover:border-gray-700 transition-all hover:-translate-y-0.5"
-                  title="Open comprehensive Tour Agenda with master tour dates and driver schedules"
-                >
-                  <CalendarCheck size={16} className="text-brand-accent" /> Tour Agenda
-                </button>
                 <button 
                   onClick={() => setIsAgendaOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:text-brand-primary border border-gray-200 dark:border-slate-700 font-bold text-xs rounded-xl transition-colors shadow-2xs hover:shadow-xs"

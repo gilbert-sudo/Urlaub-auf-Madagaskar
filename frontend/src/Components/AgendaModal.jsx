@@ -11,6 +11,18 @@ import { toast } from 'sonner';
 
 const locales = { 'en-US': enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
+
+// Custom sortEvents hook for react-big-calendar: prioritize tour schedules on the very top of each row
+const originalSortEvents = localizer.sortEvents.bind(localizer);
+localizer.sortEvents = function({ evtA, evtB }) {
+  const pA = evtA?.priority ?? evtA?.event?.priority ?? 0;
+  const pB = evtB?.priority ?? evtB?.event?.priority ?? 0;
+  if (pA !== pB) {
+    return pB - pA; // Higher priority (e.g. tour schedule = 100) stays on top
+  }
+  return originalSortEvents({ evtA, evtB });
+};
+
 const DnDCalendar = withDragAndDrop(Calendar);
 
 export const AgendaContext = createContext({});

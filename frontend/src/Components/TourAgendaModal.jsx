@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { updateDriverEvent, deleteDriverEvent, addDriverEvent, fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
+import { updateTrip, fetchTripById } from '../store/slices/tripsSlice';
+import { fetchHotels } from '../store/slices/hotelsSlice';
 import { format, differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import { 
   Users, 
@@ -12,11 +14,17 @@ import {
   ExternalLink, 
   AlertCircle, 
   MapPin,
-  CalendarCheck
+  CalendarCheck,
+  Edit2,
+  Bed,
+  Check,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgendaModal } from './AgendaModal';
 import { DriverSelect } from './DriverSelect';
+import { HotelSelect } from './HotelSelect';
 
 const DRIVER_PALETTES = [
   { bg: '#059669', border: '#047857', text: '#ffffff', lightBg: 'bg-emerald-50 dark:bg-emerald-950/40', borderLight: 'border-emerald-200 dark:border-emerald-800', badgeBg: 'bg-emerald-500', textColor: 'text-emerald-700 dark:text-emerald-300' },
@@ -29,6 +37,47 @@ const DRIVER_PALETTES = [
   { bg: '#0d9488', border: '#0f766e', text: '#ffffff', lightBg: 'bg-teal-50 dark:bg-teal-950/40', borderLight: 'border-teal-200 dark:border-teal-800', badgeBg: 'bg-teal-500', textColor: 'text-teal-700 dark:text-teal-300' },
 ];
 
+// Helper: safe date formatting without timezone shift
+const formatLocalDate = (d) => {
+  if (!d) return '';
+  if (typeof d === 'string') {
+    const clean = d.split('T')[0];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  }
+  const dateObj = new Date(d);
+  if (isNaN(dateObj.getTime())) return '';
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+// Helper: safe date parsing to local midnight
+const parseLocalDate = (d) => {
+  if (!d) return new Date();
+  if (d instanceof Date) return startOfDay(d);
+  const cleanStr = String(d).split('T')[0];
+  const parts = cleanStr.split('-').map(Number);
+  if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+    return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
+  }
+  const fallback = new Date(d);
+  return isNaN(fallback.getTime()) ? new Date() : startOfDay(fallback);
+};
+
+// Helper: safe date parsing to end of day (23:59:59.999) for inclusive calendar ranges
+const parseLocalDateEndOfDay = (d) => {
+  if (!d) return endOfDay(new Date());
+  if (d instanceof Date) return endOfDay(d);
+  const cleanStr = String(d).split('T')[0];
+  const parts = cleanStr.split('-').map(Number);
+  if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+    return new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59, 999);
+  }
+  const fallback = new Date(d);
+  return isNaN(fallback.getTime()) ? endOfDay(new Date()) : endOfDay(fallback);
+};
+
 export function TourAgendaModal({
   isOpen,
   onClose,
@@ -39,17 +88,54 @@ export function TourAgendaModal({
 }) {
   const dispatch = useDispatch();
 
+  // Keep trip state synchronized with Redux store
+  const reduxTrip = useSelector((state) => 
+    state.trips?.currentTrip?._id === trip?._id 
+      ? state.trips.currentTrip 
+      : (state.trips?.items?.find(t => t._id === trip?._id) || trip)
+  );
+  const activeTrip = reduxTrip || trip;
+
   // Active staged modification on an event (via drag or resize)
   const [modifiedEvent, setModifiedEvent] = useState(null);
 
-  // Selected event for side drawer inspection
+  // Saving state indicator
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Selected event for side drawer inspection / editing
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [editFormData, setEditFormData] = useState(null);
+
+  // Form states for side drawer editing
+  const [tourForm, setTourForm] = useState({
+    title: '',
+    startDate: '',
+    endDate: '',
+    status: 'Inquiry',
+    guestType: ''
+  });
+
+  const [itineraryForm, setItineraryForm] = useState({
+    index: 0,
+    dayNumber: 1,
+    date: '',
+    locationDetails: '',
+    hotel: '',
+    activities: '',
+    coordinates: null
+  });
+
+  const [driverForm, setDriverForm] = useState({
+    driverId: '',
+    title: '',
+    start: '',
+    end: '',
+    notes: ''
+  });
 
   // Toggle for showing daily itinerary stops on calendar
-  const [showItineraryDays, setShowItineraryDays] = useState(false);
+  const [showItineraryDays, setShowItineraryDays] = useState(true);
 
-  // Modal for assigning a new driver from within this view
+  // Modal for assigning a new driver
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assignForm, setAssignForm] = useState({
     driverId: '',
@@ -59,15 +145,30 @@ export function TourAgendaModal({
     title: ''
   });
 
-  // Reset internal states when opened/closed
+  // Modal for adding a new itinerary stop
+  const [isAddStopModalOpen, setIsAddStopModalOpen] = useState(false);
+  const [newStopForm, setNewStopForm] = useState({
+    dayNumber: 1,
+    date: '',
+    locationDetails: '',
+    hotel: '',
+    activities: ''
+  });
+
+  // Modal for slot click quick chooser
+  const [slotActionModal, setSlotActionModal] = useState(null);
+
+  // Load hotels and reset states when opened/closed
   useEffect(() => {
     if (isOpen) {
+      dispatch(fetchHotels());
       setModifiedEvent(null);
       setSelectedEvent(null);
-      setEditFormData(null);
       setIsAssignModalOpen(false);
+      setIsAddStopModalOpen(false);
+      setSlotActionModal(null);
     }
-  }, [isOpen]);
+  }, [isOpen, dispatch]);
 
   // Unique driver color palette mapping
   const driverPaletteMap = useMemo(() => {
@@ -113,46 +214,124 @@ export function TourAgendaModal({
 
   // Tour duration calculation
   const tourDuration = useMemo(() => {
-    if (!trip?.startDate || !trip?.endDate) return 1;
-    return Math.max(1, differenceInDays(new Date(trip.endDate), new Date(trip.startDate)) + 1);
-  }, [trip]);
+    if (!activeTrip?.startDate || !activeTrip?.endDate) return 1;
+    return Math.max(1, differenceInDays(parseLocalDate(activeTrip.endDate), parseLocalDate(activeTrip.startDate)) + 1);
+  }, [activeTrip]);
+
+  // Helper to sanitize an itinerary item for backend updateTrip
+  const cleanItineraryItem = (day, idx) => ({
+    dayNumber: Number(day.dayNumber) || (idx + 1),
+    date: formatLocalDate(day.date) || undefined,
+    activities: day.activities || '',
+    hotel: (typeof day.hotel === 'object' && day.hotel?._id) ? day.hotel._id : (day.hotel || undefined),
+    locationDetails: day.locationDetails || '',
+    coordinates: day.coordinates || undefined
+  });
 
   // Staged drag and resize handlers
   const handleEventDrop = ({ event, start, end }) => {
-    if (event.isTourSchedule || event.isItineraryDay || event.isReadOnly) {
-      toast.info('Tour dates are managed in the Tour Agenda.');
+    if (event.isReadOnly) {
+      toast.info('This event is read-only.');
       return;
     }
 
-    const origStart = (modifiedEvent && modifiedEvent.id === event._id) ? modifiedEvent.initialStart : new Date(event.start);
-    const origEnd = (modifiedEvent && modifiedEvent.id === event._id) ? modifiedEvent.initialEnd : new Date(event.end);
+    if (event.isTourSchedule) {
+      const origStart = (modifiedEvent && modifiedEvent.id === event.id) ? modifiedEvent.initialStart : parseLocalDate(activeTrip.startDate);
+      const origEnd = (modifiedEvent && modifiedEvent.id === event.id) ? modifiedEvent.initialEnd : parseLocalDateEndOfDay(activeTrip.endDate);
+      setModifiedEvent({
+        id: event.id,
+        type: 'tour',
+        start: startOfDay(start),
+        end: endOfDay(end),
+        initialStart: origStart,
+        initialEnd: origEnd,
+        title: activeTrip.title || 'Tour Schedule'
+      });
+      return;
+    }
+
+    if (event.isItineraryDay) {
+      const origStart = (modifiedEvent && modifiedEvent.id === event.id) ? modifiedEvent.initialStart : parseLocalDate(event.startDate || event.start);
+      setModifiedEvent({
+        id: event.id,
+        type: 'itinerary',
+        start: startOfDay(start),
+        end: endOfDay(start), // Single-day stop
+        initialStart: origStart,
+        initialEnd: origStart,
+        itineraryIndex: event.itineraryIndex,
+        itineraryItem: event.itineraryItem,
+        title: event.title
+      });
+      return;
+    }
+
+    // Driver Event
+    const origStart = (modifiedEvent && modifiedEvent.id === event._id) ? modifiedEvent.initialStart : parseLocalDate(event.start);
+    const origEnd = (modifiedEvent && modifiedEvent.id === event._id) ? modifiedEvent.initialEnd : parseLocalDateEndOfDay(event.end);
 
     setModifiedEvent({
       id: event._id,
-      start,
-      end,
+      type: 'driver',
+      start: startOfDay(start),
+      end: endOfDay(end),
       initialStart: origStart,
       initialEnd: origEnd,
-      driverName: event.driver?.name || 'Driver'
+      driverName: event.driver?.name || 'Driver',
+      title: event.title || 'Driver Assignment'
     });
   };
 
   const handleEventResize = ({ event, start, end }) => {
-    if (event.isTourSchedule || event.isItineraryDay || event.isReadOnly) {
-      toast.info('Tour dates are managed in the Tour Agenda.');
+    if (event.isReadOnly) {
+      toast.info('This event is read-only.');
       return;
     }
 
-    const origStart = (modifiedEvent && modifiedEvent.id === event._id) ? modifiedEvent.initialStart : new Date(event.start);
-    const origEnd = (modifiedEvent && modifiedEvent.id === event._id) ? modifiedEvent.initialEnd : new Date(event.end);
+    if (event.isTourSchedule) {
+      const origStart = (modifiedEvent && modifiedEvent.id === event.id) ? modifiedEvent.initialStart : parseLocalDate(activeTrip.startDate);
+      const origEnd = (modifiedEvent && modifiedEvent.id === event.id) ? modifiedEvent.initialEnd : parseLocalDateEndOfDay(activeTrip.endDate);
+      setModifiedEvent({
+        id: event.id,
+        type: 'tour',
+        start: startOfDay(start),
+        end: endOfDay(end),
+        initialStart: origStart,
+        initialEnd: origEnd,
+        title: activeTrip.title || 'Tour Schedule'
+      });
+      return;
+    }
+
+    if (event.isItineraryDay) {
+      const origStart = (modifiedEvent && modifiedEvent.id === event.id) ? modifiedEvent.initialStart : parseLocalDate(event.startDate || event.start);
+      setModifiedEvent({
+        id: event.id,
+        type: 'itinerary',
+        start: startOfDay(start),
+        end: endOfDay(start),
+        initialStart: origStart,
+        initialEnd: origStart,
+        itineraryIndex: event.itineraryIndex,
+        itineraryItem: event.itineraryItem,
+        title: event.title
+      });
+      return;
+    }
+
+    // Driver Event
+    const origStart = (modifiedEvent && modifiedEvent.id === event._id) ? modifiedEvent.initialStart : parseLocalDate(event.start);
+    const origEnd = (modifiedEvent && modifiedEvent.id === event._id) ? modifiedEvent.initialEnd : parseLocalDateEndOfDay(event.end);
 
     setModifiedEvent({
       id: event._id,
-      start,
-      end,
+      type: 'driver',
+      start: startOfDay(start),
+      end: endOfDay(end),
       initialStart: origStart,
       initialEnd: origEnd,
-      driverName: event.driver?.name || 'Driver'
+      driverName: event.driver?.name || 'Driver',
+      title: event.title || 'Driver Assignment'
     });
   };
 
@@ -165,65 +344,301 @@ export function TourAgendaModal({
     setModifiedEvent(null);
   };
 
+  // Save modified event from either the floating UI or the header/sidebar save button
   const handleSaveModified = async () => {
     if (!modifiedEvent) return;
+    setIsSaving(true);
+
+    if (modifiedEvent.type === 'tour') {
+      try {
+        const startStr = formatLocalDate(modifiedEvent.start);
+        const endStr = formatLocalDate(modifiedEvent.end);
+        const duration = Math.max(1, differenceInDays(parseLocalDate(endStr), parseLocalDate(startStr)) + 1);
+
+        const payload = {
+          ...activeTrip,
+          client: activeTrip.client?._id || activeTrip.client,
+          startDate: startStr,
+          endDate: endStr,
+          duration
+        };
+
+        await dispatch(updateTrip({
+          id: activeTrip._id,
+          data: payload
+        })).unwrap();
+
+        toast.success(`Tour dates updated: ${format(parseLocalDate(startStr), 'MMM dd')} – ${format(parseLocalDate(endStr), 'MMM dd, yyyy')}`);
+        setModifiedEvent(null);
+      } catch (err) {
+        toast.error('Failed to update tour dates: ' + (err.message || ''));
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
+    if (modifiedEvent.type === 'itinerary') {
+      try {
+        const targetDate = formatLocalDate(modifiedEvent.start);
+        const currentList = Array.isArray(activeTrip.itinerary) ? [...activeTrip.itinerary] : [];
+        const targetIdx = modifiedEvent.itineraryIndex;
+
+        const updatedList = currentList.map((item, idx) => {
+          const isMatch = (item._id && modifiedEvent.itineraryItem?._id && item._id === modifiedEvent.itineraryItem._id) || idx === targetIdx;
+          return {
+            ...cleanItineraryItem(item, idx),
+            date: isMatch ? targetDate : (item.date ? formatLocalDate(item.date) : undefined)
+          };
+        });
+
+        const payload = {
+          ...activeTrip,
+          client: activeTrip.client?._id || activeTrip.client,
+          itinerary: updatedList
+        };
+
+        await dispatch(updateTrip({
+          id: activeTrip._id,
+          data: payload
+        })).unwrap();
+
+        toast.success(`Itinerary stop rescheduled to ${format(modifiedEvent.start, 'MMM dd, yyyy')}`);
+        setModifiedEvent(null);
+      } catch (err) {
+        toast.error('Failed to reschedule itinerary stop: ' + (err.message || ''));
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
+    // Driver Event
     try {
       await dispatch(updateDriverEvent({
         id: modifiedEvent.id,
-        start: modifiedEvent.start.toISOString(),
-        end: modifiedEvent.end.toISOString()
+        start: startOfDay(modifiedEvent.start).toISOString(),
+        end: endOfDay(modifiedEvent.end).toISOString()
       })).unwrap();
 
       toast.success(`Schedule updated for ${modifiedEvent.driverName}`);
       setModifiedEvent(null);
-      if (trip?._id) {
-        dispatch(fetchDriverEventsByTrip(trip._id));
+      if (activeTrip?._id) {
+        dispatch(fetchDriverEventsByTrip(activeTrip._id));
       }
     } catch (err) {
       toast.error('Failed to update driver schedule');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  // Event Selection for inspection drawer
+  // Event Selection for inspection / editing in drawer
   const handleSelectEvent = (event) => {
     if (modifiedEvent) return;
-    setSelectedEvent(event);
-    if (!event.isTourSchedule && !event.isItineraryDay) {
-      setEditFormData({
-        title: event.title || '',
-        start: format(new Date(event.start), 'yyyy-MM-dd'),
-        end: format(new Date(event.end), 'yyyy-MM-dd'),
-        notes: event.notes || ''
+
+    if (event.isTourSchedule) {
+      setSelectedEvent({ ...event, entityType: 'tour' });
+      setTourForm({
+        title: activeTrip?.title || '',
+        startDate: formatLocalDate(activeTrip?.startDate),
+        endDate: formatLocalDate(activeTrip?.endDate),
+        status: activeTrip?.status || 'Inquiry',
+        guestType: activeTrip?.guestType || ''
       });
-    } else {
-      setEditFormData(null);
+      return;
+    }
+
+    if (event.isItineraryDay) {
+      const item = event.itineraryItem || {};
+      setSelectedEvent({ ...event, entityType: 'itinerary' });
+      setItineraryForm({
+        index: event.itineraryIndex,
+        dayNumber: item.dayNumber || (event.itineraryIndex + 1),
+        date: formatLocalDate(item.date) || formatLocalDate(event.start),
+        locationDetails: item.locationDetails || '',
+        hotel: (typeof item.hotel === 'object' && item.hotel?._id) ? item.hotel._id : (item.hotel || ''),
+        activities: item.activities || '',
+        coordinates: item.coordinates || null
+      });
+      return;
+    }
+
+    // Driver event
+    const driverId = (typeof event.driverId === 'object' && event.driverId?._id) 
+      ? event.driverId._id 
+      : (event.driver?._id || event.driverId || '');
+
+    setSelectedEvent({ ...event, entityType: 'driver' });
+    setDriverForm({
+      driverId,
+      title: event.title || '',
+      start: formatLocalDate(event.start),
+      end: formatLocalDate(event.end),
+      notes: event.notes || ''
+    });
+  };
+
+  // Save Tour Details from Drawer
+  const handleSaveTourDrawer = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!tourForm.startDate || !tourForm.endDate) {
+      toast.error('Please specify both start and end dates');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const s = parseLocalDate(tourForm.startDate);
+      const endD = parseLocalDate(tourForm.endDate);
+      const duration = Math.max(1, differenceInDays(endD, s) + 1);
+
+      const payload = {
+        ...activeTrip,
+        client: activeTrip.client?._id || activeTrip.client,
+        title: tourForm.title || activeTrip.title,
+        startDate: tourForm.startDate,
+        endDate: tourForm.endDate,
+        duration,
+        status: tourForm.status,
+        guestType: tourForm.guestType
+      };
+
+      await dispatch(updateTrip({
+        id: activeTrip._id,
+        data: payload
+      })).unwrap();
+
+      toast.success('Tour schedule & details updated');
+      setSelectedEvent(null);
+    } catch (err) {
+      toast.error('Failed to update tour details: ' + (err.message || ''));
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleSaveDrawerEdit = async (e) => {
-    e?.preventDefault();
-    if (!selectedEvent || !editFormData) return;
+  // Save Itinerary Stop from Drawer
+  const handleSaveItineraryDrawer = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!itineraryForm.date) {
+      toast.error('Date is required for this itinerary stop');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const currentList = Array.isArray(activeTrip?.itinerary) ? [...activeTrip.itinerary] : [];
+      const targetIdx = itineraryForm.index;
+
+      const updatedList = currentList.map((item, idx) => {
+        const isMatch = (idx === targetIdx) || (item._id && selectedEvent?.itineraryItem?._id && item._id === selectedEvent.itineraryItem._id);
+        if (isMatch) {
+          return {
+            dayNumber: Number(itineraryForm.dayNumber) || (idx + 1),
+            date: itineraryForm.date,
+            locationDetails: itineraryForm.locationDetails || '',
+            hotel: itineraryForm.hotel || undefined,
+            activities: itineraryForm.activities || '',
+            coordinates: itineraryForm.coordinates || item.coordinates || undefined
+          };
+        }
+        return cleanItineraryItem(item, idx);
+      });
+
+      const payload = {
+        ...activeTrip,
+        client: activeTrip.client?._id || activeTrip.client,
+        itinerary: updatedList
+      };
+
+      await dispatch(updateTrip({
+        id: activeTrip._id,
+        data: payload
+      })).unwrap();
+
+      toast.success(`Itinerary Day ${itineraryForm.dayNumber} updated`);
+      setSelectedEvent(null);
+    } catch (err) {
+      toast.error('Failed to save itinerary stop: ' + (err.message || ''));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Delete Itinerary Stop from Drawer
+  const handleDeleteItineraryStop = async (indexToDelete) => {
+    if (!window.confirm('Are you sure you want to remove this itinerary stop from the tour?')) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const currentList = Array.isArray(activeTrip?.itinerary) ? [...activeTrip.itinerary] : [];
+      const updatedList = currentList
+        .filter((_, idx) => idx !== indexToDelete)
+        .map((item, idx) => cleanItineraryItem(item, idx));
+
+      const payload = {
+        ...activeTrip,
+        client: activeTrip.client?._id || activeTrip.client,
+        itinerary: updatedList
+      };
+
+      await dispatch(updateTrip({
+        id: activeTrip._id,
+        data: payload
+      })).unwrap();
+
+      toast.success('Itinerary stop removed');
+      setSelectedEvent(null);
+    } catch (err) {
+      toast.error('Failed to remove itinerary stop: ' + (err.message || ''));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Save Driver Assignment from Drawer
+  const handleSaveDriverDrawer = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!selectedEvent || !driverForm) return;
+
+    if (!driverForm.driverId) {
+      toast.error('Please select a driver');
+      return;
+    }
+    setIsSaving(true);
 
     try {
       await dispatch(updateDriverEvent({
         id: selectedEvent._id,
-        title: editFormData.title,
-        start: new Date(editFormData.start).toISOString(),
-        end: new Date(editFormData.end).toISOString(),
-        notes: editFormData.notes
+        driverId: driverForm.driverId,
+        title: driverForm.title,
+        start: new Date(driverForm.start).toISOString(),
+        end: new Date(driverForm.end).toISOString(),
+        notes: driverForm.notes
       })).unwrap();
 
-      toast.success('Assignment details saved');
+      toast.success('Driver assignment updated');
       setSelectedEvent(null);
-      setEditFormData(null);
-      if (trip?._id) {
-        dispatch(fetchDriverEventsByTrip(trip._id));
+      if (activeTrip?._id) {
+        dispatch(fetchDriverEventsByTrip(activeTrip._id));
       }
     } catch (err) {
-      toast.error('Failed to save assignment changes');
+      toast.error('Failed to save driver assignment');
+    } finally {
+      setIsSaving(false);
     }
   };
 
+  // Delete Driver Assignment
   const handleDeleteAssignment = async (eventId) => {
     if (!eventId) return;
     if (window.confirm('Are you sure you want to remove this driver from the tour?')) {
@@ -231,9 +646,8 @@ export function TourAgendaModal({
         await dispatch(deleteDriverEvent(eventId)).unwrap();
         toast.success('Driver assignment removed');
         setSelectedEvent(null);
-        setEditFormData(null);
-        if (trip?._id) {
-          dispatch(fetchDriverEventsByTrip(trip._id));
+        if (activeTrip?._id) {
+          dispatch(fetchDriverEventsByTrip(activeTrip._id));
         }
       } catch (err) {
         toast.error('Failed to remove driver assignment');
@@ -243,21 +657,29 @@ export function TourAgendaModal({
 
   // Assign Driver Modal Handlers
   const openAssignModal = (dates = null) => {
-    const s = dates?.start ? format(new Date(dates.start), 'yyyy-MM-dd') : (trip?.startDate ? format(new Date(trip.startDate), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
-    const e = dates?.end ? format(new Date(dates.end), 'yyyy-MM-dd') : (trip?.endDate ? format(new Date(trip.endDate), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
+    const s = dates?.start 
+      ? formatLocalDate(dates.start) 
+      : (activeTrip?.startDate ? formatLocalDate(activeTrip.startDate) : formatLocalDate(new Date()));
+    const e = dates?.end 
+      ? formatLocalDate(dates.end) 
+      : (activeTrip?.endDate ? formatLocalDate(activeTrip.endDate) : formatLocalDate(new Date()));
 
     setAssignForm({
       driverId: '',
       start: s,
       end: e,
       notes: '',
-      title: trip ? `${trip.title} Assignment` : 'Tour Assignment'
+      title: activeTrip ? `${activeTrip.title} Assignment` : 'Tour Assignment'
     });
+    setSlotActionModal(null);
     setIsAssignModalOpen(true);
   };
 
   const handleAssignSubmit = async (e) => {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!assignForm.driverId) {
       toast.error('Please select a driver');
       return;
@@ -270,73 +692,172 @@ export function TourAgendaModal({
     try {
       await dispatch(addDriverEvent({
         driverId: assignForm.driverId,
-        title: assignForm.title || `${trip?.title || 'Tour'} Assignment`,
+        title: assignForm.title || `${activeTrip?.title || 'Tour'} Assignment`,
         start: new Date(assignForm.start).toISOString(),
         end: new Date(assignForm.end).toISOString(),
         type: 'tour',
-        tripId: trip?._id,
+        tripId: activeTrip?._id,
         notes: assignForm.notes,
         allDay: true
       })).unwrap();
 
       toast.success('Driver assigned successfully');
       setIsAssignModalOpen(false);
-      if (trip?._id) {
-        dispatch(fetchDriverEventsByTrip(trip._id));
+      if (activeTrip?._id) {
+        dispatch(fetchDriverEventsByTrip(activeTrip._id));
       }
     } catch (err) {
       toast.error('Failed to assign driver');
     }
   };
 
+  // Add Itinerary Stop Modal Handlers
+  const openAddStopModal = (initialDate = null) => {
+    const nextDayNum = (Array.isArray(activeTrip?.itinerary) ? activeTrip.itinerary.length : 0) + 1;
+    const dateStr = initialDate 
+      ? formatLocalDate(initialDate) 
+      : (activeTrip?.startDate ? formatLocalDate(activeTrip.startDate) : formatLocalDate(new Date()));
+
+    setNewStopForm({
+      dayNumber: nextDayNum,
+      date: dateStr,
+      locationDetails: '',
+      hotel: '',
+      activities: ''
+    });
+    setSlotActionModal(null);
+    setIsAddStopModalOpen(true);
+  };
+
+  const handleAddStopSubmit = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!newStopForm.date) {
+      toast.error('Date is required for the itinerary stop');
+      return;
+    }
+    setIsSaving(true);
+
+    try {
+      const currentList = Array.isArray(activeTrip?.itinerary) ? [...activeTrip.itinerary] : [];
+      const sanitizedExisting = currentList.map((item, idx) => cleanItineraryItem(item, idx));
+
+      const newStop = {
+        dayNumber: Number(newStopForm.dayNumber) || (currentList.length + 1),
+        date: newStopForm.date,
+        locationDetails: newStopForm.locationDetails || '',
+        hotel: newStopForm.hotel || undefined,
+        activities: newStopForm.activities || '',
+        coordinates: { lat: -18.8792, lng: 47.5079 }
+      };
+
+      const updatedList = [...sanitizedExisting, newStop];
+
+      const payload = {
+        ...activeTrip,
+        client: activeTrip.client?._id || activeTrip.client,
+        itinerary: updatedList
+      };
+
+      await dispatch(updateTrip({
+        id: activeTrip._id,
+        data: payload
+      })).unwrap();
+
+      toast.success(`Itinerary Day ${newStop.dayNumber} added`);
+      setIsAddStopModalOpen(false);
+      setShowItineraryDays(true);
+    } catch (err) {
+      toast.error('Failed to add itinerary stop: ' + (err.message || ''));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Slot Selection Handler: opens slot action chooser
   const handleSelectSlot = ({ start, end }) => {
-    openAssignModal({ start, end });
+    setSlotActionModal({ start, end });
   };
 
   // Construct Calendar Events
   const calendarEvents = useMemo(() => {
     const eventsList = [];
 
-    // 1. Tour's official schedule event (Molten Lava / App brand colors)
-    if (trip?.startDate && trip?.endDate) {
+    // 1. Tour's official schedule event (Dominant Dark Luxury & Amber Badge styling)
+    if (activeTrip?.startDate && activeTrip?.endDate) {
+      const isTourModified = modifiedEvent && modifiedEvent.type === 'tour';
+      const isTourSelected = selectedEvent && selectedEvent.entityType === 'tour';
+
+      const tourStart = isTourModified 
+        ? startOfDay(modifiedEvent.start) 
+        : (isTourSelected && tourForm.startDate ? startOfDay(parseLocalDate(tourForm.startDate)) : startOfDay(parseLocalDate(activeTrip.startDate)));
+
+      const tourEnd = isTourModified 
+        ? endOfDay(modifiedEvent.end) 
+        : (isTourSelected && tourForm.endDate ? parseLocalDateEndOfDay(tourForm.endDate) : parseLocalDateEndOfDay(activeTrip.endDate));
+
       eventsList.push({
-        id: `tour-schedule-${trip._id || 'main'}`,
-        _id: `tour-schedule-${trip._id || 'main'}`,
+        id: `tour-schedule-${activeTrip._id || 'main'}`,
+        _id: `tour-schedule-${activeTrip._id || 'main'}`,
         isTourSchedule: true,
-        title: `Tour: ${trip.title || 'Tour Schedule'}`,
-        displayTitle: `🚩 Tour: ${trip.title || 'Tour'} (${tourDuration}d)`,
-        start: new Date(trip.startDate),
-        end: new Date(trip.endDate),
-        startDate: trip.startDate,
-        endDate: trip.endDate,
+        priority: 100, // Forces tour schedule to the very top row of any date cell/week
+        title: `Tour: ${activeTrip.title || 'Tour Schedule'}`,
+        displayTitle: `${activeTrip.title || 'Master Tour'} (${tourDuration}d)`,
+        start: tourStart,
+        end: tourEnd,
+        startDate: activeTrip.startDate,
+        endDate: activeTrip.endDate,
+        initialStart: isTourModified ? modifiedEvent.initialStart : parseLocalDate(activeTrip.startDate),
+        initialEnd: isTourModified ? modifiedEvent.initialEnd : parseLocalDateEndOfDay(activeTrip.endDate),
         allDay: true,
-        isReadOnly: true,
-        tripData: trip,
+        isReadOnly: false,
+        isEditing: isTourModified,
+        onSave: isTourModified ? handleSaveModified : undefined,
+        onReset: isTourModified ? handleResetModified : undefined,
+        onCancel: isTourModified ? handleCancelModified : undefined,
+        tripData: activeTrip,
         icon: (
-          <div className="w-4 h-4 rounded-full bg-brand-accent/30 border border-brand-accent/50 shrink-0 flex items-center justify-center text-amber-200">
-            <CalendarCheck size={11} strokeWidth={2.5} />
+          <div className="w-5 h-5 rounded-md bg-amber-400 text-slate-950 shrink-0 flex items-center justify-center font-black shadow-xs">
+            <CalendarCheck size={13} strokeWidth={2.8} />
           </div>
         )
       });
 
       // 2. Daily Itinerary stops (Sunflower Gold accent)
-      if (showItineraryDays && Array.isArray(trip.itinerary)) {
-        trip.itinerary.forEach((item, idx) => {
+      if (showItineraryDays && Array.isArray(activeTrip.itinerary)) {
+        activeTrip.itinerary.forEach((item, idx) => {
           if (item?.date) {
-            const itemDate = new Date(item.date);
+            const isThisItemModified = modifiedEvent && modifiedEvent.type === 'itinerary' && (modifiedEvent.itineraryIndex === idx || modifiedEvent.id === `tour-itinerary-${item._id || idx}`);
+            const isThisItemSelected = selectedEvent && selectedEvent.entityType === 'itinerary' && (selectedEvent.itineraryIndex === idx || selectedEvent._id === `tour-itinerary-${item._id || idx}`);
+
+            const itemDate = isThisItemModified 
+              ? modifiedEvent.start 
+              : (isThisItemSelected && itineraryForm.date ? parseLocalDate(itineraryForm.date) : parseLocalDate(item.date));
+
             const locationName = item.locationDetails || (item.hotel?.name ? `Hotel: ${item.hotel.name}` : '') || item.activities || `Day ${item.dayNumber || idx + 1}`;
+            
             eventsList.push({
               id: `tour-itinerary-${item._id || idx}`,
               _id: `tour-itinerary-${item._id || idx}`,
               isItineraryDay: true,
-              isReadOnly: true,
+              itineraryIndex: idx,
+              priority: 50,
+              isReadOnly: false,
               title: `D${item.dayNumber || idx + 1}: ${locationName}`,
               displayTitle: `D${item.dayNumber || idx + 1}: ${locationName}`,
-              start: itemDate,
-              end: itemDate,
+              start: startOfDay(itemDate),
+              end: endOfDay(itemDate),
               startDate: item.date,
               endDate: item.date,
+              initialStart: isThisItemModified ? modifiedEvent.initialStart : parseLocalDate(item.date),
+              initialEnd: isThisItemModified ? modifiedEvent.initialEnd : parseLocalDateEndOfDay(item.date),
               allDay: true,
+              isEditing: isThisItemModified,
+              onSave: isThisItemModified ? handleSaveModified : undefined,
+              onReset: isThisItemModified ? handleResetModified : undefined,
+              onCancel: isThisItemModified ? handleCancelModified : undefined,
               itineraryItem: item,
               icon: (
                 <div className="w-3.5 h-3.5 rounded-full bg-brand-primary/30 shrink-0 flex items-center justify-center text-brand-secondary text-[9px] font-black">
@@ -349,7 +870,7 @@ export function TourAgendaModal({
       }
     }
 
-    // 3. Assigned driver events
+    // 3. Assigned driver events (Distinct pill styling, lower priority than master tour)
     const driverEvents = tripEvents.map(event => {
       const driverObj = (typeof event.driverId === 'object' && event.driverId)
         ? event.driverId 
@@ -358,28 +879,29 @@ export function TourAgendaModal({
       const driverId = driverObj._id || event.driverId;
       const palette = driverPaletteMap.get(driverId) || DRIVER_PALETTES[0];
 
-      const isThisModified = modifiedEvent && modifiedEvent.id === event._id;
-      const isThisSelected = selectedEvent && selectedEvent._id === event._id && editFormData;
+      const isThisModified = modifiedEvent && modifiedEvent.type === 'driver' && modifiedEvent.id === event._id;
+      const isThisSelected = selectedEvent && selectedEvent.entityType === 'driver' && selectedEvent._id === event._id && driverForm;
 
       const eventStart = isThisModified 
-        ? modifiedEvent.start 
-        : (isThisSelected ? new Date(editFormData.start) : new Date(event.start));
+        ? startOfDay(modifiedEvent.start) 
+        : (isThisSelected ? startOfDay(parseLocalDate(driverForm.start)) : startOfDay(new Date(event.start)));
 
       const eventEnd = isThisModified 
-        ? modifiedEvent.end 
-        : (isThisSelected ? new Date(editFormData.end) : new Date(event.end));
+        ? endOfDay(modifiedEvent.end) 
+        : (isThisSelected ? parseLocalDateEndOfDay(driverForm.end) : endOfDay(new Date(event.end)));
 
       return {
         ...event,
         id: event._id,
-        title: `${driverObj.name}: ${event.title || 'Tour Driver'}`,
-        displayTitle: `${driverObj.name}`,
+        priority: 10, // Renders beneath the master tour schedule
+        title: `Driver: ${driverObj.name} (${event.title || 'Shift'})`,
+        displayTitle: driverObj.name,
         driver: driverObj,
         palette,
         start: eventStart,
         end: eventEnd,
-        initialStart: isThisModified ? modifiedEvent.initialStart : new Date(event.start),
-        initialEnd: isThisModified ? modifiedEvent.initialEnd : new Date(event.end),
+        initialStart: isThisModified ? modifiedEvent.initialStart : startOfDay(new Date(event.start)),
+        initialEnd: isThisModified ? modifiedEvent.initialEnd : endOfDay(new Date(event.end)),
         startDate: event.start,
         endDate: event.end,
         isReadOnly: false,
@@ -388,11 +910,11 @@ export function TourAgendaModal({
         onReset: isThisModified ? handleResetModified : undefined,
         onCancel: isThisModified ? handleCancelModified : undefined,
         icon: (
-          <div className="w-4 h-4 rounded-full overflow-hidden bg-white/30 shrink-0 flex items-center justify-center font-bold text-[9px] text-white">
+          <div className="w-4 h-4 rounded-full overflow-hidden bg-white/40 ring-1 ring-white/60 shrink-0 flex items-center justify-center font-extrabold text-[8px] text-white shadow-2xs">
             {driverObj.avatar ? (
               <img src={driverObj.avatar} alt={driverObj.name} className="w-full h-full object-cover" />
             ) : (
-              driverObj.name?.charAt(0).toUpperCase() || 'D'
+              <Car size={10} strokeWidth={2.5} />
             )}
           </div>
         )
@@ -400,153 +922,285 @@ export function TourAgendaModal({
     });
 
     return [...eventsList, ...driverEvents];
-  }, [trip, tripEvents, drivers, driverPaletteMap, modifiedEvent, selectedEvent, editFormData, showItineraryDays, tourDuration]);
+  }, [activeTrip, tripEvents, drivers, driverPaletteMap, modifiedEvent, selectedEvent, tourForm, itineraryForm, driverForm, showItineraryDays, tourDuration]);
 
-  // Event styling following the app's brand colors
+  // Event styling
   const eventStyleGetter = (event) => {
     if (event.isTourSchedule) {
       const isSelected = selectedEvent?._id === event._id;
+      const isEditing = event.isEditing;
       return {
         style: {
-          background: 'linear-gradient(135deg, #09090b 0%, #18181b 100%)', // Jet Black to Charcoal
-          border: isSelected ? '2px solid #E8B72F' : '1.5px solid #27272a',
-          borderRadius: '8px',
+          backgroundColor: '#09090b',
+          border: isEditing ? '2px dashed #f59e0b' : (isSelected ? '2px solid #f59e0b' : '1px solid #27272a'),
+          borderRadius: '4px',
           color: '#ffffff',
           fontWeight: '900',
-          padding: '2px 8px',
-          boxShadow: isSelected 
-            ? '0 0 0 2px rgba(232, 183, 47, 0.4), 0 4px 14px rgba(0, 0, 0, 0.6)' 
-            : '0 2px 8px rgba(0, 0, 0, 0.4)',
+          fontSize: '11px',
+          letterSpacing: '0.02em',
+          minHeight: '26px',
+          height: '26px',
+          padding: '0 8px',
+          boxShadow: isEditing
+            ? '0 10px 25px -3px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.3)'
+            : (isSelected ? '0 0 0 2px rgba(245, 158, 11, 0.45), 0 6px 18px rgba(0, 0, 0, 0.7)' : '0 3px 8px rgba(0, 0, 0, 0.35)'),
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
+          opacity: 1,
           transition: 'all 0.15s ease',
-          cursor: 'pointer',
-          zIndex: 20
+          cursor: isEditing ? 'grabbing' : 'pointer',
+          zIndex: 25
         }
       };
     }
 
     if (event.isItineraryDay) {
       const isSelected = selectedEvent?._id === event._id;
+      const isEditing = event.isEditing;
       return {
         style: {
-          background: '#E8B72F', // Sunflower Gold accent
-          border: isSelected ? '2px solid #811303' : '1px solid #d97706',
+          background: '#fbbf24',
+          border: isEditing ? '2px dashed #811303' : (isSelected ? '2px solid #811303' : '1px solid #d97706'),
           borderRadius: '6px',
-          color: '#2A0A05',
+          color: '#451a03',
           fontWeight: '800',
-          fontSize: '11px',
-          padding: '1px 6px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+          fontSize: '10px',
+          minHeight: '20px',
+          height: '20px',
+          padding: '0 6px',
+          boxShadow: isEditing 
+            ? '0 8px 18px rgba(217,119,6,0.35)' 
+            : (isSelected ? '0 0 0 2px rgba(129, 19, 3, 0.4), 0 2px 6px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.15)'),
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
+          opacity: 0.95,
           transition: 'all 0.15s ease',
-          cursor: 'pointer',
+          cursor: isEditing ? 'grabbing' : 'pointer',
           zIndex: 15
         }
       };
     }
 
+    // Driver Shift
     const palette = event.palette || DRIVER_PALETTES[0];
     const isEditing = event.isEditing;
+    const isSelected = selectedEvent?._id === event._id;
 
     return {
       style: {
         backgroundColor: palette.bg,
-        border: isEditing ? '2px dashed #ffffff' : `1px solid ${palette.border}`,
-        borderRadius: '8px',
+        border: isEditing ? '2px dashed #ffffff' : (isSelected ? '2px solid #ffffff' : `1.5px solid ${palette.border}`),
+        borderRadius: '9999px',
         color: palette.text,
-        fontWeight: '800',
-        padding: '2px 8px',
+        fontWeight: '700',
+        fontSize: '10px',
+        minHeight: '21px',
+        height: '21px',
+        padding: '0 8px',
+        opacity: 0.9,
         boxShadow: isEditing 
           ? '0 10px 20px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4)' 
-          : '0 2px 4px rgba(0,0,0,0.15)',
+          : '0 1px 4px rgba(0,0,0,0.12)',
         display: 'flex',
         alignItems: 'center',
-        gap: '6px',
+        gap: '5px',
         transition: 'all 0.15s ease',
-        cursor: isEditing ? 'grabbing' : 'pointer'
+        cursor: isEditing ? 'grabbing' : 'pointer',
+        zIndex: 10
       }
     };
   };
 
-  // Highlight days falling within the official tour dates using brand tint
+  // Highlight days falling within the official tour dates
   const dayPropGetter = (date) => {
-    if (!trip?.startDate || !trip?.endDate) return {};
-    const tripStart = startOfDay(new Date(trip.startDate));
-    const tripEnd = endOfDay(new Date(trip.endDate));
+    if (!activeTrip?.startDate || !activeTrip?.endDate) return {};
+    const tripStart = startOfDay(parseLocalDate(activeTrip.startDate));
+    const tripEnd = endOfDay(parseLocalDate(activeTrip.endDate));
     const cellDate = startOfDay(date);
 
     if (cellDate >= tripStart && cellDate <= tripEnd) {
       return {
         className: 'tour-active-day',
         style: {
-          backgroundColor: 'rgba(129, 19, 3, 0.04)', // subtle Molten Lava brand wash
+          backgroundColor: 'rgba(129, 19, 3, 0.04)',
         }
       };
     }
     return {};
   };
 
+  // Open tour editor directly in drawer
+  const handleOpenTourEditor = () => {
+    setSelectedEvent({
+      id: `tour-schedule-${activeTrip?._id || 'main'}`,
+      _id: `tour-schedule-${activeTrip?._id || 'main'}`,
+      isTourSchedule: true,
+      entityType: 'tour'
+    });
+    setTourForm({
+      title: activeTrip?.title || '',
+      startDate: formatLocalDate(activeTrip?.startDate),
+      endDate: formatLocalDate(activeTrip?.endDate),
+      status: activeTrip?.status || 'Inquiry',
+      guestType: activeTrip?.guestType || ''
+    });
+  };
+
+  // Open specific itinerary stop in drawer
+  const handleOpenItineraryStopEditor = (item, idx) => {
+    setSelectedEvent({
+      id: `tour-itinerary-${item._id || idx}`,
+      _id: `tour-itinerary-${item._id || idx}`,
+      isItineraryDay: true,
+      itineraryIndex: idx,
+      itineraryItem: item,
+      entityType: 'itinerary'
+    });
+    setItineraryForm({
+      index: idx,
+      dayNumber: item.dayNumber || (idx + 1),
+      date: formatLocalDate(item.date),
+      locationDetails: item.locationDetails || '',
+      hotel: (typeof item.hotel === 'object' && item.hotel?._id) ? item.hotel._id : (item.hotel || ''),
+      activities: item.activities || '',
+      coordinates: item.coordinates || null
+    });
+  };
+
   // Sidebar content
   const sidebarContent = (
     <div className="h-full flex flex-col justify-between p-4 overflow-y-auto custom-scrollbar">
       <div className="space-y-6">
+        {/* Unsaved changes alert if an event is staged */}
+        {modifiedEvent && (
+          <div className="p-4 bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl animate-in fade-in duration-200">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-black text-xs uppercase mb-1">
+              <Sparkles size={15} className="text-amber-500" /> Pending Schedule Modification
+            </div>
+            <p className="text-xs font-bold text-gray-800 dark:text-slate-200 mb-2">
+              {modifiedEvent.title}: {modifiedEvent.type === 'itinerary'
+                ? format(modifiedEvent.start, 'MMM dd, yyyy')
+                : `${format(modifiedEvent.start, 'MMM dd')} – ${format(modifiedEvent.end, 'MMM dd, yyyy')}`}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveModified}
+                disabled={isSaving}
+                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
+              >
+                <Check size={14} strokeWidth={2.8} /> {isSaving ? 'Saving...' : 'Save Now'}
+              </button>
+              <button
+                onClick={handleResetModified}
+                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all"
+                title="Reset to original date"
+              >
+                <RotateCcw size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Tour info header */}
-        <div className="bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white p-4 rounded-2xl border border-gray-800 shadow-md">
-          <div className="flex items-center gap-2 mb-2 text-brand-accent font-black text-xs uppercase tracking-wider">
-            <CalendarCheck size={16} /> Tour Overview
+        <div className="bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white p-4 rounded-2xl border border-gray-800 shadow-md relative group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="flex items-center gap-2 text-brand-accent font-black text-xs uppercase tracking-wider">
+              <CalendarCheck size={16} /> Tour Overview
+            </span>
+            <button
+              onClick={handleOpenTourEditor}
+              className="p-1 px-2 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-bold text-gray-200 flex items-center gap-1 transition-all"
+              title="Edit Tour Schedule & Details"
+            >
+              <Edit2 size={11} /> Edit
+            </button>
           </div>
           <h4 className="font-black text-white text-base leading-snug mb-1">
-            {trip?.title}
+            {activeTrip?.title}
           </h4>
           <p className="text-xs font-semibold text-gray-300 mb-3">
-            {trip?.startDate ? format(new Date(trip.startDate), 'MMM dd, yyyy') : ''} – {trip?.endDate ? format(new Date(trip.endDate), 'MMM dd, yyyy') : ''}
+            {activeTrip?.startDate ? format(parseLocalDate(activeTrip.startDate), 'MMM dd, yyyy') : ''} – {activeTrip?.endDate ? format(parseLocalDate(activeTrip.endDate), 'MMM dd, yyyy') : ''}
           </p>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-lg text-xs font-black text-gray-200 border border-white/10 shadow-2xs">
-            <Clock size={12} className="text-brand-accent" /> {tourDuration} Days Total
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-lg text-xs font-black text-gray-200 border border-white/10 shadow-2xs">
+              <Clock size={12} className="text-brand-accent" /> {tourDuration} Days Total
+            </div>
+            {activeTrip?.status && (
+              <span className="inline-block px-2.5 py-1 bg-brand-primary/30 rounded-lg text-xs font-black text-brand-accent border border-brand-primary/40">
+                {activeTrip.status}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Calendar Legend */}
-        <div className="p-3.5 bg-gray-50/80 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-700">
-          <div className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
-            Calendar Elements
-          </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-md bg-black border border-gray-700 flex items-center justify-center text-[9px] text-white font-black shadow-xs">
-                🚩
-              </span>
-              <span className="font-bold text-gray-700 dark:text-slate-300">Tour Schedule</span>
-              <span className="text-[10px] text-gray-400 ml-auto">{tourDuration}d span</span>
+        {/* Daily Itinerary Stops Section */}
+        <div>
+          <div className="flex items-center justify-between mb-2.5">
+            <h5 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-slate-500 flex items-center gap-1.5">
+              <MapPin size={14} className="text-amber-500" /> Itinerary Stops ({activeTrip?.itinerary?.length || 0})
+            </h5>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => openAddStopModal()}
+                className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-0.5"
+                title="Add a new stop to this tour"
+              >
+                <Plus size={13} /> Add Stop
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-md bg-emerald-500 flex items-center justify-center text-[9px] text-white font-bold shadow-xs">
-                🚗
-              </span>
-              <span className="font-bold text-gray-700 dark:text-slate-300">Driver Shifts</span>
-              <span className="text-[10px] text-gray-400 ml-auto">{assignedDriversSummary.length} driver{assignedDriversSummary.length !== 1 ? 's' : ''}</span>
-            </div>
-            {Array.isArray(trip?.itinerary) && trip.itinerary.length > 0 && (
-              <div className="flex items-center justify-between pt-1 border-t border-gray-150 dark:border-slate-700/60">
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-md bg-brand-accent flex items-center justify-center text-[9px] text-brand-secondary font-black shadow-xs">
-                    D
-                  </span>
-                  <span className="font-bold text-gray-700 dark:text-slate-300">Daily Stops</span>
-                </div>
-                <button
-                  onClick={() => setShowItineraryDays(!showItineraryDays)}
-                  className="text-[11px] font-bold text-brand-primary dark:text-brand-300 hover:underline"
-                >
-                  {showItineraryDays ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            )}
           </div>
+
+          {Array.isArray(activeTrip?.itinerary) && activeTrip.itinerary.length > 0 ? (
+            <div className="space-y-1.5 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+              {activeTrip.itinerary.map((item, idx) => {
+                const isSelected = selectedEvent?.entityType === 'itinerary' && selectedEvent?.itineraryIndex === idx;
+                return (
+                  <div 
+                    key={item._id || idx}
+                    onClick={() => handleOpenItineraryStopEditor(item, idx)}
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 group ${
+                      isSelected 
+                        ? 'bg-amber-100/90 dark:bg-amber-950/60 border-amber-400 shadow-sm' 
+                        : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-900/40 hover:bg-amber-50 hover:border-amber-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-5 h-5 rounded-md bg-amber-400 text-amber-950 font-black text-[10px] flex items-center justify-center shrink-0">
+                        D{item.dayNumber || idx + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate">
+                          {item.locationDetails || (item.hotel?.name ? `Hotel: ${item.hotel.name}` : '') || item.activities || 'Planned Stop'}
+                        </p>
+                        {item.date && (
+                          <p className="text-[10px] text-gray-500 dark:text-slate-400 font-semibold">
+                            {format(parseLocalDate(item.date), 'MMM d, yyyy')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="p-1 text-amber-700 dark:text-amber-300 hover:bg-amber-200/50 rounded">
+                        <Edit2 size={12} />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-3 text-center bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-gray-200 dark:border-slate-700 text-xs text-gray-400">
+              No itinerary stops yet.
+              <button 
+                onClick={() => openAddStopModal()} 
+                className="block mx-auto mt-1 text-xs font-bold text-brand-primary hover:underline"
+              >
+                + Add first stop
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Assigned Drivers Section */}
@@ -615,18 +1269,50 @@ export function TourAgendaModal({
           )}
         </div>
 
-        {/* Pro Tip */}
-        <div className="p-3.5 bg-brand-50/70 dark:bg-brand-950/30 rounded-2xl border border-brand-100 dark:border-brand-900/50 text-[11px] text-brand-900 dark:text-brand-200">
-          <p className="font-bold flex items-center gap-1.5 mb-1 text-brand-primary dark:text-brand-300">
-            <AlertCircle size={13} /> Interactive Tour Agenda Tip
-          </p>
-          <p className="leading-relaxed opacity-90">
-            The brand red bar represents the official tour schedule. Drag driver pills to adjust coverage and dates.
-          </p>
+        {/* Calendar Legend */}
+        <div className="p-3 bg-gray-50/80 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-700">
+          <div className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2">
+            Editable Calendar Layers
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-md bg-stone-900 border border-stone-700 flex items-center justify-center text-[10px] text-amber-400 font-black shadow-xs">
+                  <CalendarCheck size={10} strokeWidth={2.5} />
+                </span>
+                <span className="font-bold text-gray-800 dark:text-slate-200 text-xs">Tour Schedule</span>
+              </div>
+              <span className="text-[10px] text-gray-400">Drag / Click to Edit</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-md bg-amber-400 flex items-center justify-center text-[9px] text-amber-950 font-black shadow-xs">
+                  D
+                </span>
+                <span className="font-bold text-gray-800 dark:text-slate-200 text-xs">Daily Stops</span>
+              </div>
+              <span className="text-[10px] text-gray-400">Drag / Click to Edit</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] text-white font-bold shadow-xs">
+                  <Car size={10} strokeWidth={2.5} />
+                </span>
+                <span className="font-bold text-gray-800 dark:text-slate-200 text-xs">Driver Shifts</span>
+              </div>
+              <span className="text-[10px] text-gray-400">Drag / Click to Edit</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
+      <div className="pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
+        <button
+          onClick={() => openAddStopModal()}
+          className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
+        >
+          <Plus size={14} /> Add Itinerary Stop
+        </button>
         <button
           onClick={() => openAssignModal()}
           className="w-full py-2.5 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-xl shadow-md shadow-brand-primary/20 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
@@ -637,30 +1323,69 @@ export function TourAgendaModal({
     </div>
   );
 
-  // Header Actions
+  // Header Actions with Prominent Save/Reset confirmation whenever changes are staged
   const headerActions = (
-    <div className="flex items-center gap-2">
-      {Array.isArray(trip?.itinerary) && trip.itinerary.length > 0 && (
-        <button
-          onClick={() => setShowItineraryDays(!showItineraryDays)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
-            showItineraryDays
-              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
-              : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:bg-gray-50'
-          }`}
-          title="Toggle daily itinerary stops on calendar"
-        >
-          <MapPin size={13} className={showItineraryDays ? "text-amber-600" : "text-gray-400"} />
-          {showItineraryDays ? 'Hide Daily Stops' : 'Show Daily Stops'}
-        </button>
-      )}
+    <div className="flex items-center gap-2 flex-wrap">
+      {modifiedEvent ? (
+        <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/40 px-3 py-1.5 rounded-2xl animate-in fade-in duration-150">
+          <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+            <Sparkles size={14} className="text-amber-500 animate-spin" />
+            Schedule Modified: {modifiedEvent.type === 'itinerary' 
+              ? format(modifiedEvent.start, 'MMM dd, yyyy')
+              : `${format(modifiedEvent.start, 'MMM dd')} – ${format(modifiedEvent.end, 'MMM dd, yyyy')}`}
+          </span>
+          <button
+            onClick={handleResetModified}
+            className="px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 rounded-lg transition-colors flex items-center gap-1"
+            title="Reset to original dates"
+          >
+            <RotateCcw size={12} /> Reset
+          </button>
+          <button
+            onClick={handleCancelModified}
+            className="px-2.5 py-1 text-xs font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSaveModified}
+            disabled={isSaving}
+            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all hover:scale-105 flex items-center gap-1.5"
+          >
+            <Check size={14} strokeWidth={2.8} /> {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={() => setShowItineraryDays(!showItineraryDays)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
+              showItineraryDays
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
+                : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:bg-gray-50'
+            }`}
+            title="Toggle daily itinerary stops on calendar"
+          >
+            <MapPin size={13} className={showItineraryDays ? "text-amber-600" : "text-gray-400"} />
+            {showItineraryDays ? 'Hide Stops' : 'Show Stops'}
+          </button>
 
-      <button
-        onClick={() => openAssignModal()}
-        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-950 hover:bg-black text-white font-bold text-xs rounded-xl shadow-sm border border-gray-800 transition-all hover:scale-[1.02]"
-      >
-        <Plus size={14} /> Assign Driver
-      </button>
+          <button
+            onClick={() => openAddStopModal()}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-xs transition-all hover:scale-[1.02]"
+            title="Add a new itinerary stop"
+          >
+            <Plus size={14} /> Add Stop
+          </button>
+
+          <button
+            onClick={() => openAssignModal()}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-950 hover:bg-black text-white font-bold text-xs rounded-xl shadow-sm border border-gray-800 transition-all hover:scale-[1.02]"
+          >
+            <Plus size={14} /> Assign Driver
+          </button>
+        </>
+      )}
     </div>
   );
 
@@ -669,11 +1394,11 @@ export function TourAgendaModal({
       <AgendaModal
         isOpen={isOpen}
         onClose={onClose}
-        title={`${trip?.title || 'Tour'} • Tour Agenda`}
-        subtitle={`${trip?.startDate ? format(new Date(trip.startDate), 'MMM dd') : ''} – ${trip?.endDate ? format(new Date(trip.endDate), 'MMM dd, yyyy') : ''} (${tourDuration} days) • Complete schedule & driver assignments`}
+        title={`${activeTrip?.title || 'Tour'} • Tour Agenda`}
+        subtitle={`${activeTrip?.startDate ? format(parseLocalDate(activeTrip.startDate), 'MMM dd') : ''} – ${activeTrip?.endDate ? format(parseLocalDate(activeTrip.endDate), 'MMM dd, yyyy') : ''} (${tourDuration} days) • Fully editable schedule, stops & drivers`}
         icon={CalendarCheck}
         events={calendarEvents}
-        defaultDate={trip?.startDate ? new Date(trip.startDate) : new Date()}
+        defaultDate={activeTrip?.startDate ? parseLocalDate(activeTrip.startDate) : new Date()}
         onEventDrop={handleEventDrop}
         onEventResize={handleEventResize}
         onSelectEvent={handleSelectEvent}
@@ -688,236 +1413,326 @@ export function TourAgendaModal({
 
       {/* Selected Event Details Drawer / Slide-Over */}
       {selectedEvent && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 bg-white dark:bg-slate-900 shadow-2xl z-[100000] border-l border-gray-200 dark:border-slate-800 p-6 flex flex-col justify-between animate-in slide-in-from-right duration-200">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white dark:bg-slate-900 shadow-2xl z-[100000] border-l border-gray-200 dark:border-slate-800 p-6 flex flex-col justify-between animate-in slide-in-from-right duration-200 overflow-y-auto">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-6">
               <h3 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
-                {selectedEvent.isTourSchedule ? (
+                {selectedEvent.entityType === 'tour' ? (
                   <>
-                    <CalendarCheck size={18} className="text-gray-950 dark:text-white" /> Tour Schedule
+                    <CalendarCheck size={18} className="text-amber-500" /> Edit Tour Schedule
                   </>
-                ) : selectedEvent.isItineraryDay ? (
+                ) : selectedEvent.entityType === 'itinerary' ? (
                   <>
-                    <MapPin size={18} className="text-brand-accent" /> Daily Itinerary Stop
+                    <MapPin size={18} className="text-amber-500" /> Edit Itinerary Stop
                   </>
                 ) : (
                   <>
-                    <Car size={18} className="text-brand-primary" /> Driver Assignment
+                    <Car size={18} className="text-brand-primary" /> Edit Driver Assignment
                   </>
                 )}
               </h3>
               <button 
-                onClick={() => { setSelectedEvent(null); setEditFormData(null); }}
+                onClick={() => setSelectedEvent(null)}
                 className="p-1.5 text-gray-400 hover:text-gray-600 bg-gray-50 dark:bg-slate-800 rounded-full transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {selectedEvent.isTourSchedule ? (
-              /* Tour Schedule Details View */
-              <div className="space-y-5">
-                <div className="p-4 bg-gradient-to-br from-gray-950 via-gray-900 to-black rounded-2xl text-white shadow-xl border border-gray-800">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-brand-accent bg-white/10 px-2 py-0.5 rounded-md border border-brand-accent/30">
-                      Master Tour Dates
-                    </span>
-                    <span className="text-xs font-bold text-amber-200">
-                      {tourDuration} Days
-                    </span>
+            {/* 1. TOUR SCHEDULE EDIT FORM */}
+            {selectedEvent.entityType === 'tour' && (
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSaveTourDrawer(e);
+                }} 
+                className="space-y-4"
+              >
+                <div className="p-3.5 bg-gray-950 text-white rounded-2xl mb-4 border border-gray-800">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-black uppercase text-amber-400">Master Tour Dates</span>
+                    <span className="text-xs font-bold text-gray-300">{tourDuration} Days Total</span>
                   </div>
-                  <h4 className="text-base font-black leading-snug mb-1">
-                    {trip?.title}
-                  </h4>
-                  <p className="text-xs text-gray-300 font-semibold mb-3">
-                    {trip?.startDate ? format(new Date(trip.startDate), 'MMMM dd, yyyy') : ''} – {trip?.endDate ? format(new Date(trip.endDate), 'MMMM dd, yyyy') : ''}
+                  <p className="text-xs text-gray-400">
+                    Adjusting these dates reschedules the primary tour duration across the agenda.
                   </p>
-                  {trip?.status && (
-                    <div className="inline-block px-2.5 py-1 bg-white/10 rounded-lg text-xs font-bold text-gray-200 border border-white/10">
-                      Status: {trip.status}
-                    </div>
-                  )}
                 </div>
 
-                {/* Driver Coverage Status */}
                 <div>
-                  <h5 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-2 flex items-center justify-between">
-                    <span>Driver Coverage</span>
-                    <span className="text-brand-primary font-bold">{assignedDriversSummary.length} Assigned</span>
-                  </h5>
-                  <div className="space-y-2">
-                    {assignedDriversSummary.length > 0 ? (
-                      assignedDriversSummary.map(({ driver, palette, totalDays, events }) => (
-                        <div key={driver._id} className={`p-2.5 rounded-xl border ${palette.lightBg} ${palette.borderLight} flex items-center justify-between`}>
-                          <div className="flex items-center gap-2">
-                            <span className={`w-2.5 h-2.5 rounded-full ${palette.badgeBg}`} />
-                            <span className="text-xs font-bold text-gray-900 dark:text-white">{driver.name}</span>
-                          </div>
-                          <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400">
-                            {totalDays}d ({events.length} shift{events.length > 1 ? 's' : ''})
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs italic text-gray-500">No drivers assigned yet.</p>
-                    )}
-                  </div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Tour Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={tourForm.title}
+                    onChange={(e) => setTourForm({ ...tourForm, title: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-sm text-gray-900 dark:text-white outline-none focus:border-brand-primary"
+                    required
+                  />
                 </div>
 
-                {/* Itinerary Summary */}
-                {Array.isArray(trip?.itinerary) && trip.itinerary.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h5 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-slate-500">
-                        Itinerary Stops ({trip.itinerary.length})
-                      </h5>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
-                      {trip.itinerary.map((item, idx) => (
-                        <div key={item._id || idx} className="p-2 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700 text-xs flex items-center justify-between">
-                          <span className="font-bold text-gray-800 dark:text-slate-200">
-                            D{item.dayNumber || idx + 1}: {item.locationDetails || (item.hotel?.name ? `Hotel: ${item.hotel.name}` : '') || item.activities || 'Planned Stop'}
-                          </span>
-                          {item.date && (
-                            <span className="text-[10px] text-gray-400">
-                              {format(new Date(item.date), 'MMM d')}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : selectedEvent.isItineraryDay ? (
-              /* Daily Itinerary Stop Details */
-              <div className="space-y-4">
-                <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl">
-                  <div className="text-xs font-black uppercase text-amber-700 dark:text-amber-400 mb-1">
-                    Day {selectedEvent.itineraryItem?.dayNumber}
-                  </div>
-                  <h4 className="font-black text-gray-900 dark:text-white text-base">
-                    {selectedEvent.itineraryItem?.locationDetails || 'Itinerary Stop'}
-                  </h4>
-                  {selectedEvent.itineraryItem?.date && (
-                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                      {format(new Date(selectedEvent.itineraryItem.date), 'EEEE, MMMM dd, yyyy')}
-                    </p>
-                  )}
-                </div>
-
-                {selectedEvent.itineraryItem?.hotel && (
-                  <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700">
-                    <p className="text-[11px] font-black uppercase text-gray-400 mb-0.5">Hotel Accommodation</p>
-                    <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-                      {selectedEvent.itineraryItem.hotel?.name || 'Hotel details'}
-                    </p>
-                  </div>
-                )}
-
-                {selectedEvent.itineraryItem?.activities && (
-                  <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700">
-                    <p className="text-[11px] font-black uppercase text-gray-400 mb-0.5">Activities & Highlights</p>
-                    <p className="text-xs text-gray-700 dark:text-slate-300">
-                      {selectedEvent.itineraryItem.activities}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Driver Profile Summary */
-              <>
-                <div className="flex items-center gap-3 p-3.5 bg-gray-50 dark:bg-slate-800/60 rounded-2xl border border-gray-100 dark:border-slate-700 mb-6">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-slate-700 shrink-0 border border-white dark:border-slate-600 shadow-sm">
-                    {selectedEvent.driver?.avatar ? (
-                      <img src={selectedEvent.driver.avatar} alt={selectedEvent.driver.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center font-bold text-gray-600 dark:text-slate-300">
-                        {selectedEvent.driver?.name?.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-black text-gray-900 dark:text-white truncate">
-                      {selectedEvent.driver?.name}
-                    </h4>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 truncate">
-                      {selectedEvent.driver?.email || selectedEvent.driver?.phone || 'Tour Driver'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Edit Assignment Form */}
-                <form onSubmit={handleSaveDrawerEdit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
-                      Assignment Title
+                      Start Date *
                     </label>
                     <input
-                      type="text"
-                      value={editFormData?.title || ''}
-                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
-                      className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-sm text-gray-900 dark:text-white outline-none focus:border-brand-primary"
+                      type="date"
+                      value={tourForm.startDate}
+                      onChange={(e) => setTourForm({ ...tourForm, startDate: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary"
                       required
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        value={editFormData?.start || ''}
-                        onChange={(e) => setEditFormData({ ...editFormData, start: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
-                        End Date
-                      </label>
-                      <input
-                        type="date"
-                        value={editFormData?.end || ''}
-                        onChange={(e) => setEditFormData({ ...editFormData, end: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary"
-                        required
-                      />
-                    </div>
-                  </div>
-
                   <div>
                     <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
-                      Notes
+                      End Date *
                     </label>
-                    <textarea
-                      value={editFormData?.notes || ''}
-                      onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
-                      className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary min-h-[90px]"
-                      placeholder="Notes about this assignment..."
+                    <input
+                      type="date"
+                      value={tourForm.endDate}
+                      onChange={(e) => setTourForm({ ...tourForm, endDate: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary"
+                      required
                     />
                   </div>
+                </div>
 
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      className="w-full py-2.5 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-sm rounded-xl shadow-md shadow-brand-primary/20 transition-all hover:-translate-y-0.5"
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={tourForm.status}
+                      onChange={(e) => setTourForm({ ...tourForm, status: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary"
                     >
-                      Save Assignment
-                    </button>
+                      <option value="Inquiry">Inquiry</option>
+                      <option value="Proposal">Proposal</option>
+                      <option value="Booked">Booked</option>
+                      <option value="Active">Active</option>
+                      <option value="Completed">Completed</option>
+                    </select>
                   </div>
-                </form>
-              </>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                      Guest Type
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Honeymoon, Family"
+                      value={tourForm.guestType}
+                      onChange={(e) => setTourForm({ ...tourForm, guestType: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveTourDrawer}
+                    disabled={isSaving}
+                    className="w-full py-2.5 bg-gray-950 hover:bg-black text-white font-bold text-sm rounded-xl shadow-md border border-gray-800 flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Check size={16} /> {isSaving ? 'Saving...' : 'Save Tour Schedule'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* 2. ITINERARY STOP EDIT FORM */}
+            {selectedEvent.entityType === 'itinerary' && (
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSaveItineraryDrawer(e);
+                }} 
+                className="space-y-4"
+              >
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-center justify-between">
+                  <span className="text-xs font-black uppercase text-amber-800 dark:text-amber-300">
+                    Day {itineraryForm.dayNumber} Stop
+                  </span>
+                  <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
+                    {itineraryForm.date ? format(parseLocalDate(itineraryForm.date), 'EEE, MMM dd') : ''}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                      Day #
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={itineraryForm.dayNumber}
+                      onChange={(e) => setItineraryForm({ ...itineraryForm, dayNumber: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                      Stop Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={itineraryForm.date}
+                      onChange={(e) => setItineraryForm({ ...itineraryForm, date: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Destination / Location Details
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Antananarivo - Andasibe"
+                    value={itineraryForm.locationDetails}
+                    onChange={(e) => setItineraryForm({ ...itineraryForm, locationDetails: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-sm text-gray-900 dark:text-white outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Hotel Accommodation
+                  </label>
+                  <HotelSelect
+                    value={itineraryForm.hotel}
+                    onChange={(hotelId) => setItineraryForm({ ...itineraryForm, hotel: hotelId })}
+                    label=""
+                    modalZIndex="z-[100010]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Activities & Highlights
+                  </label>
+                  <textarea
+                    value={itineraryForm.activities}
+                    onChange={(e) => setItineraryForm({ ...itineraryForm, activities: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs text-gray-900 dark:text-white outline-none focus:border-amber-500 min-h-[90px]"
+                    placeholder="Describe planned visits, logistics or notes for this stop..."
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveItineraryDrawer}
+                    disabled={isSaving}
+                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-xl shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
+                  >
+                    <Check size={16} /> {isSaving ? 'Saving...' : 'Save Itinerary Stop'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* 3. DRIVER ASSIGNMENT EDIT FORM */}
+            {selectedEvent.entityType === 'driver' && (
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSaveDriverDrawer(e);
+                }} 
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5">
+                    Assigned Driver *
+                  </label>
+                  <DriverSelect
+                    value={driverForm.driverId}
+                    onChange={(id) => setDriverForm({ ...driverForm, driverId: id })}
+                    label=""
+                    modalZIndex="z-[100010]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Assignment Title
+                  </label>
+                  <input
+                    type="text"
+                    value={driverForm.title}
+                    onChange={(e) => setDriverForm({ ...driverForm, title: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-sm text-gray-900 dark:text-white outline-none focus:border-brand-primary"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                      Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={driverForm.start}
+                      onChange={(e) => setDriverForm({ ...driverForm, start: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                      End Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={driverForm.end}
+                      onChange={(e) => setDriverForm({ ...driverForm, end: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    value={driverForm.notes}
+                    onChange={(e) => setDriverForm({ ...driverForm, notes: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs text-gray-900 dark:text-white outline-none focus:border-brand-primary min-h-[90px]"
+                    placeholder="Notes about this assignment..."
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveDriverDrawer}
+                    disabled={isSaving}
+                    className="w-full py-2.5 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-sm rounded-xl shadow-md shadow-brand-primary/20 transition-all hover:-translate-y-0.5"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Assignment'}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
 
           {/* Drawer Footer Actions */}
           <div className="space-y-2 pt-6 border-t border-gray-100 dark:border-slate-800">
-            {selectedEvent.isTourSchedule ? (
+            {selectedEvent.entityType === 'tour' && (
               <button
+                type="button"
                 onClick={() => {
                   setSelectedEvent(null);
                   openAssignModal();
@@ -926,17 +1741,23 @@ export function TourAgendaModal({
               >
                 <Plus size={14} /> Assign Driver to this Tour
               </button>
-            ) : selectedEvent.isItineraryDay ? (
+            )}
+
+            {selectedEvent.entityType === 'itinerary' && (
               <button
-                onClick={() => setSelectedEvent(null)}
-                className="w-full py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-800 dark:text-white font-bold text-xs rounded-xl flex items-center justify-center transition-all"
+                type="button"
+                onClick={() => handleDeleteItineraryStop(selectedEvent.itineraryIndex)}
+                className="w-full py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all"
               >
-                Close Details
+                <Trash2 size={14} /> Remove Itinerary Stop
               </button>
-            ) : (
+            )}
+
+            {selectedEvent.entityType === 'driver' && (
               <>
                 {onOpenDriverAgenda && (
                   <button
+                    type="button"
                     onClick={() => {
                       const targetDriver = selectedEvent.driver;
                       setSelectedEvent(null);
@@ -949,6 +1770,7 @@ export function TourAgendaModal({
                 )}
 
                 <button
+                  type="button"
                   onClick={() => handleDeleteAssignment(selectedEvent._id)}
                   className="w-full py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all"
                 >
@@ -969,6 +1791,7 @@ export function TourAgendaModal({
                 <Car size={22} className="text-brand-primary" /> Assign Driver to Tour
               </h2>
               <button 
+                type="button"
                 onClick={() => setIsAssignModalOpen(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 dark:bg-slate-800 rounded-full transition-colors"
               >
@@ -976,7 +1799,14 @@ export function TourAgendaModal({
               </button>
             </div>
 
-            <form onSubmit={handleAssignSubmit} className="space-y-4">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAssignSubmit(e);
+              }} 
+              className="space-y-4"
+            >
               <div>
                 <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5">
                   Select Driver *
@@ -1042,7 +1872,8 @@ export function TourAgendaModal({
 
               <div className="pt-2">
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleAssignSubmit}
                   disabled={!assignForm.driverId}
                   className="w-full py-3 bg-brand-primary hover:bg-brand-secondary disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-brand-primary/20 transition-all hover:-translate-y-0.5"
                 >
@@ -1050,6 +1881,177 @@ export function TourAgendaModal({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Itinerary Stop Dialog */}
+      {isAddStopModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100001] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                <MapPin size={22} className="text-amber-500" /> Add Itinerary Stop
+              </h2>
+              <button 
+                type="button"
+                onClick={() => setIsAddStopModalOpen(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 dark:bg-slate-800 rounded-full transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAddStopSubmit(e);
+              }} 
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Day #
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newStopForm.dayNumber}
+                    onChange={(e) => setNewStopForm({ ...newStopForm, dayNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={newStopForm.date}
+                    onChange={(e) => setNewStopForm({ ...newStopForm, date: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  Destination / Location Details
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Antananarivo - Antsirabe"
+                  value={newStopForm.locationDetails}
+                  onChange={(e) => setNewStopForm({ ...newStopForm, locationDetails: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-sm outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  Hotel Accommodation
+                </label>
+                <HotelSelect
+                  value={newStopForm.hotel}
+                  onChange={(hotelId) => setNewStopForm({ ...newStopForm, hotel: hotelId })}
+                  label=""
+                  modalZIndex="z-[100010]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  Activities & Highlights
+                </label>
+                <textarea
+                  value={newStopForm.activities}
+                  onChange={(e) => setNewStopForm({ ...newStopForm, activities: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs outline-none focus:border-amber-500 min-h-[70px]"
+                  placeholder="Planned visits, transfers, activities..."
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleAddStopSubmit}
+                  disabled={isSaving}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-all hover:-translate-y-0.5"
+                >
+                  {isSaving ? 'Saving...' : 'Confirm Itinerary Stop'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Slot Click Quick Chooser Modal */}
+      {slotActionModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-[100001] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 max-w-sm w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-black text-base text-gray-900 dark:text-white">
+                  Add Event to Calendar
+                </h3>
+                <p className="text-xs font-semibold text-gray-400">
+                  {format(new Date(slotActionModal.start), 'MMM dd, yyyy')}
+                  {slotActionModal.end && formatLocalDate(slotActionModal.start) !== formatLocalDate(slotActionModal.end) && (
+                    <span> – {format(new Date(slotActionModal.end), 'MMM dd, yyyy')}</span>
+                  )}
+                </p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setSlotActionModal(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 bg-gray-50 dark:bg-slate-800 rounded-full"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={() => openAssignModal(slotActionModal)}
+                className="w-full p-3.5 bg-gray-50 dark:bg-slate-800/80 hover:bg-brand-primary/10 border border-gray-200 dark:border-slate-700 hover:border-brand-primary rounded-2xl flex items-center gap-3 transition-all text-left group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0 group-hover:bg-brand-primary group-hover:text-white transition-colors">
+                  <Car size={18} />
+                </div>
+                <div>
+                  <div className="font-black text-xs text-gray-900 dark:text-white group-hover:text-brand-primary transition-colors">
+                    Assign Driver
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-medium">
+                    Schedule a driver shift for these dates
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openAddStopModal(slotActionModal.start)}
+                className="w-full p-3.5 bg-gray-50 dark:bg-slate-800/80 hover:bg-amber-500/10 border border-gray-200 dark:border-slate-700 hover:border-amber-500 rounded-2xl flex items-center gap-3 transition-all text-left group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                  <MapPin size={18} />
+                </div>
+                <div>
+                  <div className="font-black text-xs text-gray-900 dark:text-white group-hover:text-amber-600 transition-colors">
+                    Add Daily Stop
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-medium">
+                    Create an itinerary stop & destination
+                  </div>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       )}

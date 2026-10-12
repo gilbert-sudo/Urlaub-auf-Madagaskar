@@ -170,6 +170,7 @@ export function DriverSelect({ value, onChange, required, label = 'Driver', comp
                         </div>
                       </div>
                       <button 
+                        type="button"
                         onClick={() => {
                           setIsOpen(false);
                           setSearchTerm('');
@@ -268,6 +269,7 @@ export function DriverSelect({ value, onChange, required, label = 'Driver', comp
                         </div>
                       </div>
                       <button 
+                        type="button"
                         onClick={() => setIsAddingNew(false)}
                         className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
                       >

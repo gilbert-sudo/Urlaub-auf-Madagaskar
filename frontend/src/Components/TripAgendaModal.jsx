@@ -1,10 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchTrips, updateTrip } from '../store/slices/tripsSlice';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, startOfDay, endOfDay, format } from 'date-fns';
 import { Map, CalendarIcon, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgendaModal } from './AgendaModal';
+
+const parseLocalDate = (d) => {
+  if (!d) return new Date();
+  if (d instanceof Date) return startOfDay(d);
+  const cleanStr = String(d).split('T')[0];
+  const parts = cleanStr.split('-').map(Number);
+  if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+    return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
+  }
+  const fallback = new Date(d);
+  return isNaN(fallback.getTime()) ? new Date() : startOfDay(fallback);
+};
+
+const parseLocalDateEndOfDay = (d) => {
+  if (!d) return endOfDay(new Date());
+  if (d instanceof Date) return endOfDay(d);
+  const cleanStr = String(d).split('T')[0];
+  const parts = cleanStr.split('-').map(Number);
+  if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+    return new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59, 999);
+  }
+  const fallback = new Date(d);
+  return isNaN(fallback.getTime()) ? endOfDay(new Date()) : endOfDay(fallback);
+};
 
 export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
   const dispatch = useDispatch();
@@ -24,8 +48,8 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
       if (currentTrip.startDate && currentTrip.endDate) {
         setLocalTrip({
           ...currentTrip,
-          start: new Date(currentTrip.startDate),
-          end: new Date(currentTrip.endDate)
+          start: parseLocalDate(currentTrip.startDate),
+          end: parseLocalDateEndOfDay(currentTrip.endDate)
         });
       } else {
         setLocalTrip(null);
@@ -36,20 +60,11 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
   if (!isOpen || !currentTrip) return null;
 
   const handleSelectSlot = ({ start, end }) => {
-    const startDate = new Date(start);
-    let endDate = new Date(end);
+    const startDate = startOfDay(new Date(start));
+    let endDate = endOfDay(new Date(end));
 
-    // If end is at midnight and greater than start (standard RBC slot selection)
-    if (endDate.getHours() === 0 && endDate.getMinutes() === 0 && endDate.getTime() > startDate.getTime()) {
-      const daysSelected = differenceInDays(endDate, startDate);
-      if (daysSelected === 1 && currentTrip.duration && currentTrip.duration > 1) {
-        endDate = new Date(startDate.getTime() + (currentTrip.duration - 1) * 86400000);
-      } else {
-        endDate = new Date(endDate.getTime() - 86400000);
-      }
-    } else if (endDate.getTime() <= startDate.getTime()) {
-      const daysToAdd = Math.max(1, currentTrip.duration || 1) - 1;
-      endDate = new Date(startDate.getTime() + daysToAdd * 86400000);
+    if (currentTrip.duration && currentTrip.duration > 1) {
+      endDate = endOfDay(new Date(startDate.getTime() + (currentTrip.duration - 1) * 86400000));
     }
 
     setLocalTrip({
@@ -64,7 +79,7 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
       toast.error('You can only edit the current trip.');
       return;
     }
-    setLocalTrip(prev => ({ ...prev, start, end }));
+    setLocalTrip(prev => ({ ...prev, start: startOfDay(start), end: endOfDay(end) }));
   };
 
   const handleEventResize = ({ event, start, end }) => {
@@ -72,18 +87,20 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
       toast.error('You can only edit the current trip.');
       return;
     }
-    setLocalTrip(prev => ({ ...prev, start, end }));
+    setLocalTrip(prev => ({ ...prev, start: startOfDay(start), end: endOfDay(end) }));
   };
 
   const handleSave = async () => {
     if (!localTrip) return;
     try {
-      const duration = differenceInDays(localTrip.end, localTrip.start) + 1;
+      const sStr = format(localTrip.start, 'yyyy-MM-dd');
+      const eStr = format(localTrip.end, 'yyyy-MM-dd');
+      const duration = differenceInDays(parseLocalDate(eStr), parseLocalDate(sStr)) + 1;
       await dispatch(updateTrip({ 
         id: currentTrip._id, 
         data: { 
-          startDate: localTrip.start.toISOString().split('T')[0], 
-          endDate: localTrip.end.toISOString().split('T')[0],
+          startDate: sStr, 
+          endDate: eStr,
           duration 
         } 
       })).unwrap();
@@ -99,8 +116,8 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
     if (currentTrip.startDate && currentTrip.endDate) {
       setLocalTrip({
         ...currentTrip,
-        start: new Date(currentTrip.startDate),
-        end: new Date(currentTrip.endDate)
+        start: parseLocalDate(currentTrip.startDate),
+        end: parseLocalDateEndOfDay(currentTrip.endDate)
       });
       toast.info('Schedule reset to initial state');
     } else {
@@ -113,8 +130,8 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
     if (currentTrip && currentTrip.startDate && currentTrip.endDate) {
       setLocalTrip({
         ...currentTrip,
-        start: new Date(currentTrip.startDate),
-        end: new Date(currentTrip.endDate)
+        start: parseLocalDate(currentTrip.startDate),
+        end: parseLocalDateEndOfDay(currentTrip.endDate)
       });
     } else {
       setLocalTrip(null);
@@ -123,11 +140,13 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
   };
 
   const hasOriginalDates = Boolean(currentTrip?.startDate && currentTrip?.endDate);
+  const origStartTime = hasOriginalDates ? parseLocalDate(currentTrip.startDate).getTime() : 0;
+  const origEndTime = hasOriginalDates ? parseLocalDateEndOfDay(currentTrip.endDate).getTime() : 0;
   const isModified = Boolean(
     localTrip && (
       !hasOriginalDates ||
-      localTrip.start.getTime() !== new Date(currentTrip.startDate).getTime() ||
-      localTrip.end.getTime() !== new Date(currentTrip.endDate).getTime()
+      localTrip.start.getTime() !== origStartTime ||
+      localTrip.end.getTime() !== origEndTime
     )
   );
 
@@ -154,8 +173,8 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
         id: trip._id,
         title: trip.title,
         icon: <Map size={12} />,
-        start: new Date(trip.startDate),
-        end: new Date(trip.endDate),
+        start: parseLocalDate(trip.startDate),
+        end: parseLocalDateEndOfDay(trip.endDate),
         isReadOnly: true
       };
     }).filter(Boolean);

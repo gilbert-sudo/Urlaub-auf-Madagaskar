@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createHotel } from '../store/slices/hotelsSlice';
 import { toast } from 'sonner';
 
-export function HotelSelect({ value, onChange, required, label = 'Hotel', compact = false }) {
+export function HotelSelect({ value, onChange, required, label = 'Hotel', compact = false, modalZIndex = 'z-[100010]' }) {
   const dispatch = useDispatch();
   const { items: hotels } = useSelector(state => state.hotels);
   
@@ -134,7 +134,7 @@ export function HotelSelect({ value, onChange, required, label = 'Hotel', compac
       {isClient && document.body && createPortal(
         <AnimatePresence>
           {isOpen && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 md:p-12">
+            <div className={`fixed inset-0 ${modalZIndex} flex items-center justify-center p-4 sm:p-6 md:p-12`}>
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -168,6 +168,7 @@ export function HotelSelect({ value, onChange, required, label = 'Hotel', compac
                         </div>
                       </div>
                       <button 
+                        type="button"
                         onClick={() => {
                           setIsOpen(false);
                           setSearchTerm('');
@@ -271,6 +272,7 @@ export function HotelSelect({ value, onChange, required, label = 'Hotel', compac
                         </div>
                       </div>
                       <button 
+                        type="button"
                         onClick={() => setIsAddingNew(false)}
                         className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
                       >

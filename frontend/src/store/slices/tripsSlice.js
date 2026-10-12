@@ -75,7 +75,9 @@ const tripsSlice = createSlice({
       })
       // ----- FETCH ONE -----
       .addCase(fetchTripById.pending, (state) => {
-        state.loading = true;
+        if (!state.currentTrip) {
+          state.loading = true;
+        }
         state.error = null;
       })
       .addCase(fetchTripById.fulfilled, (state, action) => {
