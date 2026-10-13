@@ -683,7 +683,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const CustomDateCellWrapper = useCallback(({ value, children, ...props }) => {
-    const isSelected = isDragging && dragStart && dragCurrent && (
+    const isSelected = isDragging && Boolean(onSelectSlot) && dragStart && dragCurrent && (
       (value >= dragStart && value <= dragCurrent) ||
       (value <= dragStart && value >= dragCurrent)
     );
@@ -700,7 +700,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
          ...(isSelected ? { backgroundColor: 'rgba(16, 185, 129, 0.2)', boxShadow: 'inset 0 0 0 2px rgba(16, 185, 129, 0.8)' } : {})
       }
     });
-  }, [isDragging, dragStart, dragCurrent]);
+  }, [isDragging, dragStart, dragCurrent, onSelectSlot]);
 
   return (
     <div 
@@ -709,14 +709,13 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
       onMouseDown={handleMouseDown}
     >
       {months.map((monthDate, idx) => {
+        const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1, 0, 0, 0, 0);
+        const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59, 999);
         const monthEventsCount = displayEvents.filter(ev => {
           if (ev.isSpacer) return false;
-          const m = monthDate.getMonth();
-          const y = monthDate.getFullYear();
           const s = new Date(ev.start);
           const e = new Date(ev.end);
-          return (s.getFullYear() <= y && e.getFullYear() >= y) &&
-                 (s.getMonth() <= m && e.getMonth() >= m);
+          return s <= monthEnd && e >= monthStart;
         }).length;
 
         return (
@@ -744,8 +743,8 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
                   eventPropGetter={eventPropGetter || eventStyleGetter}
                   dayPropGetter={dayPropGetter}
                   onSelectEvent={onSelectEvent}
-                  selectable={true}
-                  resizable
+                  selectable={Boolean(onSelectSlot)}
+                  resizable={Boolean(onEventResize)}
                   onEventDrop={onEventDrop}
                   onEventResize={onEventResize}
                   popup={false}
@@ -803,7 +802,8 @@ YearView.navigate = (date, action) => {
 };
 
 export function AgendaModal({
-  isOpen,
+  isOpen = true,
+  isModal = true,
   onClose,
   title,
   subtitle,
@@ -829,12 +829,12 @@ export function AgendaModal({
 }) {
   const [calendarView, setCalendarView] = useState(defaultView);
 
-  // Always reset to defaultView (year mode) whenever the modal opens
+  // Always reset to defaultView (year mode) whenever a modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (isModal && isOpen) {
       setCalendarView(defaultView);
     }
-  }, [isOpen, defaultView]);
+  }, [isModal, isOpen, defaultView]);
 
   const calendarViews = useMemo(() => {
     const views = {};
@@ -863,9 +863,9 @@ export function AgendaModal({
   const activeDate = controlledDate !== undefined ? controlledDate : currentDate;
   const activeView = controlledView !== undefined ? controlledView : calendarView;
 
-  // Prevent background page from scrolling while modal is open
+  // Prevent background page from scrolling only while modal is open
   useEffect(() => {
-    if (!isOpen) {
+    if (!isModal || !isOpen) {
       document.body.style.overflow = '';
       return;
     }
@@ -873,7 +873,7 @@ export function AgendaModal({
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isModal, isOpen]);
 
   const lastWheelNavTime = useRef(0);
 
@@ -947,7 +947,7 @@ export function AgendaModal({
   }, [isOpen, events]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (isModal && !isOpen) return;
     const handleMouseUp = () => {
       document.body.classList.remove('rbc-is-resizing', 'rbc-is-moving');
       document.documentElement.style.setProperty('--drag-shift-px', '0px');
@@ -961,9 +961,9 @@ export function AgendaModal({
               onSelectSlot({ start: startOfDay(start), end: endOfDay(end) });
             }
           } else {
-            setCurrentDate(dragStart);
-            if (calendarView === 'year') {
-              setCalendarView('month');
+            handleNavigate(dragStart);
+            if (activeView === 'year') {
+              handleView('month');
             }
           }
         }
@@ -974,13 +974,13 @@ export function AgendaModal({
     };
     window.addEventListener('mouseup', handleMouseUp);
     return () => window.removeEventListener('mouseup', handleMouseUp);
-  }, [isDragging, dragStart, dragCurrent, onSelectSlot, calendarView]);
+  }, [isDragging, dragStart, dragCurrent, onSelectSlot, activeView, isModal, isOpen]);
 
-  if (!isOpen) return null;
+  if (isModal && !isOpen) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 bg-white dark:bg-slate-900 z-[9999] flex flex-col animate-in fade-in zoom-in duration-300 overscroll-contain">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm z-10">
+  const modalContent = (
+    <div className={isModal ? "fixed inset-0 bg-white dark:bg-slate-900 z-[9999] flex flex-col animate-in fade-in zoom-in duration-300 overscroll-contain" : "flex-1 flex flex-col h-full w-full bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden relative overscroll-contain"}>
+      <div className="flex flex-wrap items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm z-10 gap-3">
         <div className="flex items-center gap-4">
           {Icon && (
             <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary">
@@ -993,11 +993,13 @@ export function AgendaModal({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           {headerActions}
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 dark:bg-slate-800 dark:hover:bg-slate-700 hover:bg-gray-100 rounded-full transition-colors ml-4">
-            <X size={24} />
-          </button>
+          {onClose && (
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 dark:bg-slate-800 dark:hover:bg-slate-700 hover:bg-gray-100 rounded-full transition-colors ml-2">
+              <X size={24} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -1034,7 +1036,7 @@ export function AgendaModal({
                  eventPropGetter={eventStyleGetter}
                  dayPropGetter={dayPropGetter}
                  selectable={!!onSelectSlot}
-                 resizable
+                 resizable={Boolean(onEventResize)}
                  messages={{ year: 'Year' }}
                  onSelectSlot={onSelectSlot}
                  onSelectEvent={onSelectEvent}
@@ -1325,8 +1327,88 @@ export function AgendaModal({
         .year-view .rbc-event-content {
           padding: 0; overflow: visible !important;
         }
+
+        /* Modern toolbar styles matching design rules */
+        .custom-calendar .rbc-toolbar {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 16px;
+          margin-bottom: 14px;
+          border-radius: 1.25rem;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          gap: 10px;
+        }
+        .dark .custom-calendar .rbc-toolbar {
+          background: #0f172a;
+          border-color: #1e293b;
+        }
+        .custom-calendar .rbc-toolbar-label {
+          font-size: 1.15rem;
+          font-weight: 900;
+          color: #0f172a;
+          letter-spacing: -0.025em;
+        }
+        .dark .custom-calendar .rbc-toolbar-label {
+          color: #f8fafc;
+        }
+        .custom-calendar .rbc-btn-group {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .custom-calendar .rbc-toolbar button {
+          color: #64748b;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 9999px;
+          padding: 6px 14px;
+          font-size: 12px;
+          font-weight: 700;
+          transition: all 0.15s ease;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+          cursor: pointer;
+        }
+        .custom-calendar .rbc-toolbar button:hover {
+          color: #0f172a;
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+          transform: translateY(-0.5px);
+        }
+        .custom-calendar .rbc-toolbar button:active,
+        .custom-calendar .rbc-toolbar button.rbc-active {
+          background-color: #811303 !important;
+          color: #ffffff !important;
+          border-color: #811303 !important;
+          box-shadow: 0 2px 6px rgba(129, 19, 3, 0.3) !important;
+        }
+        .dark .custom-calendar .rbc-toolbar button {
+          color: #94a3b8;
+          background: #1e293b;
+          border-color: #334155;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .dark .custom-calendar .rbc-toolbar button:hover {
+          color: #f8fafc;
+          background: #334155;
+          border-color: #475569;
+          transform: translateY(-0.5px);
+        }
+        .dark .custom-calendar .rbc-toolbar button:active,
+        .dark .custom-calendar .rbc-toolbar button.rbc-active {
+          background-color: #811303 !important;
+          color: #ffffff !important;
+          border-color: #811303 !important;
+          box-shadow: 0 2px 6px rgba(129, 19, 3, 0.4) !important;
+        }
       `}</style>
-    </div>,
-    document.body
+    </div>
   );
+
+  if (isModal) {
+    return createPortal(modalContent, document.body);
+  }
+  return modalContent;
 }
