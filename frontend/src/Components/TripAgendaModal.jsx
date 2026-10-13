@@ -183,13 +183,13 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
     if (!event.isReadOnly) {
       return {
         style: {
-          background: 'linear-gradient(135deg, #09090b 0%, #18181b 100%)',
-          borderRadius: '8px',
+          background: '#811303',
+          borderRadius: '9999px',
           opacity: 1,
           color: '#ffffff',
           fontWeight: '900',
-          border: event.isEditing ? '2px dashed #E8B72F' : '1.5px solid #27272a',
-          boxShadow: event.isEditing ? '0 4px 12px rgba(0,0,0,0.5)' : '0 2px 6px rgba(0,0,0,0.35)',
+          border: event.isEditing ? '2px dashed #ffffff' : '1.5px solid rgba(255,255,255,0.3)',
+          boxShadow: '0 2px 8px rgba(129, 19, 3, 0.35)',
           display: 'block',
           boxSizing: 'border-box',
           zIndex: 50
@@ -200,14 +200,14 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
     return {
       style: {
         backgroundColor: '#94a3b8',
-        borderRadius: '6px',
-        opacity: 0.65,
+        borderRadius: '9999px',
+        opacity: 0.55,
         color: 'white',
         border: '1px solid rgba(255, 255, 255, 0.2)',
         display: 'block',
         boxSizing: 'border-box',
         cursor: 'not-allowed',
-        filter: 'grayscale(30%)'
+        filter: 'grayscale(40%)'
       }
     };
   };
@@ -236,13 +236,13 @@ export function TripAgendaModal({ isOpen, onClose, currentTrip }) {
           <div className="flex items-center gap-2">
             <button 
               onClick={handleReset} 
-              className="px-3 py-1.5 text-xs font-bold text-amber-600 hover:text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors flex items-center gap-1"
+              className="px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:text-brand-primary dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center gap-1.5"
               title="Reset to initial dates"
             >
-              <RotateCcw size={14} /> Reset
+              <RotateCcw size={13} /> Reset
             </button>
-            <button onClick={handleCancel} className="px-4 py-2 font-bold text-gray-600 hover:text-gray-900 transition-colors">Cancel</button>
-            <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2 bg-gray-950 hover:bg-black text-white font-bold rounded-xl shadow-lg border border-gray-800 transition-all hover:-translate-y-0.5">
+            <button onClick={handleCancel} className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-full transition-colors">Cancel</button>
+            <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-black uppercase tracking-wider rounded-full shadow-xs transition-all hover:-translate-y-0.5">
               Save Changes
             </button>
           </div>

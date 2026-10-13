@@ -77,12 +77,12 @@ export function CreateTripPage() {
           exclusions: trip.exclusions?.length ? trip.exclusions : [''],
           flights: {
             arrival: {
-              date: trip.flights?.arrival?.date ? new Date(trip.flights.arrival.date).toISOString().split('T')[0] : '',
+              date: trip.flights?.arrival?.date ? new Date(trip.flights.arrival.date).toISOString() : '',
               flightNumber: trip.flights?.arrival?.flightNumber || '',
               details: trip.flights?.arrival?.details || ''
             },
             departure: {
-              date: trip.flights?.departure?.date ? new Date(trip.flights.departure.date).toISOString().split('T')[0] : '',
+              date: trip.flights?.departure?.date ? new Date(trip.flights.departure.date).toISOString() : '',
               flightNumber: trip.flights?.departure?.flightNumber || '',
               details: trip.flights?.departure?.details || ''
             }

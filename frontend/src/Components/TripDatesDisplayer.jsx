@@ -16,15 +16,15 @@ export function TripDatesDisplayer({ startDate, endDate }) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-2xl relative">
           
           {/* Check In Card */}
-          <div className="flex-1 w-full bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-[0_4px_20px_rgb(0,0,0,0.04)] border border-gray-300 dark:border-slate-600 flex items-center gap-4 relative overflow-hidden">
-            <div className="w-10 h-10 rounded-2xl bg-brand-primary shadow-sm flex shrink-0 items-center justify-center text-white">
+          <div className="flex-1 w-full bg-stone-50/70 dark:bg-slate-800/40 rounded-[2rem] p-3.5 sm:p-4 border border-stone-200/70 dark:border-slate-800 flex items-center gap-3.5 relative overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-brand-primary/10 dark:bg-brand-primary/20 text-brand-primary dark:text-brand-300 flex shrink-0 items-center justify-center">
               <Calendar size={18} strokeWidth={2.5} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] sm:text-[10px] uppercase font-extrabold text-gray-400 tracking-[0.15em] mb-0.5">
+              <span className="text-[9px] sm:text-[10px] uppercase font-extrabold text-stone-400 dark:text-slate-500 tracking-[0.15em] mb-0.5">
                 Check In
               </span>
-              <span className="text-sm sm:text-base font-black text-gray-900 dark:text-slate-100 tracking-tight leading-none">
+              <span className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none">
                 {formattedStart}
               </span>
             </div>
@@ -33,25 +33,25 @@ export function TripDatesDisplayer({ startDate, endDate }) {
           {/* Center Connector / Duration */}
           <div className="flex shrink-0 items-center justify-center relative z-10 px-2 py-1">
              {duration > 0 ? (
-               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-white rounded-full text-[10px] font-black tracking-widest uppercase shadow-md">
+               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-white rounded-full text-[10px] font-black tracking-widest uppercase shadow-xs">
                  <Clock size={12} />
                  <span>{duration} Days</span>
                </div>
              ) : (
-               <ArrowRight size={16} strokeWidth={3} className="text-gray-400" />
+               <ArrowRight size={16} strokeWidth={3} className="text-stone-400 dark:text-slate-500" />
              )}
           </div>
 
           {/* Check Out Card */}
-          <div className="flex-1 w-full bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-[0_4px_20px_rgb(0,0,0,0.04)] border border-gray-300 dark:border-slate-600 flex items-center gap-4 relative overflow-hidden">
-            <div className="w-10 h-10 rounded-2xl bg-brand-primary shadow-sm flex shrink-0 items-center justify-center text-white">
+          <div className="flex-1 w-full bg-stone-50/70 dark:bg-slate-800/40 rounded-[2rem] p-3.5 sm:p-4 border border-stone-200/70 dark:border-slate-800 flex items-center gap-3.5 relative overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-brand-primary/10 dark:bg-brand-primary/20 text-brand-primary dark:text-brand-300 flex shrink-0 items-center justify-center">
               <Calendar size={18} strokeWidth={2.5} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] sm:text-[10px] uppercase font-extrabold text-gray-400 tracking-[0.15em] mb-0.5">
+              <span className="text-[9px] sm:text-[10px] uppercase font-extrabold text-stone-400 dark:text-slate-500 tracking-[0.15em] mb-0.5">
                 Check Out
               </span>
-              <span className="text-sm sm:text-base font-black text-gray-900 dark:text-slate-100 tracking-tight leading-none">
+              <span className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none">
                 {formattedEnd}
               </span>
             </div>

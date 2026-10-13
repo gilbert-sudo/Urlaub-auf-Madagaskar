@@ -25,14 +25,10 @@ import { TourAgendaModal } from './TourAgendaModal';
 import { DriverSelect } from './DriverSelect';
 
 const DRIVER_PALETTES = [
-  { bg: 'bg-emerald-500', bar: '#059669', border: 'border-emerald-300 dark:border-emerald-700', text: 'text-emerald-700 dark:text-emerald-300', light: 'bg-emerald-50 dark:bg-emerald-950/40' },
-  { bg: 'bg-indigo-500', bar: '#4f46e5', border: 'border-indigo-300 dark:border-indigo-700', text: 'text-indigo-700 dark:text-indigo-300', light: 'bg-indigo-50 dark:bg-indigo-950/40' },
-  { bg: 'bg-amber-500', bar: '#d97706', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-700 dark:text-amber-300', light: 'bg-amber-50 dark:bg-amber-950/40' },
-  { bg: 'bg-purple-500', bar: '#7c3aed', border: 'border-purple-300 dark:border-purple-700', text: 'text-purple-700 dark:text-purple-300', light: 'bg-purple-50 dark:bg-purple-950/40' },
-  { bg: 'bg-rose-500', bar: '#e11d48', border: 'border-rose-300 dark:border-rose-700', text: 'text-rose-700 dark:text-rose-300', light: 'bg-rose-50 dark:bg-rose-950/40' },
-  { bg: 'bg-cyan-500', bar: '#0891b2', border: 'border-cyan-300 dark:border-cyan-700', text: 'text-cyan-700 dark:text-cyan-300', light: 'bg-cyan-50 dark:bg-cyan-950/40' },
-  { bg: 'bg-blue-500', bar: '#2563eb', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-700 dark:text-blue-300', light: 'bg-blue-50 dark:bg-blue-950/40' },
-  { bg: 'bg-teal-500', bar: '#0d9488', border: 'border-teal-300 dark:border-teal-700', text: 'text-teal-700 dark:text-teal-300', light: 'bg-teal-50 dark:bg-teal-950/40' },
+  { bg: 'bg-stone-900 dark:bg-white', bar: '#1c1917', border: 'border-stone-800 dark:border-slate-600', text: 'text-stone-900 dark:text-white', light: 'bg-stone-100 dark:bg-slate-800' },
+  { bg: 'bg-brand-primary', bar: '#811303', border: 'border-brand-primary/40', text: 'text-brand-primary dark:text-brand-300', light: 'bg-brand-primary/10 dark:bg-brand-primary/20' },
+  { bg: 'bg-stone-600 dark:bg-stone-300', bar: '#52525b', border: 'border-stone-300 dark:border-slate-600', text: 'text-stone-700 dark:text-stone-200', light: 'bg-stone-100 dark:bg-slate-800' },
+  { bg: 'bg-brand-secondary', bar: '#441008', border: 'border-brand-secondary/40', text: 'text-brand-secondary dark:text-brand-300', light: 'bg-brand-primary/5 dark:bg-brand-primary/15' },
 ];
 
 export function AssignedDriversManager({ trip, tripEvents = [] }) {
@@ -171,23 +167,23 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
   }, [tripEvents, drivers, trip, tourDuration, driverIndexMap]);
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-slate-700 mb-8">
+    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-stone-200/80 dark:border-slate-800 mb-8 transition-all relative overflow-hidden">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center text-brand-primary shrink-0">
-            <Car size={22} />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-100 dark:border-slate-800 mb-6">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-full bg-stone-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0 border border-stone-200/60 dark:border-slate-700">
+            <Car size={20} strokeWidth={2.2} className="text-brand-primary" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-black text-gray-900 dark:text-white">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                 Assigned Drivers
               </h3>
-              <span className="px-2.5 py-0.5 text-xs font-black bg-brand-primary/10 text-brand-primary rounded-full">
+              <span className="px-2.5 py-0.5 text-xs font-bold bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-stone-200/60 dark:border-slate-700 rounded-full">
                 {tripEvents.length}
               </span>
             </div>
-            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
               Manage driver assignments & schedules for this tour
             </p>
           </div>
@@ -196,28 +192,28 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
         <div className="flex items-center gap-2 flex-wrap">
           {/* View Mode Switcher */}
           {tripEvents.length > 0 && (
-            <div className="flex items-center p-1 bg-gray-100 dark:bg-slate-750 rounded-xl border border-gray-200/50 dark:border-slate-700/60">
+            <div className="flex items-center p-1 bg-stone-100 dark:bg-slate-800 rounded-full border border-stone-200/60 dark:border-slate-700">
               <button 
                 onClick={() => setViewMode('cards')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                   viewMode === 'cards' 
-                    ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-xs' 
-                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' 
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                 }`}
                 title="Card grid view"
               >
-                <LayoutGrid size={14} /> Cards
+                <LayoutGrid size={13} /> Cards
               </button>
               <button 
                 onClick={() => setViewMode('timeline')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                   viewMode === 'timeline' 
-                    ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-xs' 
-                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' 
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                 }`}
                 title="All drivers schedule timeline view"
               >
-                <Clock size={14} /> Schedule Timeline
+                <Clock size={13} /> Schedule Timeline
               </button>
             </div>
           )}
@@ -225,7 +221,7 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
           {/* Assign Driver Button */}
           <button 
             onClick={openDriverSelect}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-brand-50 dark:bg-brand-primary/10 text-brand-700 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-primary/20 font-bold text-xs rounded-xl transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 bg-stone-100 hover:bg-stone-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 border border-stone-200/60 dark:border-slate-700 font-bold text-xs sm:text-sm rounded-full transition-all shadow-xs active:scale-95"
           >
             <Plus size={14} /> Assign Driver
           </button>
@@ -244,38 +240,38 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
               const duration = Math.max(1, differenceInDays(new Date(event.end), new Date(event.start)) + 1);
 
               return (
-                <div key={event._id} className="group relative flex flex-col p-4 bg-gray-50/80 dark:bg-slate-900/50 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all">
+                <div key={event._id} className="group relative flex flex-col p-5 bg-stone-50/70 dark:bg-slate-800/40 rounded-[2rem] border border-stone-200/70 dark:border-slate-800 shadow-xs hover:shadow-sm transition-all">
                   {/* Actions */}
-                  <div className="absolute top-3 right-3 flex gap-1">
+                  <div className="absolute top-4 right-4 flex gap-1.5">
                     <button 
                       onClick={() => handleEditDriverAssignment(event)}
-                      className="p-1.5 text-gray-500 hover:text-brand-primary hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors shadow-sm bg-gray-100 dark:bg-slate-800/80"
+                      className="p-2 text-stone-400 hover:text-brand-primary hover:bg-stone-100 dark:hover:bg-slate-700 rounded-full transition-colors bg-white dark:bg-slate-800 border border-stone-200/60 dark:border-slate-700 shadow-2xs"
                       title="Edit Assignment in Agenda"
                     >
-                      <Edit2 size={14} />
+                      <Edit2 size={13} />
                     </button>
                     <button 
                       onClick={() => handleDelete(event._id)}
-                      className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors shadow-sm bg-gray-100 dark:bg-slate-800/80"
+                      className="p-2 text-stone-400 hover:text-red-500 hover:bg-stone-100 dark:hover:bg-slate-700 rounded-full transition-colors bg-white dark:bg-slate-800 border border-stone-200/60 dark:border-slate-700 shadow-2xs"
                       title="Remove Driver"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={13} />
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-3 mb-3 pr-14">
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-slate-700 shrink-0 border border-white dark:border-slate-600 shadow-xs">
+                  <div className="flex items-center gap-3 mb-4 pr-16">
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-stone-200 dark:bg-slate-700 shrink-0 border border-white dark:border-slate-600 shadow-2xs">
                       {driverObj?.avatar ? (
                         <img src={driverObj.avatar} alt={driverObj.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center font-bold text-gray-500 dark:text-slate-400">
+                        <div className="w-full h-full flex items-center justify-center font-bold text-stone-600 dark:text-slate-300">
                           {driverObj?.name?.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-bold text-gray-900 dark:text-white truncate">{driverObj?.name}</div>
-                      <div className="text-xs text-gray-500 dark:text-slate-400 font-semibold truncate">
+                      <div className="font-bold text-slate-900 dark:text-white truncate">{driverObj?.name}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold truncate">
                         {event.title || 'Tour Driver'} • {duration}d
                       </div>
                     </div>
@@ -284,46 +280,46 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
                   {/* Dates Banner - Click opens Driver Agenda */}
                   <div 
                     onClick={() => handleEditDriverAssignment(event)}
-                    className="flex items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700 cursor-pointer hover:border-brand-primary/40 transition-colors group/dates"
+                    className="flex items-center justify-between bg-white dark:bg-slate-800/90 p-3.5 rounded-2xl border border-stone-200/60 dark:border-slate-700/60 cursor-pointer hover:border-brand-primary/40 transition-colors group/dates"
                     title="Click to edit schedule in Driver Agenda"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="flex flex-col items-center rounded-lg border border-gray-100 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 min-w-[42px] overflow-hidden shadow-xs">
-                        <div className="w-full bg-brand-primary/10 text-brand-700 dark:bg-brand-primary/20 dark:text-brand-400 text-[9px] font-black uppercase text-center py-0.5 tracking-widest border-b border-brand-primary/10 dark:border-brand-primary/20">
+                      <div className="flex flex-col items-center rounded-xl border border-stone-200/60 dark:border-slate-700 bg-stone-50 dark:bg-slate-700/50 min-w-[42px] overflow-hidden shadow-2xs">
+                        <div className="w-full bg-brand-primary/10 text-brand-primary dark:bg-brand-primary/20 dark:text-brand-300 text-[9px] font-black uppercase text-center py-0.5 tracking-widest border-b border-brand-primary/10">
                           {new Date(event.start).toLocaleString('default', { month: 'short' })}
                         </div>
-                        <div className="text-sm font-black text-gray-800 dark:text-white py-1">
+                        <div className="text-sm font-black text-slate-800 dark:text-white py-1">
                           {new Date(event.start).getDate()}
                         </div>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Start</span>
-                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Start</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                           {new Date(event.start).toLocaleDateString(undefined, { weekday: 'short' })}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex-1 px-4 flex items-center justify-center">
-                       <div className="w-full h-[2px] bg-gray-100 dark:bg-slate-700 relative flex items-center justify-center rounded-full">
-                          <div className="w-5 h-5 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 flex items-center justify-center absolute shadow-xs group-hover/dates:scale-110 transition-transform">
-                            <ArrowRight size={10} className="text-gray-400 group-hover/dates:text-brand-primary" />
+                    <div className="flex-1 px-3 flex items-center justify-center">
+                       <div className="w-full h-[2px] bg-stone-100 dark:bg-slate-700 relative flex items-center justify-center rounded-full">
+                          <div className="w-5 h-5 rounded-full bg-white dark:bg-slate-800 border border-stone-200/60 dark:border-slate-700 flex items-center justify-center absolute shadow-2xs group-hover/dates:scale-110 transition-transform">
+                            <ArrowRight size={10} className="text-stone-400 group-hover/dates:text-brand-primary" />
                           </div>
                        </div>
                     </div>
 
                     <div className="flex items-center gap-2.5">
                       <div className="flex flex-col text-right">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">End</span>
-                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">End</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                           {new Date(event.end).toLocaleDateString(undefined, { weekday: 'short' })}
                         </span>
                       </div>
-                      <div className="flex flex-col items-center rounded-lg border border-gray-100 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 min-w-[42px] overflow-hidden shadow-xs">
-                        <div className="w-full bg-brand-primary/10 text-brand-700 dark:bg-brand-primary/20 dark:text-brand-400 text-[9px] font-black uppercase text-center py-0.5 tracking-widest border-b border-brand-primary/10 dark:border-brand-primary/20">
+                      <div className="flex flex-col items-center rounded-xl border border-stone-200/60 dark:border-slate-700 bg-stone-50 dark:bg-slate-700/50 min-w-[42px] overflow-hidden shadow-2xs">
+                        <div className="w-full bg-brand-primary/10 text-brand-primary dark:bg-brand-primary/20 dark:text-brand-300 text-[9px] font-black uppercase text-center py-0.5 tracking-widest border-b border-brand-primary/10">
                           {new Date(event.end).toLocaleString('default', { month: 'short' })}
                         </div>
-                        <div className="text-sm font-black text-gray-800 dark:text-white py-1">
+                        <div className="text-sm font-black text-slate-800 dark:text-white py-1">
                           {new Date(event.end).getDate()}
                         </div>
                       </div>
@@ -331,19 +327,19 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
                   </div>
 
                   {event.notes && (
-                    <div className="mt-2 text-xs italic text-gray-500 line-clamp-2">
+                    <div className="mt-2 text-xs italic text-slate-500 line-clamp-2">
                       {event.notes}
                     </div>
                   )}
 
                   {/* Agenda Edit Button */}
-                  <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-700/60 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500">
+                  <div className="mt-3.5 pt-2.5 border-t border-stone-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-stone-400 dark:text-slate-500">
                       Duration: {duration} days
                     </span>
                     <button
                       onClick={() => handleEditDriverAssignment(event)}
-                      className="text-xs font-bold text-brand-primary hover:text-brand-600 flex items-center gap-1 group-hover:underline"
+                      className="text-xs font-bold text-brand-primary hover:text-brand-secondary flex items-center gap-1 group-hover:underline"
                     >
                       <CalendarIcon size={12} /> Edit on Agenda
                     </button>
@@ -354,29 +350,29 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
           </div>
         ) : (
           /* Multi-Driver Interactive Schedule Timeline View */
-          <div className="p-4 bg-gray-50/70 dark:bg-slate-900/60 rounded-2xl border border-gray-100 dark:border-slate-700 space-y-4">
+          <div className="p-5 bg-stone-50/70 dark:bg-slate-800/40 rounded-[2rem] border border-stone-200/70 dark:border-slate-800 space-y-4">
             {/* Tour Span Banner */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-stone-200/60 dark:border-slate-800 shadow-2xs">
+              <div className="flex items-center gap-2 flex-wrap">
                 <CalendarCheck size={16} className="text-brand-primary" />
-                <span className="text-xs font-black text-gray-800 dark:text-white">
+                <span className="text-xs font-black text-slate-800 dark:text-white">
                   Tour Duration:
                 </span>
-                <span className="text-xs font-bold text-gray-600 dark:text-slate-300">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                   {trip?.startDate ? format(new Date(trip.startDate), 'MMM dd') : ''} – {trip?.endDate ? format(new Date(trip.endDate), 'MMM dd, yyyy') : ''}
                 </span>
-                <span className="px-2 py-0.5 text-[11px] font-black bg-brand-50 dark:bg-brand-primary/10 text-brand-700 dark:text-brand-400 rounded-md">
+                <span className="px-2.5 py-0.5 text-[11px] font-black bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full border border-stone-200/60 dark:border-slate-700">
                   {tourDuration} Days
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-gray-400 dark:text-slate-500">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
                   {timelineData.length} active assignment{timelineData.length > 1 ? 's' : ''}
                 </span>
                 <button
                   onClick={() => setIsAllDriversAgendaOpen(true)}
-                  className="px-2.5 py-1 text-xs font-bold bg-brand-primary hover:bg-brand-secondary text-white rounded-lg transition-all shadow-xs"
+                  className="px-3.5 py-1.5 text-xs font-bold bg-brand-primary hover:bg-brand-secondary text-white rounded-full transition-all shadow-xs"
                 >
                   Edit on Tour Agenda
                 </button>
@@ -384,47 +380,47 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
             </div>
 
             {/* Visual Timeline Lanes */}
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3 pt-1">
               {timelineData.map(({ event, driver, palette, durationDays, leftPercent, widthPercent }, idx) => (
                 <div 
                   key={event._id || idx}
-                  className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/70 shadow-2xs hover:shadow-sm transition-all"
+                  className="p-3.5 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-stone-200/60 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all"
                 >
-                  <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-200 dark:bg-slate-700 shrink-0 border border-white dark:border-slate-600 shadow-2xs">
+                      <div className="w-7 h-7 rounded-full overflow-hidden bg-stone-200 dark:bg-slate-700 shrink-0 border border-white dark:border-slate-600 shadow-2xs">
                         {driver?.avatar ? (
                           <img src={driver.avatar} alt={driver.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center font-bold text-xs text-gray-600 dark:text-slate-300">
+                          <div className="w-full h-full flex items-center justify-center font-bold text-xs text-slate-600 dark:text-slate-300">
                             {driver?.name?.charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div>
-                        <span className="font-black text-xs text-gray-900 dark:text-white">
+                        <span className="font-black text-xs text-slate-900 dark:text-white">
                           {driver?.name}
                         </span>
-                        <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500 ml-2">
+                        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 ml-2">
                           ({format(new Date(event.start), 'MMM dd')} – {format(new Date(event.end), 'MMM dd')})
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-black text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+                      <span className="text-[11px] font-black text-slate-600 dark:text-slate-300 bg-stone-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-stone-200/60 dark:border-slate-700">
                         {durationDays}d
                       </span>
                       <button
                         onClick={() => handleEditDriverAssignment(event)}
-                        className="p-1 text-gray-400 hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-slate-700 rounded-md transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-brand-primary hover:bg-stone-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                         title="Edit in Driver Agenda"
                       >
                         <Edit2 size={13} />
                       </button>
                       <button
                         onClick={() => handleDelete(event._id)}
-                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-md transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                         title="Remove assignment"
                       >
                         <Trash2 size={13} />
@@ -435,11 +431,11 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
                   {/* Horizontal Bar Track */}
                   <div 
                     onClick={() => handleEditDriverAssignment(event)}
-                    className="w-full h-6 bg-gray-100 dark:bg-slate-700/60 rounded-lg relative overflow-hidden cursor-pointer group"
+                    className="w-full h-6 bg-stone-100 dark:bg-slate-800 rounded-full relative overflow-hidden cursor-pointer group p-0.5"
                     title="Click to edit on Agenda"
                   >
                     <div 
-                      className={`h-full absolute rounded-md transition-all flex items-center px-2 text-white text-[10px] font-bold shadow-xs group-hover:brightness-110`}
+                      className={`h-full absolute rounded-full transition-all flex items-center px-2.5 text-white text-[10px] font-bold shadow-xs group-hover:brightness-110`}
                       style={{
                         left: `${leftPercent}%`,
                         width: `${widthPercent}%`,
@@ -456,13 +452,13 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
             </div>
 
             {/* Bottom Call to Action */}
-            <div className="pt-2 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
-              <span className="flex items-center gap-1 font-medium">
+            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1.5 font-medium">
                 <AlertCircle size={13} className="text-brand-primary" /> Click any driver lane to edit their dates in the interactive agenda.
               </span>
               <button
                 onClick={() => setIsAllDriversAgendaOpen(true)}
-                className="font-bold text-brand-primary hover:text-brand-secondary underline flex items-center gap-1"
+                className="font-bold text-brand-primary hover:text-brand-secondary underline flex items-center gap-1 w-fit"
               >
                 <CalendarCheck size={13} /> Open Tour Agenda
               </button>
@@ -471,25 +467,22 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
         )
       ) : (
         /* Empty State */
-        <div className="flex flex-col items-center justify-center py-12 px-4 bg-gradient-to-b from-gray-50 to-white dark:from-slate-800/50 dark:to-slate-900 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-slate-700 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-brand-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-          
-          <div className="w-20 h-20 mb-4 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center shadow-inner relative">
-             <div className="absolute inset-0 bg-brand-primary/20 rounded-full animate-ping opacity-20"></div>
-             <Car size={32} className="text-gray-400 dark:text-slate-500 group-hover:text-brand-primary transition-colors duration-300 relative z-10" />
+        <div className="flex flex-col items-center justify-center py-12 px-4 bg-stone-50/50 dark:bg-slate-900/40 rounded-[2.5rem] border border-dashed border-stone-300 dark:border-slate-800 relative overflow-hidden group">
+          <div className="w-16 h-16 mb-4 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-xs border border-stone-200/80 dark:border-slate-700">
+             <Car size={26} className="text-slate-400 dark:text-slate-500 group-hover:text-brand-primary transition-colors duration-300" />
           </div>
           
-          <h3 className="text-lg font-black text-gray-800 dark:text-white mb-2">No Drivers Assigned</h3>
-          <p className="text-sm text-gray-500 dark:text-slate-400 text-center max-w-sm mb-6">
+          <h3 className="text-base font-black text-slate-800 dark:text-white mb-1.5">No Drivers Assigned</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center max-w-sm mb-6">
             There are currently no drivers assigned to this tour. Assign a driver to ensure smooth transportation.
           </p>
           
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsDriverSelectOpen(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-brand-primary text-white font-bold rounded-xl shadow-lg shadow-brand-primary/30 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-primary/40 transition-all duration-300"
+              className="flex items-center gap-2 px-6 py-2.5 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-black uppercase tracking-wider rounded-full shadow-xs hover:-translate-y-0.5 transition-all duration-200"
             >
-              <Plus size={18} strokeWidth={3} />
+              <Plus size={16} strokeWidth={2.5} />
               Assign a Driver
             </button>
           </div>
@@ -499,22 +492,22 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
       {/* Select Driver Modal */}
       {isDriverSelectOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-stone-200/80 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-                <Car size={24} className="text-brand-primary" /> Select Driver
+              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <Car size={22} className="text-brand-primary" /> Select Driver
               </h2>
               <button 
                 onClick={() => setIsDriverSelectOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-600 bg-stone-100 dark:bg-slate-800 hover:bg-stone-200/80 rounded-full transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleOpenAgenda} className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600 dark:text-slate-400 mb-4 font-medium">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-4 font-medium">
                   Choose a driver to open their agenda and assign this trip.
                 </p>
                 <DriverSelect 
@@ -528,9 +521,9 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
                 <button 
                   type="submit"
                   disabled={!selectedDriverId}
-                  className="w-full py-3 bg-brand-primary hover:bg-brand-600 disabled:opacity-50 disabled:hover:bg-brand-primary text-white font-bold rounded-xl shadow-lg shadow-brand-primary/30 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-brand-primary hover:bg-brand-secondary disabled:opacity-50 disabled:hover:bg-brand-primary text-white text-xs font-black uppercase tracking-wider rounded-full shadow-xs transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
                 >
-                  <CalendarIcon size={18} /> Open Driver's Agenda
+                  <CalendarIcon size={16} /> Open Driver's Agenda
                 </button>
               </div>
             </form>

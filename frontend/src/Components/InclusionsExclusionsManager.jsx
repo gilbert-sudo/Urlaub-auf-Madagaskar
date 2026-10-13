@@ -29,8 +29,7 @@ import {
   X,
   Minus,
   Sparkles,
-  Compass,
-  AlertCircle
+  Compass
 } from 'lucide-react';
 
 const PREDEFINED_FEATURES = [
@@ -63,7 +62,6 @@ function getItemIcon(itemText, isIncluded = true) {
     return isIncluded ? CheckCircle2 : MinusCircle;
   }
 
-  // 1. Direct match with PREDEFINED_FEATURES
   const exact = PREDEFINED_FEATURES.find(
     p => p.label.toLowerCase() === itemText.trim().toLowerCase()
   );
@@ -71,7 +69,6 @@ function getItemIcon(itemText, isIncluded = true) {
 
   const t = itemText.toLowerCase();
 
-  // 2. Multilingual semantic keywords
   if (t.includes('flug') || t.includes('flüge') || t.includes('flight') || t.includes('vol') || t.includes('airport')) {
     return Plane;
   }
@@ -171,7 +168,6 @@ export function InclusionsExclusionsManager({ trip }) {
       if (inclusions.includes(itemLabel)) {
         setInclusions(inclusions.filter(i => i !== itemLabel));
       } else {
-        // Remove from exclusions if present and add to inclusions
         setExclusions(exclusions.filter(e => e !== itemLabel));
         setInclusions([...inclusions.filter(i => i !== ''), itemLabel]);
       }
@@ -179,7 +175,6 @@ export function InclusionsExclusionsManager({ trip }) {
       if (exclusions.includes(itemLabel)) {
         setExclusions(exclusions.filter(e => e !== itemLabel));
       } else {
-        // Remove from inclusions if present and add to exclusions
         setInclusions(inclusions.filter(i => i !== itemLabel));
         setExclusions([...exclusions.filter(e => e !== ''), itemLabel]);
       }
@@ -197,7 +192,6 @@ export function InclusionsExclusionsManager({ trip }) {
         return;
       }
       if (exclusions.includes(val)) {
-        // Move from exclusions to inclusions
         setExclusions(exclusions.filter(e => e !== val));
         toast.success(`Moved "${val}" from Excluded to Included.`);
       }
@@ -210,7 +204,6 @@ export function InclusionsExclusionsManager({ trip }) {
         return;
       }
       if (inclusions.includes(val)) {
-        // Move from inclusions to exclusions
         setInclusions(inclusions.filter(i => i !== val));
         toast.success(`Moved "${val}" from Included to Excluded.`);
       }
@@ -233,27 +226,23 @@ export function InclusionsExclusionsManager({ trip }) {
   const totalExclusions = exclusions.length;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[2.2rem] p-6 sm:p-8 shadow-sm border border-stone-200/80 dark:border-slate-800 mb-8 transition-all relative overflow-hidden">
-      {/* Subtle brand warm ambient wash */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-brand-primary/[0.02] dark:bg-brand-primary/[0.05] rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/[0.02] dark:bg-amber-500/[0.04] rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
-
+    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-stone-200/80 dark:border-slate-800 mb-8 transition-all relative overflow-hidden">
       {/* Header bar */}
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-100 dark:border-slate-800 mb-6">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-brand-primary/10 dark:bg-brand-primary/20 text-brand-primary dark:text-brand-300 flex items-center justify-center shrink-0 shadow-sm border border-brand-primary/10">
-            <ListChecks size={22} strokeWidth={2.2} />
+          <div className="w-11 h-11 rounded-full bg-stone-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0 border border-stone-200/60 dark:border-slate-700">
+            <ListChecks size={20} strokeWidth={2.2} className="text-brand-primary" />
           </div>
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                 Inclusions & Exclusions
               </h3>
               {!isEditing && (
-                <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-stone-200/60 dark:border-slate-700/60">
-                  <span className="text-[#25523A] dark:text-[#7EC49A]">{totalInclusions} Included</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-stone-200/60 dark:border-slate-700">
+                  <span className="text-slate-900 dark:text-white">{totalInclusions} Included</span>
                   <span className="text-stone-300 dark:text-slate-600">•</span>
-                  <span className="text-brand-primary dark:text-brand-300">{totalExclusions} Excluded</span>
+                  <span className="text-slate-500 dark:text-slate-400">{totalExclusions} Excluded</span>
                 </span>
               )}
             </div>
@@ -268,24 +257,24 @@ export function InclusionsExclusionsManager({ trip }) {
           {!isEditing ? (
             <button 
               onClick={() => setIsEditing(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-stone-100 hover:bg-stone-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-xs hover:shadow active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-stone-100 hover:bg-stone-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-bold text-xs sm:text-sm rounded-full border border-stone-200/60 dark:border-slate-700 transition-all shadow-xs active:scale-95"
             >
-              <Edit2 size={15} /> Edit Services
+              <Edit2 size={14} /> Edit Services
             </button>
           ) : (
             <div className="flex items-center gap-2">
               <button 
                 onClick={handleCancel}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs sm:text-sm rounded-xl transition-all active:scale-95"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs sm:text-sm rounded-full transition-all active:scale-95"
               >
-                <X size={15} /> Cancel
+                <X size={14} /> Cancel
               </button>
               <button 
                 onClick={handleUpdate}
                 disabled={isSaving || !hasChanges}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-brand-primary/20 hover:shadow-brand-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                className="inline-flex items-center gap-2 px-5 py-2 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs sm:text-sm rounded-full shadow-md shadow-brand-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
               >
-                <Save size={15} /> {isSaving ? 'Saving...' : 'Save Changes'}
+                <Save size={14} /> {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           )}
@@ -294,11 +283,11 @@ export function InclusionsExclusionsManager({ trip }) {
 
       {/* Main Content Area */}
       {!isEditing ? (
-        /* READ-ONLY VIEW: Balanced, Elegant 2-Column Split */
+        /* READ-ONLY VIEW */
         totalInclusions === 0 && totalExclusions === 0 ? (
-          <div className="text-center py-12 px-6 rounded-3xl bg-stone-50/70 dark:bg-slate-800/40 border border-stone-200/60 dark:border-slate-800">
-            <div className="w-12 h-12 mx-auto rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center mb-3">
-              <ListChecks size={24} />
+          <div className="text-center py-12 px-6 rounded-[2rem] bg-stone-50/70 dark:bg-slate-800/40 border border-stone-200/60 dark:border-slate-800">
+            <div className="w-12 h-12 mx-auto rounded-full bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-3 border border-stone-200/60 dark:border-slate-700">
+              <ListChecks size={22} className="text-brand-primary" />
             </div>
             <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">No Services Specified Yet</h4>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-4">
@@ -306,7 +295,7 @@ export function InclusionsExclusionsManager({ trip }) {
             </p>
             <button
               onClick={() => setIsEditing(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white text-xs font-bold rounded-xl shadow-sm hover:bg-brand-secondary transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-primary text-white text-xs sm:text-sm font-bold rounded-full shadow-sm hover:bg-brand-secondary transition-all active:scale-95"
             >
               <Plus size={14} /> Add Inclusions & Exclusions
             </button>
@@ -314,15 +303,15 @@ export function InclusionsExclusionsManager({ trip }) {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-7 relative z-10">
             
-            {/* COLUMN 1: INCLUDED IN PACKAGE (Muted Botanical Sage & Earthy Natural Tones) */}
-            <div className="flex flex-col bg-[#F7FAF8] dark:bg-slate-900/60 rounded-3xl border border-[#D5E3DA] dark:border-emerald-950/40 p-5 sm:p-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 border-b border-[#E3EDE6] dark:border-emerald-950/40">
+            {/* COLUMN 1: INCLUDED IN PACKAGE */}
+            <div className="flex flex-col bg-stone-50/70 dark:bg-slate-800/40 rounded-[2rem] border border-stone-200/70 dark:border-slate-800 p-5 sm:p-6 shadow-xs">
+              <div className="flex items-center justify-between pb-4 border-b border-stone-200/60 dark:border-slate-700/60">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#26533C]/10 text-[#214834] dark:bg-[#26533C]/25 dark:text-[#7EC49A] flex items-center justify-center shrink-0 border border-[#26533C]/15 dark:border-[#26533C]/30 shadow-xs">
-                    <CheckCircle2 size={18} strokeWidth={2.4} />
+                  <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0 border border-stone-200/60 dark:border-slate-700 shadow-2xs">
+                    <CheckCircle2 size={16} strokeWidth={2.4} className="text-brand-primary" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-[#1E3E2D] dark:text-[#A7D9BC] uppercase tracking-wider">
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
                       Included in Package
                     </h4>
                     <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -330,7 +319,7 @@ export function InclusionsExclusionsManager({ trip }) {
                     </span>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-xs font-black bg-[#EAF2ED] dark:bg-[#163524] text-[#214834] dark:text-[#7EC49A] border border-[#D5E3DA] dark:border-[#204933]">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-stone-200/60 dark:border-slate-700 shadow-2xs">
                   {totalInclusions} {totalInclusions === 1 ? 'item' : 'items'}
                 </span>
               </div>
@@ -340,24 +329,24 @@ export function InclusionsExclusionsManager({ trip }) {
                   No inclusions listed for this package.
                 </div>
               ) : (
-                <div className="space-y-2.5 mt-4 flex-1">
+                <div className="space-y-2 mt-4 flex-1">
                   {inclusions.map((item, index) => {
                     const Icon = getItemIcon(item, true);
                     return (
                       <div 
                         key={`inc-view-${index}`}
-                        className="group flex items-start gap-3 p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border border-[#DFEAE2] dark:border-slate-700/70 hover:border-[#ACCEB9] dark:hover:border-[#2D5A43] shadow-xs hover:shadow-sm transition-all"
+                        className="group flex items-start gap-3 p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border border-stone-200/60 dark:border-slate-700/60 shadow-2xs hover:shadow-xs transition-all"
                       >
-                        <div className="w-8 h-8 rounded-xl bg-[#F0F6F2] dark:bg-[#1C3B2B] text-[#25523A] dark:text-[#7EC49A] flex items-center justify-center shrink-0 border border-[#D8E6DC] dark:border-[#274D38] group-hover:scale-105 transition-transform mt-0.5">
-                          <Icon size={15} strokeWidth={2.2} />
+                        <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0 mt-0.5">
+                          <Icon size={14} strokeWidth={2.2} />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pt-0.5">
                           <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">
                             {item}
                           </p>
                         </div>
-                        <div className="w-5 h-5 rounded-full bg-[#EBF4EE] dark:bg-[#193B27] flex items-center justify-center shrink-0 text-[#25523A] dark:text-[#7EC49A] mt-0.5">
-                          <Check size={12} strokeWidth={3} />
+                        <div className="w-5 h-5 rounded-full bg-stone-100 dark:bg-slate-700/60 flex items-center justify-center shrink-0 text-slate-700 dark:text-slate-300 mt-1">
+                          <Check size={11} strokeWidth={3} />
                         </div>
                       </div>
                     );
@@ -366,15 +355,15 @@ export function InclusionsExclusionsManager({ trip }) {
               )}
             </div>
 
-            {/* COLUMN 2: NOT INCLUDED / EXCLUDED (Sophisticated Warm Brand Terracotta & Mahogany) */}
-            <div className="flex flex-col bg-[#FCF8F7] dark:bg-slate-900/60 rounded-3xl border border-brand-100/90 dark:border-brand-950/40 p-5 sm:p-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 border-b border-brand-100/70 dark:border-brand-950/40">
+            {/* COLUMN 2: NOT INCLUDED / EXCLUDED */}
+            <div className="flex flex-col bg-stone-50/70 dark:bg-slate-800/40 rounded-[2rem] border border-stone-200/70 dark:border-slate-800 p-5 sm:p-6 shadow-xs">
+              <div className="flex items-center justify-between pb-4 border-b border-stone-200/60 dark:border-slate-700/60">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary dark:bg-brand-primary/25 dark:text-brand-300 flex items-center justify-center shrink-0 border border-brand-primary/15 dark:border-brand-primary/30 shadow-xs">
-                    <MinusCircle size={18} strokeWidth={2.4} />
+                  <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0 border border-stone-200/60 dark:border-slate-700 shadow-2xs">
+                    <MinusCircle size={16} strokeWidth={2.4} className="text-slate-500" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-brand-primary dark:text-brand-300 uppercase tracking-wider">
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
                       Not Included / Excluded
                     </h4>
                     <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -382,34 +371,34 @@ export function InclusionsExclusionsManager({ trip }) {
                     </span>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-xs font-black bg-brand-50 dark:bg-brand-950/50 text-brand-primary dark:text-brand-300 border border-brand-100 dark:border-brand-900/40">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-stone-200/60 dark:border-slate-700 shadow-2xs">
                   {totalExclusions} {totalExclusions === 1 ? 'item' : 'items'}
                 </span>
               </div>
 
               {totalExclusions === 0 ? (
                 <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500 italic">
-                  No exclusions specified.
+                  No exclusions listed for this package.
                 </div>
               ) : (
-                <div className="space-y-2.5 mt-4 flex-1">
+                <div className="space-y-2 mt-4 flex-1">
                   {exclusions.map((item, index) => {
                     const Icon = getItemIcon(item, false);
                     return (
                       <div 
                         key={`exc-view-${index}`}
-                        className="group flex items-start gap-3 p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border border-brand-100/70 dark:border-slate-700/70 hover:border-brand-200 dark:hover:border-brand-800/60 shadow-xs hover:shadow-sm transition-all"
+                        className="group flex items-start gap-3 p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border border-stone-200/60 dark:border-slate-700/60 shadow-2xs hover:shadow-xs transition-all"
                       >
-                        <div className="w-8 h-8 rounded-xl bg-brand-50/80 dark:bg-brand-950/40 text-brand-primary dark:text-brand-300 flex items-center justify-center shrink-0 border border-brand-100 dark:border-brand-900/40 group-hover:scale-105 transition-transform mt-0.5">
-                          <Icon size={15} strokeWidth={2.2} />
+                        <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0 mt-0.5">
+                          <Icon size={14} strokeWidth={2.2} />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 leading-snug">
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">
                             {item}
                           </p>
                         </div>
-                        <div className="w-5 h-5 rounded-full bg-brand-50 dark:bg-brand-950/50 flex items-center justify-center shrink-0 text-brand-primary/80 dark:text-brand-300/80 mt-0.5">
-                          <Minus size={12} strokeWidth={3} />
+                        <div className="w-5 h-5 rounded-full bg-stone-100 dark:bg-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 mt-1">
+                          <Minus size={11} strokeWidth={3} />
                         </div>
                       </div>
                     );
@@ -421,27 +410,19 @@ export function InclusionsExclusionsManager({ trip }) {
           </div>
         )
       ) : (
-        /* EDITING MODE: Intuitive Two-Column Interactive Workspace */
-        <div className="space-y-8 relative z-10 animate-in fade-in duration-200">
-          
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 flex items-center gap-3 text-xs sm:text-sm font-medium">
-            <AlertCircle size={18} className="shrink-0 text-amber-600 dark:text-amber-400" />
-            <span>
-              Click predefined features below to toggle their status, or type custom itinerary items. Clicking an item already selected in the other column will automatically transfer it.
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        /* EDIT MODE VIEW */
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             
             {/* EDIT COLUMN 1: INCLUSIONS */}
-            <div className="flex flex-col bg-[#F7FAF8] dark:bg-slate-900/60 rounded-3xl border border-[#D5E3DA] dark:border-emerald-950/40 p-5 sm:p-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 border-b border-[#E3EDE6] dark:border-emerald-950/40 mb-4">
+            <div className="flex flex-col bg-stone-50/70 dark:bg-slate-800/40 rounded-[2rem] border border-stone-200/70 dark:border-slate-800 p-5 sm:p-6 shadow-xs">
+              <div className="flex items-center justify-between pb-4 border-b border-stone-200/60 dark:border-slate-700/60 mb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#26533C]/10 text-[#214834] dark:bg-[#26533C]/25 dark:text-[#7EC49A] flex items-center justify-center">
-                    <CheckCircle2 size={16} strokeWidth={2.4} />
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center border border-stone-200/60 dark:border-slate-700 shadow-2xs">
+                    <CheckCircle2 size={16} strokeWidth={2.4} className="text-brand-primary" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-[#1E3E2D] dark:text-[#A7D9BC] uppercase tracking-wider">
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
                       Included Services
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -468,16 +449,16 @@ export function InclusionsExclusionsManager({ trip }) {
                         onClick={() => handleTogglePredefined(item.label, 'inclusions')}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                           isSelected
-                            ? 'bg-[#EAF3ED] dark:bg-[#183827] text-[#1E432F] dark:text-[#8CD4AC] border-2 border-[#26533C] dark:border-[#387C57] shadow-xs scale-[0.98]'
+                            ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 border border-stone-900 dark:border-white shadow-2xs scale-[0.98]'
                             : isExcluded
                               ? 'bg-stone-100/70 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border border-dashed border-stone-200 dark:border-slate-700 hover:border-brand-primary/40'
-                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-stone-200/90 dark:border-slate-700 hover:border-[#26533C]/50 hover:bg-[#F8FAF9]'
+                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-stone-200/90 dark:border-slate-700 hover:border-brand-primary/50'
                         }`}
                         title={isExcluded ? 'Currently in Excluded. Click to move to Included.' : ''}
                       >
-                        <Icon size={13} className={isSelected ? 'text-[#26533C] dark:text-[#8CD4AC]' : 'text-slate-400'} />
+                        <Icon size={13} className={isSelected ? 'text-white dark:text-stone-900' : 'text-slate-400'} />
                         <span>{item.label}</span>
-                        {isSelected && <Check size={11} strokeWidth={3} className="ml-0.5 text-[#26533C] dark:text-[#8CD4AC]" />}
+                        {isSelected && <Check size={11} strokeWidth={3} className="ml-0.5 text-white dark:text-stone-900" />}
                       </button>
                     );
                   })}
@@ -485,7 +466,7 @@ export function InclusionsExclusionsManager({ trip }) {
               </div>
 
               {/* Active Items & Custom Items List */}
-              <div className="pt-4 border-t border-[#E3EDE6] dark:border-emerald-950/40 mb-4 flex-1">
+              <div className="pt-4 border-t border-stone-200/60 dark:border-slate-700/60 mb-4 flex-1">
                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">
                   Selected Inclusions ({inclusions.length})
                 </p>
@@ -498,16 +479,16 @@ export function InclusionsExclusionsManager({ trip }) {
                       return (
                         <div 
                           key={`inc-item-${index}`}
-                          className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-[#DFEAE2] dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                          className="flex items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-stone-200/60 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200"
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <Icon size={14} className="text-[#25523A] dark:text-[#7EC49A] shrink-0" />
+                            <Icon size={14} className="text-slate-600 dark:text-slate-400 shrink-0" />
                             <span className="truncate">{item}</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleRemoveItem(item, 'inclusions')}
-                            className="text-stone-400 hover:text-brand-primary p-1 rounded-lg hover:bg-brand-50/60 dark:hover:bg-brand-primary/10 transition-colors shrink-0"
+                            className="text-stone-400 hover:text-brand-primary p-1 rounded-full hover:bg-stone-100 dark:hover:bg-slate-700 transition-colors shrink-0"
                             title="Remove inclusion"
                           >
                             <Trash2 size={13} />
@@ -520,7 +501,7 @@ export function InclusionsExclusionsManager({ trip }) {
               </div>
 
               {/* Add Custom Inclusion Input */}
-              <div className="pt-4 border-t border-[#E3EDE6] dark:border-emerald-950/40">
+              <div className="pt-4 border-t border-stone-200/60 dark:border-slate-700/60">
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -532,13 +513,13 @@ export function InclusionsExclusionsManager({ trip }) {
                         handleAddCustom('inclusions');
                       }
                     }}
-                    placeholder="Add custom inclusion (e.g. VIP Airport Fast-track)..."
-                    className="flex-1 px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 focus:border-[#26533C] focus:ring-2 focus:ring-[#26533C]/10 outline-none transition-all text-slate-800 dark:text-white"
+                    placeholder="Add custom inclusion..."
+                    className="flex-1 px-4 py-2.5 rounded-full text-xs sm:text-sm bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all text-slate-800 dark:text-white"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddCustom('inclusions')}
-                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#26533C] hover:bg-[#1C412E] text-white shadow-xs transition-all active:scale-95"
+                    className="px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-stone-900 hover:bg-stone-800 dark:bg-white dark:text-stone-900 text-white shadow-2xs transition-all active:scale-95"
                   >
                     Add
                   </button>
@@ -548,14 +529,14 @@ export function InclusionsExclusionsManager({ trip }) {
             </div>
 
             {/* EDIT COLUMN 2: EXCLUSIONS */}
-            <div className="flex flex-col bg-[#FCF8F7] dark:bg-slate-900/60 rounded-3xl border border-brand-100/90 dark:border-brand-950/40 p-5 sm:p-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 border-b border-brand-100/70 dark:border-brand-950/40 mb-4">
+            <div className="flex flex-col bg-stone-50/70 dark:bg-slate-800/40 rounded-[2rem] border border-stone-200/70 dark:border-slate-800 p-5 sm:p-6 shadow-xs">
+              <div className="flex items-center justify-between pb-4 border-b border-stone-200/60 dark:border-slate-700/60 mb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-brand-primary/10 text-brand-primary dark:bg-brand-primary/25 dark:text-brand-300 flex items-center justify-center">
-                    <MinusCircle size={16} strokeWidth={2.4} />
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center border border-stone-200/60 dark:border-slate-700 shadow-2xs">
+                    <MinusCircle size={16} strokeWidth={2.4} className="text-slate-500" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-brand-primary dark:text-brand-300 uppercase tracking-wider">
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
                       Excluded Services
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -582,16 +563,16 @@ export function InclusionsExclusionsManager({ trip }) {
                         onClick={() => handleTogglePredefined(item.label, 'exclusions')}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                           isSelected
-                            ? 'bg-brand-50 dark:bg-brand-950/50 text-brand-primary dark:text-brand-300 border-2 border-brand-primary dark:border-brand-400 shadow-xs scale-[0.98]'
+                            ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 border border-stone-900 dark:border-white shadow-2xs scale-[0.98]'
                             : isIncluded
-                              ? 'bg-stone-100/70 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border border-dashed border-stone-200 dark:border-slate-700 hover:border-[#26533C]/40'
-                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-stone-200/90 dark:border-slate-700 hover:border-brand-primary/50 hover:bg-[#FCF8F7]'
+                              ? 'bg-stone-100/70 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border border-dashed border-stone-200 dark:border-slate-700 hover:border-brand-primary/40'
+                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-stone-200/90 dark:border-slate-700 hover:border-brand-primary/50'
                         }`}
                         title={isIncluded ? 'Currently in Included. Click to move to Excluded.' : ''}
                       >
-                        <Icon size={13} className={isSelected ? 'text-brand-primary dark:text-brand-300' : 'text-slate-400'} />
+                        <Icon size={13} className={isSelected ? 'text-white dark:text-stone-900' : 'text-slate-400'} />
                         <span>{item.label}</span>
-                        {isSelected && <Minus size={11} strokeWidth={3} className="ml-0.5 text-brand-primary dark:text-brand-300" />}
+                        {isSelected && <Minus size={11} strokeWidth={3} className="ml-0.5 text-white dark:text-stone-900" />}
                       </button>
                     );
                   })}
@@ -599,7 +580,7 @@ export function InclusionsExclusionsManager({ trip }) {
               </div>
 
               {/* Active Items & Custom Items List */}
-              <div className="pt-4 border-t border-brand-100/70 dark:border-brand-950/40 mb-4 flex-1">
+              <div className="pt-4 border-t border-stone-200/60 dark:border-slate-700/60 mb-4 flex-1">
                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">
                   Selected Exclusions ({exclusions.length})
                 </p>
@@ -612,16 +593,16 @@ export function InclusionsExclusionsManager({ trip }) {
                       return (
                         <div 
                           key={`exc-item-${index}`}
-                          className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-brand-100/80 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                          className="flex items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-stone-200/60 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200"
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <Icon size={14} className="text-brand-primary dark:text-brand-300 shrink-0" />
+                            <Icon size={14} className="text-slate-600 dark:text-slate-400 shrink-0" />
                             <span className="truncate">{item}</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleRemoveItem(item, 'exclusions')}
-                            className="text-stone-400 hover:text-brand-primary p-1 rounded-lg hover:bg-brand-50/60 dark:hover:bg-brand-primary/10 transition-colors shrink-0"
+                            className="text-stone-400 hover:text-brand-primary p-1 rounded-full hover:bg-stone-100 dark:hover:bg-slate-700 transition-colors shrink-0"
                             title="Remove exclusion"
                           >
                             <Trash2 size={13} />
@@ -634,7 +615,7 @@ export function InclusionsExclusionsManager({ trip }) {
               </div>
 
               {/* Add Custom Exclusion Input */}
-              <div className="pt-4 border-t border-brand-100/70 dark:border-brand-950/40">
+              <div className="pt-4 border-t border-stone-200/60 dark:border-slate-700/60">
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -646,13 +627,13 @@ export function InclusionsExclusionsManager({ trip }) {
                         handleAddCustom('exclusions');
                       }
                     }}
-                    placeholder="Add custom exclusion (e.g. Visa & passport fees)..."
-                    className="flex-1 px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10 outline-none transition-all text-slate-800 dark:text-white"
+                    placeholder="Add custom exclusion..."
+                    className="flex-1 px-4 py-2.5 rounded-full text-xs sm:text-sm bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all text-slate-800 dark:text-white"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddCustom('exclusions')}
-                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-brand-primary hover:bg-brand-secondary text-white shadow-xs transition-all active:scale-95"
+                    className="px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-stone-900 hover:bg-stone-800 dark:bg-white dark:text-stone-900 text-white shadow-2xs transition-all active:scale-95"
                   >
                     Add
                   </button>
@@ -668,7 +649,7 @@ export function InclusionsExclusionsManager({ trip }) {
             <button
               type="button"
               onClick={handleCancel}
-              className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-stone-100 hover:bg-stone-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300 transition-all active:scale-95"
+              className="px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-stone-100 hover:bg-stone-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300 transition-all active:scale-95"
             >
               Cancel
             </button>
@@ -676,9 +657,9 @@ export function InclusionsExclusionsManager({ trip }) {
               type="button"
               onClick={handleUpdate}
               disabled={isSaving || !hasChanges}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-brand-primary hover:bg-brand-secondary text-white shadow-md shadow-brand-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-brand-primary hover:bg-brand-secondary text-white shadow-md shadow-brand-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
             >
-              <Save size={15} /> {isSaving ? 'Saving...' : 'Save Changes'}
+              <Save size={14} /> {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
 

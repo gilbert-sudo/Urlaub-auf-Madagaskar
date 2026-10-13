@@ -18,6 +18,7 @@ import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF, OverlayView
 import { ItineraryManager } from '../Components/ItineraryManager';
 import { InclusionsExclusionsManager } from '../Components/InclusionsExclusionsManager';
 import { AssignedDriversManager } from '../Components/AssignedDriversManager';
+import { FlightInformationManager } from '../Components/FlightInformationManager';
 import { DateRangePicker } from '../Components/DateRangePicker';
 import { TripDatesDisplayer } from '../Components/TripDatesDisplayer';
 import { TripAgendaModal } from '../Components/TripAgendaModal';
@@ -593,36 +594,36 @@ export function TripDetailsPage() {
               
               {activeTab === 'client' && !showPdfPreview && <div className="w-px h-6 bg-gray-200 dark:bg-slate-700 hidden sm:block"></div>}
               
-              <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-700 rounded-full p-1 shadow-sm">
+              <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-stone-200/80 dark:border-slate-800 rounded-full p-1 shadow-xs">
                 {activeTab === 'client' && (
                   <>
                     <button 
                       onClick={() => setShowPdfPreview(!showPdfPreview)} 
-                      className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-sm font-bold ${showPdfPreview ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md' : 'bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 hover:text-brand-primary border border-gray-200/80 dark:border-slate-700'}`}
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold ${showPdfPreview ? 'bg-brand-primary hover:bg-brand-secondary text-white shadow-xs' : 'bg-stone-50 dark:bg-slate-800/50 hover:bg-stone-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-brand-primary border border-stone-200/80 dark:border-slate-700'}`}
                     >
-                      {showPdfPreview ? <Edit2 size={16} /> : <FileText size={16} />} 
+                      {showPdfPreview ? <Edit2 size={14} /> : <FileText size={14} />} 
                       {showPdfPreview ? 'Back to Editor' : 'Preview & Export'}
                     </button>
-                    <div className="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></div>
+                    <div className="w-px h-5 bg-stone-200 dark:bg-slate-800 mx-1"></div>
                   </>
                 )}
                 
                 {((activeTab === 'client' && showPdfPreview) || activeTab !== 'client') && (
                   <>
-                    <button onClick={generatePDF} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 text-gray-600 dark:text-slate-300 transition-colors text-sm font-bold" title="Export as PDF">
-                      <Download size={16} /> <span className="hidden lg:inline">PDF</span>
+                    <button onClick={generatePDF} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as PDF">
+                      <Download size={14} /> <span className="hidden lg:inline">PDF</span>
                     </button>
-                    <div className="w-px h-4 bg-gray-200 dark:bg-slate-700"></div>
-                    <button onClick={() => alert("DOCX export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 text-gray-600 dark:text-slate-300 transition-colors text-sm font-bold" title="Export as DOCX">
-                      <FileText size={16} /> <span className="hidden lg:inline">DOCX</span>
+                    <div className="w-px h-4 bg-stone-200 dark:bg-slate-800"></div>
+                    <button onClick={() => alert("DOCX export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as DOCX">
+                      <FileText size={14} /> <span className="hidden lg:inline">DOCX</span>
                     </button>
-                    <div className="w-px h-4 bg-gray-200"></div>
-                    <button onClick={() => alert("Excel export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-green-50 hover:text-green-600 text-gray-600 transition-colors text-sm font-bold" title="Export as Excel">
-                      <Table size={16} /> <span className="hidden lg:inline">Excel</span>
+                    <div className="w-px h-4 bg-stone-200 dark:bg-slate-800"></div>
+                    <button onClick={() => alert("Excel export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as Excel">
+                      <Table size={14} /> <span className="hidden lg:inline">Excel</span>
                     </button>
-                    <div className="w-px h-5 bg-gray-200 mx-1"></div>
-                    <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-sm font-bold shadow-sm ${isEditing ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-brand-primary hover:bg-brand-secondary text-white'}`}>
-                      <Edit2 size={16} /> {isEditing ? 'Done Editing' : 'Quick Edit'}
+                    <div className="w-px h-5 bg-stone-200 dark:bg-slate-800 mx-1"></div>
+                    <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold shadow-xs ${isEditing ? 'bg-stone-800 hover:bg-stone-900 text-white dark:bg-stone-200 dark:text-slate-900' : 'bg-brand-primary hover:bg-brand-secondary text-white'}`}>
+                      <Edit2 size={14} /> {isEditing ? 'Done Editing' : 'Quick Edit'}
                     </button>
                   </>
                 )}
@@ -673,14 +674,14 @@ export function TripDetailsPage() {
       {activeTab === 'overview' ? (
         <div className="space-y-8 animate-in fade-in duration-500">
           {/* Hero Section */}
-          <div className="relative w-full h-[400px] rounded-3xl overflow-hidden shadow-2xl">
+          <div className="relative w-full h-[400px] rounded-[2.5rem] overflow-hidden shadow-2xl">
             <div className="absolute inset-0">
               <img src="/hero.jpg" alt="Madagascar Landscape" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
             </div>
             <div className="absolute bottom-0 left-0 w-full p-8 text-white flex justify-between items-end">
               <div>
-                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold mb-3 uppercase tracking-wider">{trip.status}</span>
+                <span className="inline-block px-3.5 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-black mb-3 uppercase tracking-wider">{trip.status}</span>
                 <h2 className="text-4xl md:text-5xl font-black mb-2">{trip.title}</h2>
                 <div className="flex items-center gap-4 text-sm md:text-base font-semibold text-white/90">
                   <span className="flex items-center gap-1"><Map size={18}/> Madagascar</span>
@@ -698,22 +699,22 @@ export function TripDetailsPage() {
                 <div className="text-sm font-bold text-white/80 mb-1">Total Price</div>
                 <div 
                   onClick={openPriceModal}
-                  className="text-3xl font-black mb-3 cursor-pointer hover:text-amber-300 transition-colors flex items-center gap-2 group"
+                  className="text-3xl font-black mb-3 cursor-pointer hover:text-stone-200 transition-colors flex items-center gap-2 group"
                   title="Click to edit total price"
                 >
                   <span>€{trip.totalPrice}</span>
-                  <Edit2 size={16} className="opacity-0 group-hover:opacity-100 transition-opacity text-amber-300" />
+                  <Edit2 size={16} className="opacity-0 group-hover:opacity-100 transition-opacity text-stone-200" />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <button 
                     onClick={() => setIsTourAgendaOpen(true)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black px-4 py-2 rounded-xl transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 active:translate-y-0 text-sm border border-amber-300/40"
+                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-5 py-2.5 rounded-full transition-all font-bold text-sm shadow-sm border border-white/25 text-white hover:-translate-y-0.5 active:translate-y-0"
                   >
-                    <CalendarCheck size={17} className="text-slate-950 stroke-[2.5]" /> Tour Agenda
+                    <CalendarCheck size={16} className="text-white" /> Tour Agenda
                   </button>
                   <button 
                     onClick={handleShareTrip}
-                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-xl transition-colors font-bold text-sm shadow-sm border border-white/20"
+                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-5 py-2.5 rounded-full transition-all font-bold text-sm shadow-sm border border-white/25 text-white hover:-translate-y-0.5 active:translate-y-0"
                   >
                     <Share2 size={16} /> Share Itinerary
                   </button>
@@ -729,21 +730,21 @@ export function TripDetailsPage() {
             />
           )}
 
-          <div className={`bg-white dark:bg-slate-800 rounded-[2rem] shadow-sm border border-gray-100 dark:border-slate-700 ${!isMapExpanded ? 'overflow-hidden' : ''} mb-8`}>
+          <div className={`bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-stone-200/80 dark:border-slate-800 ${!isMapExpanded ? 'overflow-hidden' : ''} mb-8`}>
             {/* Section Header */}
-            <div className="p-6 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-700">
+            <div className="p-6 sm:p-7 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 dark:border-slate-800">
               <div className="flex flex-col gap-1">
-                <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
                   <Map size={24} className="text-brand-primary" /> Trip Itinerary
                 </h3>
-                <p className="text-xs font-bold text-gray-500 dark:text-slate-400">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                   {trip.duration} Days • {trip.itinerary?.length || 0} Destinations
                 </p>
               </div>
               <div className="flex items-center gap-2.5">
                 <button 
                   onClick={() => setIsAgendaOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:text-brand-primary border border-gray-200 dark:border-slate-700 font-bold text-xs rounded-xl transition-colors shadow-2xs hover:shadow-xs"
+                  className="flex items-center gap-2 px-4 py-2 bg-stone-100 hover:bg-stone-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 border border-stone-200/60 dark:border-slate-700 font-bold text-xs rounded-full transition-all shadow-xs active:scale-95"
                   title="Adjust Tour Start & End Dates"
                 >
                   <Edit2 size={13} /> Edit Dates
@@ -848,14 +849,14 @@ export function TripDetailsPage() {
                     <PolylineF 
                       key={`osrm-${idx}`}
                       path={path} 
-                      options={{ strokeColor: '#f97316', strokeOpacity: 0.8, strokeWeight: 5, geodesic: true }} 
+                      options={{ strokeColor: '#811303', strokeOpacity: 0.8, strokeWeight: 4, geodesic: true }} 
                     />
                   ))}
                   {failedSegments.map((segment, idx) => (
                     <PolylineF 
                       key={`poly-${idx}`}
                       path={segment} 
-                      options={{ strokeColor: '#f97316', strokeOpacity: 0.8, strokeWeight: 4, geodesic: true }} 
+                      options={{ strokeColor: '#811303', strokeOpacity: 0.6, strokeWeight: 3, geodesic: true }} 
                     />
                   ))}
                   {trip.itinerary?.map((item, index) => (
@@ -934,12 +935,12 @@ export function TripDetailsPage() {
 
                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                   {item.hotel?.name && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200/60 shadow-sm">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-stone-200/60 dark:border-slate-700 shadow-2xs">
                                       <Bed size={12} /> <span className="line-clamp-1">{item.hotel.name}</span>
                                     </span>
                                   )}
                                   {item.driver?.name && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200/60 shadow-sm">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-stone-200/60 dark:border-slate-700 shadow-2xs">
                                       <Car size={12} /> <span className="line-clamp-1">{item.driver.name}</span>
                                     </span>
                                   )}
@@ -955,7 +956,7 @@ export function TripDetailsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-full h-full flex items-center justify-center">Loading Map...</div>
+                <div className="w-full h-full flex items-center justify-center font-bold text-slate-400">Loading Map...</div>
               )}
 
               {/* The Floating Story Overlay */}
@@ -964,7 +965,7 @@ export function TripDetailsPage() {
                 id="story-scroll-container"
                 className="absolute md:inset-y-0 md:left-0 bottom-0 left-0 w-full md:w-[460px] h-[45%] md:h-full z-10 overflow-x-auto md:overflow-y-auto overflow-y-hidden no-scrollbar scroll-smooth pointer-events-auto px-4 md:px-8 pt-4 md:pt-8 pb-4 md:pb-[500px] transition-colors duration-500 md:bg-gradient-to-r md:from-white/95 md:via-white/80 md:to-transparent bg-gradient-to-t from-white/95 via-white/90 to-transparent flex md:block items-end md:items-stretch snap-x snap-mandatory"
               >
-                <h2 className="hidden md:flex text-3xl font-black mb-8 items-center gap-3 text-gray-900 drop-shadow-sm sticky top-0 bg-white/40 backdrop-blur-md py-4 z-20 rounded-2xl px-4 -mx-4 border border-white/50">
+                <h2 className="hidden md:flex text-3xl font-black mb-8 items-center gap-3 text-slate-900 drop-shadow-sm sticky top-0 bg-white/40 backdrop-blur-md py-4 z-20 rounded-2xl px-4 -mx-4 border border-white/50">
                   <MapPin className="text-brand-primary" /> 
                   Itinerary Journey
                 </h2>
@@ -977,28 +978,28 @@ export function TripDetailsPage() {
                       className={`story-day-card snap-center w-[300px] md:w-auto relative flex flex-col md:flex-row md:items-start gap-4 z-10 transition-all duration-500 cursor-pointer ${activeStoryDay === index ? 'opacity-100 md:translate-x-2' : 'opacity-60 hover:opacity-80'}`}
                       onClick={() => handleScrollToDay(index)}
                     >
-                      <div className={`hidden md:flex items-center justify-center w-12 h-12 rounded-full border-[3px] shadow-lg shrink-0 z-10 transition-colors duration-500 ${activeStoryDay === index ? 'bg-brand-primary border-brand-primary text-white shadow-brand-primary/30' : 'bg-white border-brand-primary/50 text-brand-primary/80 hover:border-brand-primary hover:text-brand-primary'}`}>
+                      <div className={`hidden md:flex items-center justify-center w-12 h-12 rounded-full border-[3px] shadow-lg shrink-0 z-10 transition-colors duration-500 ${activeStoryDay === index ? 'bg-brand-primary border-brand-primary text-white shadow-brand-primary/30' : 'bg-white border-stone-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-brand-primary hover:text-brand-primary'}`}>
                         <span className="font-black text-sm">D{item.dayNumber}</span>
                       </div>
                       
-                      <div className={`flex-1 p-4 md:p-5 rounded-[1.5rem] border shadow-xl backdrop-blur-xl transition-all duration-500 overflow-hidden ${activeStoryDay === index ? 'bg-white/95 border-brand-primary/30 shadow-brand-primary/10 scale-[1.02]' : 'bg-white/70 border-white/50 hover:bg-white/90'}`}>
+                      <div className={`flex-1 p-4 md:p-5 rounded-[2rem] border shadow-xl backdrop-blur-xl transition-all duration-500 overflow-hidden ${activeStoryDay === index ? 'bg-white/95 dark:bg-slate-900/95 border-brand-primary/30 shadow-brand-primary/10 scale-[1.02]' : 'bg-white/70 dark:bg-slate-800/70 border-white/50 dark:border-slate-700/50 hover:bg-white/90'}`}>
                         <div className="flex justify-between items-start mb-1.5 md:mb-2">
                           <div className="font-black text-brand-primary/80 text-[10px] uppercase tracking-widest">
                             {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                            <span className="md:hidden ml-2 inline-block px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary rounded text-[9px]">D{item.dayNumber}</span>
+                            <span className="md:hidden ml-2 inline-block px-2 py-0.5 bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-[9px] font-bold">D{item.dayNumber}</span>
                           </div>
                         </div>
-                        <h3 className={`font-black text-base md:text-lg mb-2.5 md:mb-3 leading-tight line-clamp-2 ${activeStoryDay === index ? 'text-gray-900' : 'text-gray-700'}`}>{item.activities}</h3>
+                        <h3 className={`font-black text-base md:text-lg mb-2.5 md:mb-3 leading-tight line-clamp-2 ${activeStoryDay === index ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>{item.activities}</h3>
                         
                         <div className="flex flex-wrap gap-2">
                           {item.hotel?.name && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50/80 text-blue-700 text-xs font-bold border border-blue-100/50">
-                              <Bed size={14} /> <span className="line-clamp-1">{item.hotel.name}</span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs font-bold border border-stone-200/60 dark:border-slate-700/60">
+                              <Bed size={13} /> <span className="line-clamp-1">{item.hotel.name}</span>
                             </span>
                           )}
                           {item.driver?.name && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50/80 text-emerald-700 text-xs font-bold border border-emerald-100/50">
-                              <Car size={14} /> <span className="line-clamp-1">{item.driver.name}</span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs font-bold border border-stone-200/60 dark:border-slate-700/60">
+                              <Car size={13} /> <span className="line-clamp-1">{item.driver.name}</span>
                             </span>
                           )}
                         </div>
@@ -1012,16 +1013,19 @@ export function TripDetailsPage() {
           </div>
         </div>
 
-              {/* Assigned Drivers Section */}
-              <AssignedDriversManager trip={trip} tripEvents={tripEvents} />
-              
-              {/* Editable Inclusions & Exclusions */}
-              <InclusionsExclusionsManager trip={trip} />
-        </div>
+        {/* Assigned Drivers Section */}
+        <AssignedDriversManager trip={trip} tripEvents={tripEvents} />
+        
+        {/* Editable Inclusions & Exclusions */}
+        <InclusionsExclusionsManager trip={trip} />
+
+        {/* Flight Information Section (at the very bottom) */}
+        <FlightInformationManager trip={trip} />
+      </div>
       ) : (activeTab === 'client' && !showPdfPreview) ? (
         <ItineraryManager trip={trip} />
       ) : (
-        <div className="bg-gray-100 p-8 rounded-3xl border border-gray-200 overflow-x-auto shadow-inner relative flex justify-center">
+        <div className="bg-stone-100/70 dark:bg-slate-900/50 p-6 md:p-8 rounded-[2.5rem] border border-stone-200/80 dark:border-slate-800 overflow-x-auto shadow-inner relative flex justify-center">
           <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
           <div 
             ref={documentRef}
@@ -1063,24 +1067,24 @@ export function TripDetailsPage() {
           onClick={() => setIsPriceModalOpen(false)}
         >
           <div 
-            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 p-6 max-w-md w-full animate-in zoom-in-95 duration-200"
+            className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-stone-200/80 dark:border-slate-800 p-6 sm:p-7 max-w-md w-full animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-5">
+            <div className="flex items-center justify-between pb-4 border-b border-stone-100 dark:border-slate-800 mb-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-lg">
+                <div className="w-10 h-10 rounded-full bg-brand-primary/10 text-brand-primary dark:bg-brand-primary/20 dark:text-brand-300 flex items-center justify-center font-black text-lg">
                   €
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-gray-900 dark:text-white">Edit Total Price</h3>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">Edit Total Price</h3>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     {trip.title} • {trip.duration} Days
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsPriceModalOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -1088,11 +1092,11 @@ export function TripDetailsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">
                   Total Price (EUR)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 font-bold text-lg">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 dark:text-slate-500 font-bold text-lg">
                     €
                   </span>
                   <input
@@ -1106,7 +1110,7 @@ export function TripDetailsPage() {
                       if (e.key === 'Escape') setIsPriceModalOpen(false);
                     }}
                     autoFocus
-                    className="w-full pl-9 pr-4 py-3 bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-2xl font-black text-2xl text-gray-900 dark:text-white outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full pl-11 pr-5 py-3.5 bg-stone-50 dark:bg-slate-800/80 border border-stone-200 dark:border-slate-700 rounded-full font-black text-2xl text-slate-900 dark:text-white outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -1114,7 +1118,7 @@ export function TripDetailsPage() {
 
               {/* Quick Presets */}
               <div>
-                <div className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                <div className="text-[11px] font-bold text-stone-400 dark:text-slate-500 uppercase tracking-wider mb-2 ml-1">
                   Quick Adjustments
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -1123,7 +1127,7 @@ export function TripDetailsPage() {
                       key={amt}
                       type="button"
                       onClick={() => setPriceDraft(String(Math.max(0, (Number(priceDraft) || 0) + amt)))}
-                      className="py-1.5 px-2 bg-gray-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-gray-700 dark:text-slate-300 transition-all text-center cursor-pointer"
+                      className="py-1.5 px-2 bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-stone-200/80 dark:border-slate-700 rounded-full text-xs font-bold transition-all text-center cursor-pointer active:scale-95"
                     >
                       +{amt} €
                     </button>
@@ -1132,16 +1136,16 @@ export function TripDetailsPage() {
               </div>
 
               {/* Breakdown Stats */}
-              <div className="p-3.5 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-700/60 grid grid-cols-2 gap-3 text-xs">
+              <div className="p-4 bg-stone-50/80 dark:bg-slate-800/50 rounded-2xl border border-stone-200/60 dark:border-slate-700/60 grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <span className="text-gray-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Day</span>
-                  <span className="font-extrabold text-gray-800 dark:text-slate-200 text-sm">
+                  <span className="text-stone-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Day</span>
+                  <span className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">
                     €{Math.round((Number(priceDraft) || 0) / (trip.duration || 1)).toLocaleString()} / day
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Person</span>
-                  <span className="font-extrabold text-gray-800 dark:text-slate-200 text-sm">
+                  <span className="text-stone-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Person</span>
+                  <span className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">
                     {((trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0)) > 0
                       ? `€${Math.round((Number(priceDraft) || 0) / ((trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0))).toLocaleString()} / pax`
                       : 'N/A'}
@@ -1150,11 +1154,11 @@ export function TripDetailsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-slate-800">
+            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-stone-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setIsPriceModalOpen(false)}
-                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 font-bold text-sm rounded-xl transition-colors cursor-pointer"
+                className="flex-1 py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm rounded-full transition-colors cursor-pointer active:scale-95"
               >
                 Cancel
               </button>
@@ -1162,7 +1166,7 @@ export function TripDetailsPage() {
                 type="button"
                 onClick={() => handleSavePrice()}
                 disabled={isSavingPrice}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 disabled:opacity-50 cursor-pointer"
+                className="flex-1 py-2.5 bg-brand-primary hover:bg-brand-secondary text-white font-black text-sm rounded-full shadow-md shadow-brand-primary/20 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
               >
                 <Check size={16} strokeWidth={3} /> {isSavingPrice ? 'Saving...' : 'Save Price'}
               </button>
