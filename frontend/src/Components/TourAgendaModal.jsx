@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import { AgendaModal } from './AgendaModal';
 import { DriverSelect } from './DriverSelect';
 import { HotelSelect } from './HotelSelect';
+import { formatStopLocation } from '../services/googlePlaces';
 
 const GOOGLE_MAPS_LIBRARIES = ['places'];
 
@@ -1746,7 +1747,24 @@ export function TourAgendaModal({
                   </label>
                   <HotelSelect
                     value={itineraryForm.hotel}
-                    onChange={(hotelId) => setItineraryForm({ ...itineraryForm, hotel: hotelId })}
+                    onChange={(hotelId, hotelObj) => {
+                      setItineraryForm(prev => {
+                        const updated = { ...prev, hotel: hotelId };
+                        if (hotelObj) {
+                          if (hotelObj.coordinates && hotelObj.coordinates.lat && hotelObj.coordinates.lng) {
+                            updated.coordinates = {
+                              lat: Number(hotelObj.coordinates.lat),
+                              lng: Number(hotelObj.coordinates.lng)
+                            };
+                          }
+                          const formattedLoc = formatStopLocation(hotelObj);
+                          if (formattedLoc && (!prev.locationDetails || !prev.locationDetails.trim())) {
+                            updated.locationDetails = formattedLoc;
+                          }
+                        }
+                        return updated;
+                      });
+                    }}
                     label=""
                     modalZIndex="z-[100010]"
                   />
@@ -2141,7 +2159,24 @@ export function TourAgendaModal({
                 </label>
                 <HotelSelect
                   value={newStopForm.hotel}
-                  onChange={(hotelId) => setNewStopForm({ ...newStopForm, hotel: hotelId })}
+                  onChange={(hotelId, hotelObj) => {
+                    setNewStopForm(prev => {
+                      const updated = { ...prev, hotel: hotelId };
+                      if (hotelObj) {
+                        if (hotelObj.coordinates && hotelObj.coordinates.lat && hotelObj.coordinates.lng) {
+                          updated.coordinates = {
+                            lat: Number(hotelObj.coordinates.lat),
+                            lng: Number(hotelObj.coordinates.lng)
+                          };
+                        }
+                        const formattedLoc = formatStopLocation(hotelObj);
+                        if (formattedLoc && (!prev.locationDetails || !prev.locationDetails.trim())) {
+                          updated.locationDetails = formattedLoc;
+                        }
+                      }
+                      return updated;
+                    });
+                  }}
                   label=""
                   modalZIndex="z-[100010]"
                 />

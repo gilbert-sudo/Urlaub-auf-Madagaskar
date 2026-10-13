@@ -4,10 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { updateTrip } from '../store/slices/tripsSlice';
 import { setItinerary, addDay, updateDay, removeDay, setActiveDayIndex, resetItinerary } from '../store/slices/itinerarySlice';
+import { fetchHotels } from '../store/slices/hotelsSlice';
+import { formatStopLocation } from '../services/googlePlaces';
 import { DatePicker } from './DatePicker';
 import { HotelSelect } from './HotelSelect';
 import { Button } from './Button';
-import { Plus, Trash2, Save, Map, ChevronRight, MapPin, CalendarDays, Navigation, Maximize2, X, Globe, Search } from 'lucide-react';
+import { Plus, Trash2, Save, Map, ChevronRight, MapPin, CalendarDays, Navigation, Maximize2, X, Globe, Search, Bed } from 'lucide-react';
 import { GoogleMap, MarkerF, Autocomplete } from '@react-google-maps/api';
 
 const SHARED_INPUT_CLASS = "w-full px-5 py-4 rounded-2xl border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400";
@@ -16,10 +18,16 @@ const SHARED_LABEL_CLASS = "text-[11px] font-extrabold text-gray-500 uppercase t
 export function ItineraryManager({ trip }) {
   const dispatch = useDispatch();
   const { days: itinerary, activeDayIndex } = useSelector(state => state.itinerary);
+  const { items: hotels } = useSelector(state => state.hotels);
   const [isSaving, setIsSaving] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const sidebarRef = useRef(null);
   const searchBoxRef = useRef(null);
+
+  // Fetch hotels on mount
+  useEffect(() => {
+    dispatch(fetchHotels());
+  }, [dispatch]);
 
   // Lock body scroll when map is expanded
   useEffect(() => {
@@ -67,6 +75,30 @@ export function ItineraryManager({ trip }) {
 
   const handleItineraryChange = (index, field, value) => {
     dispatch(updateDay({ index, data: { [field]: value } }));
+  };
+
+  // Handle hotel selection: auto-assign coordinates & City - Hotel Name
+  const handleHotelChange = (hotelId, hotelObj) => {
+    const activeDay = itinerary[activeDayIndex];
+    const updateData = { hotel: hotelId };
+
+    if (hotelObj) {
+      // 1. Automatically update coordinates for this stop day
+      if (hotelObj.coordinates && hotelObj.coordinates.lat && hotelObj.coordinates.lng) {
+        updateData.coordinates = {
+          lat: Number(hotelObj.coordinates.lat),
+          lng: Number(hotelObj.coordinates.lng)
+        };
+      }
+
+      // 2. Automatically format and fill location details as "City - Hotel Name" if empty
+      const formattedLoc = formatStopLocation(hotelObj);
+      if (formattedLoc && (!activeDay?.locationDetails || !activeDay?.locationDetails.trim())) {
+        updateData.locationDetails = formattedLoc;
+      }
+    }
+
+    dispatch(updateDay({ index: activeDayIndex, data: updateData }));
   };
 
   const addItineraryDay = () => {
@@ -179,7 +211,7 @@ export function ItineraryManager({ trip }) {
                            {(day.hotel?.name || day.hotel) && (
                              <div className={`text-[10px] mt-3 flex items-center gap-1.5 font-bold ${isActive ? 'text-gray-500' : 'text-gray-400'}`}>
                                 <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-brand-primary' : 'bg-gray-300'}`}></div> 
-                                <span className="line-clamp-1 truncate">{day.hotel?.name || (typeof day.hotel === 'string' && day.hotel.length === 24 ? 'Hotel Selected' : day.hotel)}</span>
+                                <span className="line-clamp-1 truncate">{hotels.find(h => h._id === (day.hotel?._id || day.hotel))?.name || day.hotel?.name || (typeof day.hotel === 'string' && day.hotel.length === 24 ? 'Hotel Selected' : day.hotel)}</span>
                              </div>
                            )}
                         </div>
@@ -275,7 +307,7 @@ export function ItineraryManager({ trip }) {
                             <HotelSelect
                               label="Accommodation"
                               value={activeDay.hotel} 
-                              onChange={(val) => handleItineraryChange(activeDayIndex, 'hotel', val)} 
+                              onChange={(hotelId, hotelObj) => handleHotelChange(hotelId, hotelObj)} 
                             />
                           </div>
                        </div>

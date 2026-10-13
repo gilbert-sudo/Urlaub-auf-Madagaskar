@@ -13,6 +13,16 @@ export const createHotel = createAsyncThunk('hotels/createHotel', async (hotelDa
   return response.data;
 });
 
+export const updateHotel = createAsyncThunk('hotels/updateHotel', async ({ id, data }) => {
+  const response = await axios.put(`${API_URL}/api/hotels/${id}`, data);
+  return response.data;
+});
+
+export const deleteHotel = createAsyncThunk('hotels/deleteHotel', async (id) => {
+  await axios.delete(`${API_URL}/api/hotels/${id}`);
+  return id;
+});
+
 const hotelsSlice = createSlice({
   name: 'hotels',
   initialState: {
@@ -39,7 +49,23 @@ const hotelsSlice = createSlice({
         state.status = 'failed';
       })
       .addCase(createHotel.fulfilled, (state, action) => {
-        state.items.push(action.payload);
+        const index = state.items.findIndex(
+          h => h._id === action.payload._id || (action.payload.placeId && h.placeId === action.payload.placeId)
+        );
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        } else {
+          state.items.unshift(action.payload);
+        }
+      })
+      .addCase(updateHotel.fulfilled, (state, action) => {
+        const index = state.items.findIndex(h => h._id === action.payload._id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(deleteHotel.fulfilled, (state, action) => {
+        state.items = state.items.filter(h => h._id !== action.payload);
       });
   }
 });
