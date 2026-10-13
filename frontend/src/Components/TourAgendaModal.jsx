@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateDriverEvent, deleteDriverEvent, addDriverEvent, fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
 import { updateTrip, fetchTripById } from '../store/slices/tripsSlice';
 import { fetchHotels } from '../store/slices/hotelsSlice';
-import { format, differenceInDays, startOfDay, endOfDay } from 'date-fns';
+import { format, differenceInDays, startOfDay, endOfDay, addDays } from 'date-fns';
 import { 
   Users, 
   Car, 
@@ -803,7 +803,7 @@ export function TourAgendaModal({
         id: `tour-schedule-${activeTrip._id || 'main'}`,
         _id: `tour-schedule-${activeTrip._id || 'main'}`,
         isTourSchedule: true,
-        priority: 100, // Forces tour schedule to the very top row of any date cell/week
+        priority: 2000, // Row 1: the tour always sits on the very first line
         title: `Tour: ${activeTrip.title || 'Tour Schedule'}`,
         displayTitle: `${activeTrip.title || 'Master Tour'} (${tourDuration}d)`,
         start: tourStart,
@@ -844,7 +844,7 @@ export function TourAgendaModal({
               _id: `tour-itinerary-${item._id || idx}`,
               isItineraryDay: true,
               itineraryIndex: idx,
-              priority: 50,
+              priority: 10, // Last rows: stops always come after the tour and all drivers
               isReadOnly: false,
               title: `D${item.dayNumber || idx + 1}: ${locationName}`,
               displayTitle: `D${item.dayNumber || idx + 1}: ${locationName}`,
@@ -894,7 +894,7 @@ export function TourAgendaModal({
       return {
         ...event,
         id: event._id,
-        priority: 10, // Renders beneath the master tour schedule
+        priority: 1000, // Rows 2+: drivers sit right under the tour (lane index subtracted below)
         title: `Driver: ${driverObj.name} (${event.title || 'Shift'})`,
         displayTitle: driverObj.name,
         driver: driverObj,
@@ -922,11 +922,78 @@ export function TourAgendaModal({
       };
     });
 
-    return [...eventsList, ...driverEvents];
+    // 4. Strict row order: Tour -> Drivers -> Stops.
+    // react-big-calendar packs events greedily into the first free row, so a stop could slide up into a
+    // row left empty by a driver. To prevent it, drivers are split into non-overlapping "lanes" and every
+    // lane is padded with invisible spacer events so each driver row is fully occupied across the tour.
+    const sortedDrivers = [...driverEvents].sort((a, b) =>
+      (a.start.getTime() - b.start.getTime()) || (b.end.getTime() - a.end.getTime())
+    );
+    const lanes = [];
+    sortedDrivers.forEach(ev => {
+      let laneIdx = lanes.findIndex(lane => ev.start.getTime() > lane[lane.length - 1].end.getTime());
+      if (laneIdx === -1) {
+        lanes.push([]);
+        laneIdx = lanes.length - 1;
+      }
+      lanes[laneIdx].push(ev);
+      ev.priority = 1000 - laneIdx; // earlier lanes stay higher than later lanes
+    });
+
+    const spacers = [];
+    if (lanes.length > 0) {
+      const allBounds = [...eventsList, ...driverEvents];
+      const rangeStart = new Date(Math.min(...allBounds.map(ev => ev.start.getTime())));
+      const rangeEnd = new Date(Math.max(...allBounds.map(ev => ev.end.getTime())));
+
+      lanes.forEach((lane, laneIdx) => {
+        const pushSpacer = (from, to) => {
+          spacers.push({
+            id: `lane-spacer-${laneIdx}-${spacers.length}`,
+            _id: `lane-spacer-${laneIdx}-${spacers.length}`,
+            isSpacer: true,
+            isReadOnly: true,
+            priority: 1000 - laneIdx,
+            title: '',
+            displayTitle: '',
+            start: startOfDay(from),
+            end: endOfDay(to),
+            allDay: true
+          });
+        };
+
+        let cursor = startOfDay(rangeStart);
+        lane.forEach(ev => {
+          if (ev.start.getTime() > cursor.getTime()) {
+            pushSpacer(cursor, addDays(ev.start, -1));
+          }
+          cursor = startOfDay(addDays(ev.end, 1));
+        });
+        if (cursor.getTime() <= rangeEnd.getTime()) {
+          pushSpacer(cursor, rangeEnd);
+        }
+      });
+    }
+
+    return [...eventsList, ...driverEvents, ...spacers];
   }, [activeTrip, tripEvents, drivers, driverPaletteMap, modifiedEvent, selectedEvent, tourForm, itineraryForm, driverForm, showItineraryDays, tourDuration]);
 
   // Event styling
   const eventStyleGetter = (event) => {
+    if (event.isSpacer) {
+      return {
+        style: {
+          visibility: 'hidden',
+          pointerEvents: 'none',
+          background: 'transparent',
+          border: '1.5px solid transparent',
+          boxShadow: 'none',
+          minHeight: '21px',
+          height: '21px'
+        }
+      };
+    }
+
     if (event.isTourSchedule) {
       const isSelected = selectedEvent?._id === event._id;
       const isEditing = event.isEditing;

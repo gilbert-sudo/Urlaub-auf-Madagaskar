@@ -12,15 +12,24 @@ import { toast } from 'sonner';
 const locales = { 'en-US': enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
-// Custom sortEvents hook for react-big-calendar: prioritize tour schedules on the very top of each row
+// Custom sortEvents hook for react-big-calendar: events with a higher `priority` are laid out on higher rows.
+// NOTE: react-big-calendar only hands { start, end, allDay } to sortEvents (never the event itself),
+// so the priority is carried on the Date returned by `eventStartAccessor` below.
 const originalSortEvents = localizer.sortEvents.bind(localizer);
 localizer.sortEvents = function({ evtA, evtB }) {
-  const pA = evtA?.priority ?? evtA?.event?.priority ?? 0;
-  const pB = evtB?.priority ?? evtB?.event?.priority ?? 0;
+  const pA = evtA?.priority ?? evtA?.start?.__priority ?? 0;
+  const pB = evtB?.priority ?? evtB?.start?.__priority ?? 0;
   if (pA !== pB) {
-    return pB - pA; // Higher priority (e.g. tour schedule = 100) stays on top
+    return pB - pA; // Higher priority (e.g. tour schedule) stays on top
   }
   return originalSortEvents({ evtA, evtB });
+};
+
+// Start accessor that tags the returned Date with the event's layout priority (see sortEvents above)
+const eventStartAccessor = (event) => {
+  const d = new Date(event.start);
+  if (event.priority !== undefined) d.__priority = event.priority;
+  return d;
 };
 
 const DnDCalendar = withDragAndDrop(Calendar);
@@ -102,6 +111,9 @@ const CustomEventComponent = ({ event, continuesPrior, continuesAfter }) => {
       toast.info('Schedule reset to initial state');
     }
   };
+
+  // Invisible layout spacers (used to keep tour / drivers / stops on strictly ordered rows)
+  if (event.isSpacer) return null;
 
   return (
     <>
@@ -698,6 +710,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
     >
       {months.map((monthDate, idx) => {
         const monthEventsCount = displayEvents.filter(ev => {
+          if (ev.isSpacer) return false;
           const m = monthDate.getMonth();
           const y = monthDate.getFullYear();
           const s = new Date(ev.start);
@@ -722,6 +735,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
                <DnDCalendar
                   localizer={localizer}
                   events={displayEvents}
+                  startAccessor={eventStartAccessor}
                   date={monthDate}
                   view="month"
                   toolbar={false}
@@ -1010,7 +1024,8 @@ export function AgendaModal({
              <AgendaContext.Provider value={{ onEventDrop, onEventResize, eventStyleGetter, dayPropGetter, components }}>
                <DnDCalendar
                  localizer={localizer}
-                 events={events}
+                 events={activeView === 'agenda' ? events.filter(ev => !ev.isSpacer) : events}
+                 startAccessor={eventStartAccessor}
                  date={activeDate}
                  onNavigate={handleNavigate}
                  view={activeView}
