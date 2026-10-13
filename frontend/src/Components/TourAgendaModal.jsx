@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateDriverEvent, deleteDriverEvent, addDriverEvent, fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
 import { updateTrip, fetchTripById } from '../store/slices/tripsSlice';
@@ -19,12 +19,19 @@ import {
   Bed,
   Check,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  Map as MapIcon,
+  Maximize2,
+  Globe,
+  Search
 } from 'lucide-react';
+import { GoogleMap, MarkerF, Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { toast } from 'sonner';
 import { AgendaModal } from './AgendaModal';
 import { DriverSelect } from './DriverSelect';
 import { HotelSelect } from './HotelSelect';
+
+const GOOGLE_MAPS_LIBRARIES = ['places'];
 
 const DRIVER_PALETTES = [
   { bg: '#059669', border: '#047857', text: '#ffffff', lightBg: 'bg-emerald-50 dark:bg-emerald-950/40', borderLight: 'border-emerald-200 dark:border-emerald-800', badgeBg: 'bg-emerald-500', textColor: 'text-emerald-700 dark:text-emerald-300' },
@@ -152,12 +159,83 @@ export function TourAgendaModal({
     date: '',
     locationDetails: '',
     hotel: '',
-    activities: ''
+    activities: '',
+    coordinates: { lat: -18.8792, lng: 47.5079 }
+  });
+
+  // Expanded Google Map modal state: 'new' | 'edit' | null
+  const [expandedMapMode, setExpandedMapMode] = useState(null);
+  const searchBoxRef = useRef(null);
+
+  // Load Google Maps API safely
+  const { isLoaded: isGoogleMapsLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries: GOOGLE_MAPS_LIBRARIES
   });
 
   // Modal for slot click quick chooser
   const [slotActionModal, setSlotActionModal] = useState(null);
 
+  // Active coordinates for the expanded map
+  const activeMapCoordinates = expandedMapMode === 'new'
+    ? (newStopForm.coordinates || { lat: -18.8792, lng: 47.5079 })
+    : (itineraryForm.coordinates || { lat: -18.8792, lng: 47.5079 });
+
+  // Handle Autocomplete Place selection in expanded map
+  const onMapPlaceChanged = () => {
+    if (searchBoxRef.current) {
+      const place = searchBoxRef.current.getPlace();
+      if (place && place.geometry && place.geometry.location) {
+        const location = place.geometry.location;
+        const newCoords = {
+          lat: location.lat(),
+          lng: location.lng()
+        };
+        const resolvedName = place.name || place.formatted_address || '';
+
+        if (expandedMapMode === 'new') {
+          setNewStopForm(prev => ({
+            ...prev,
+            coordinates: newCoords,
+            locationDetails: prev.locationDetails ? prev.locationDetails : resolvedName
+          }));
+        } else if (expandedMapMode === 'edit') {
+          setItineraryForm(prev => ({
+            ...prev,
+            coordinates: newCoords,
+            locationDetails: prev.locationDetails ? prev.locationDetails : resolvedName
+          }));
+        }
+      }
+    }
+  };
+
+  // Handle direct map click to set pinpoint coordinates
+  const handleMapLocationClick = (e) => {
+    if (e && e.latLng) {
+      const newCoords = {
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng()
+      };
+      if (expandedMapMode === 'new') {
+        setNewStopForm(prev => ({ ...prev, coordinates: newCoords }));
+      } else if (expandedMapMode === 'edit') {
+        setItineraryForm(prev => ({ ...prev, coordinates: newCoords }));
+      }
+    }
+  };
+
+  // Lock body scroll when expanded map mode is active to prevent background scrolling
+  useEffect(() => {
+    if (expandedMapMode) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [expandedMapMode]);
 
   // Load hotels and reset states when opened/closed
   useEffect(() => {
@@ -168,6 +246,7 @@ export function TourAgendaModal({
       setIsAssignModalOpen(false);
       setIsAddStopModalOpen(false);
       setSlotActionModal(null);
+      setExpandedMapMode(null);
     }
   }, [isOpen, dispatch]);
 
@@ -724,9 +803,11 @@ export function TourAgendaModal({
       date: dateStr,
       locationDetails: '',
       hotel: '',
-      activities: ''
+      activities: '',
+      coordinates: { lat: -18.8792, lng: 47.5079 }
     });
     setSlotActionModal(null);
+    setExpandedMapMode(null);
     setIsAddStopModalOpen(true);
   };
 
@@ -751,7 +832,7 @@ export function TourAgendaModal({
         locationDetails: newStopForm.locationDetails || '',
         hotel: newStopForm.hotel || undefined,
         activities: newStopForm.activities || '',
-        coordinates: { lat: -18.8792, lng: 47.5079 }
+        coordinates: newStopForm.coordinates || { lat: -18.8792, lng: 47.5079 }
       };
 
       const updatedList = [...sanitizedExisting, newStop];
@@ -769,6 +850,7 @@ export function TourAgendaModal({
 
       toast.success(`Itinerary Day ${newStop.dayNumber} added`);
       setIsAddStopModalOpen(false);
+      setExpandedMapMode(null);
       setShowItineraryDays(true);
     } catch (err) {
       toast.error('Failed to add itinerary stop: ' + (err.message || ''));
@@ -1682,6 +1764,50 @@ export function TourAgendaModal({
                   />
                 </div>
 
+                {/* Location Map & Coordinates Picker for Editing Stop */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <MapIcon size={14} className="text-amber-500" />
+                      Stop Location Pin & Coordinates
+                    </label>
+                    {itineraryForm.coordinates && (
+                      <span className="text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-lg">
+                        {Number(itineraryForm.coordinates.lat).toFixed(4)}, {Number(itineraryForm.coordinates.lng).toFixed(4)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="h-36 w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-700 shadow-inner relative group bg-gray-100 dark:bg-slate-800">
+                    {isGoogleMapsLoaded ? (
+                      <>
+                        <GoogleMap
+                          mapContainerStyle={{ width: '100%', height: '100%', borderRadius: '1rem' }}
+                          center={itineraryForm.coordinates || { lat: -18.8792, lng: 47.5079 }}
+                          zoom={itineraryForm.coordinates ? 8 : 7}
+                          options={{ disableDefaultUI: true, zoomControl: false, draggable: false }}
+                        >
+                          {itineraryForm.coordinates && (
+                            <MarkerF position={itineraryForm.coordinates} />
+                          )}
+                        </GoogleMap>
+                        <div 
+                          className="absolute inset-0 z-[10] cursor-pointer bg-black/5 hover:bg-black/15 transition-all flex items-start p-2"
+                          onClick={() => setExpandedMapMode('edit')}
+                        >
+                          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur px-2.5 py-1.5 rounded-xl text-[11px] font-black text-gray-700 dark:text-gray-200 shadow-sm transition-transform group-hover:scale-105 flex items-center gap-1.5 border border-gray-100 dark:border-slate-800">
+                            <Maximize2 size={13} className="text-amber-500" /> Click to edit location on map
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                        Loading Map...
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="pt-2">
                   <button
                     type="button"
@@ -1943,14 +2069,17 @@ export function TourAgendaModal({
       {/* Add Itinerary Stop Dialog */}
       {isAddStopModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100001] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 max-w-lg w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200 max-h-[92vh] flex flex-col">
+            <div className="flex items-center justify-between mb-5 shrink-0">
               <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                 <MapPin size={22} className="text-amber-500" /> Add Itinerary Stop
               </h2>
               <button 
                 type="button"
-                onClick={() => setIsAddStopModalOpen(false)}
+                onClick={() => {
+                  setIsAddStopModalOpen(false);
+                  setExpandedMapMode(null);
+                }}
                 className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 dark:bg-slate-800 rounded-full transition-colors"
               >
                 <X size={18} />
@@ -1963,7 +2092,7 @@ export function TourAgendaModal({
                 e.stopPropagation();
                 handleAddStopSubmit(e);
               }} 
-              className="space-y-4"
+              className="space-y-4 overflow-y-auto pr-1 flex-1 min-h-0"
             >
               <div className="grid grid-cols-3 gap-2">
                 <div>
@@ -1975,7 +2104,7 @@ export function TourAgendaModal({
                     min="1"
                     value={newStopForm.dayNumber}
                     onChange={(e) => setNewStopForm({ ...newStopForm, dayNumber: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-amber-500"
                     required
                   />
                 </div>
@@ -1987,7 +2116,7 @@ export function TourAgendaModal({
                     type="date"
                     value={newStopForm.date}
                     onChange={(e) => setNewStopForm({ ...newStopForm, date: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs text-gray-900 dark:text-white outline-none focus:border-amber-500"
                     required
                   />
                 </div>
@@ -2002,7 +2131,7 @@ export function TourAgendaModal({
                   placeholder="e.g., Antananarivo - Antsirabe"
                   value={newStopForm.locationDetails}
                   onChange={(e) => setNewStopForm({ ...newStopForm, locationDetails: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-sm outline-none focus:border-amber-500"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-gray-900 dark:text-white outline-none focus:border-amber-500"
                 />
               </div>
 
@@ -2025,12 +2154,56 @@ export function TourAgendaModal({
                 <textarea
                   value={newStopForm.activities}
                   onChange={(e) => setNewStopForm({ ...newStopForm, activities: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs outline-none focus:border-amber-500 min-h-[70px]"
+                  className="w-full px-3.5 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs text-gray-900 dark:text-white outline-none focus:border-amber-500 min-h-[70px]"
                   placeholder="Planned visits, transfers, activities..."
                 />
               </div>
 
-              <div className="pt-2">
+              {/* Location Map & Coordinates Picker for New Stop */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <MapIcon size={14} className="text-amber-500" />
+                    Exact Coordinates on Map
+                  </label>
+                  {newStopForm.coordinates && (
+                    <span className="text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-lg">
+                      {Number(newStopForm.coordinates.lat).toFixed(4)}, {Number(newStopForm.coordinates.lng).toFixed(4)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="h-40 w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-700 shadow-inner relative group bg-gray-100 dark:bg-slate-800">
+                  {isGoogleMapsLoaded ? (
+                    <>
+                      <GoogleMap
+                        mapContainerStyle={{ width: '100%', height: '100%', borderRadius: '1rem' }}
+                        center={newStopForm.coordinates || { lat: -18.8792, lng: 47.5079 }}
+                        zoom={newStopForm.coordinates ? 8 : 7}
+                        options={{ disableDefaultUI: true, zoomControl: false, draggable: false }}
+                      >
+                        {newStopForm.coordinates && (
+                          <MarkerF position={newStopForm.coordinates} />
+                        )}
+                      </GoogleMap>
+                      <div 
+                        className="absolute inset-0 z-[10] cursor-pointer bg-black/5 hover:bg-black/15 transition-all flex items-start justify-between p-2.5"
+                        onClick={() => setExpandedMapMode('new')}
+                      >
+                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur px-3 py-1.5 rounded-xl text-xs font-black text-gray-700 dark:text-gray-200 shadow-sm transition-transform group-hover:scale-105 flex items-center gap-1.5 border border-gray-100 dark:border-slate-800">
+                          <Maximize2 size={13} className="text-amber-500" /> Click to expand and pinpoint location
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                      Loading Map...
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 shrink-0">
                 <button
                   type="button"
                   onClick={handleAddStopSubmit}
@@ -2043,6 +2216,103 @@ export function TourAgendaModal({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Expanded Interactive Map Modal (for Add or Edit Itinerary Stop) */}
+      {expandedMapMode && (
+        <>
+          <div 
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[100050]" 
+            onClick={() => setExpandedMapMode(null)} 
+            onWheel={(e) => e.stopPropagation()}
+          />
+          <div 
+            className="fixed inset-4 md:inset-8 z-[100060] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-4 md:p-6 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200"
+            onWheel={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4 px-2 shrink-0">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                  <Globe className="text-amber-500" /> 
+                  {expandedMapMode === 'new' ? 'Select Stop Location' : 'Edit Stop Location'}
+                </h3>
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">
+                  Search for a place in Madagascar or click anywhere on the map to set the exact coordinates.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                {activeMapCoordinates && (
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-mono font-bold text-amber-700 dark:text-amber-300">
+                    <MapPin size={14} className="text-amber-500" />
+                    <span>{Number(activeMapCoordinates.lat).toFixed(5)}, {Number(activeMapCoordinates.lng).toFixed(5)}</span>
+                  </div>
+                )}
+                <button 
+                  type="button"
+                  onClick={() => setExpandedMapMode(null)}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+                >
+                  <X size={20} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative flex-1 rounded-[1.5rem] overflow-hidden shadow-2xl border-2 border-gray-100 dark:border-slate-800">
+              {/* Autocomplete Search input over the map */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[10] w-11/12 max-w-md">
+                <Autocomplete
+                  onLoad={(ref) => { searchBoxRef.current = ref; }}
+                  onPlaceChanged={onMapPlaceChanged}
+                  options={{ componentRestrictions: { country: 'mg' } }}
+                >
+                  <div className="relative shadow-xl rounded-full">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      type="text" 
+                      placeholder="Search destination in Madagascar..." 
+                      className="w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-white/50 dark:border-slate-700 shadow-xl rounded-full py-3.5 pl-11 pr-4 text-sm font-semibold text-gray-800 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-amber-500/20 transition-all"
+                    />
+                  </div>
+                </Autocomplete>
+              </div>
+
+              {isGoogleMapsLoaded ? (
+                <GoogleMap
+                  mapContainerStyle={{ width: '100%', height: '100%', borderRadius: '1.5rem' }}
+                  center={activeMapCoordinates || { lat: -18.8792, lng: 47.5079 }}
+                  zoom={activeMapCoordinates ? 9 : 7}
+                  options={{ 
+                    disableDefaultUI: false, 
+                    zoomControl: true, 
+                    draggable: true,
+                    scrollwheel: true,
+                    gestureHandling: 'greedy'
+                  }}
+                  onClick={handleMapLocationClick}
+                >
+                  {activeMapCoordinates && (
+                    <MarkerF position={activeMapCoordinates} />
+                  )}
+                </GoogleMap>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-gray-400">
+                  Loading Google Maps...
+                </div>
+              )}
+
+              {/* Bottom confirmation button */}
+              <div className="absolute bottom-4 right-4 z-[10]">
+                <button
+                  type="button"
+                  onClick={() => setExpandedMapMode(null)}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-amber-500/30 flex items-center gap-2 transition-all hover:scale-105"
+                >
+                  <Check size={16} strokeWidth={2.5} /> Set Coordinates
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Slot Click Quick Chooser Modal */}

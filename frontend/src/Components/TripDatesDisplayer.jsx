@@ -73,6 +73,18 @@ export function TripDatesDisplayer({ startDate, endDate }) {
           showOutsideDays
           fixedWeeks
           disableNavigation
+          style={{
+            '--rdp-accent-color': '#811303',
+            '--rdp-accent-background-color': 'rgba(129, 19, 3, 0.10)',
+            '--rdp-today-color': '#811303',
+            '--rdp-selected-border': '2px solid #811303',
+            '--rdp-range_middle-background-color': 'rgba(129, 19, 3, 0.10)',
+            '--rdp-range_middle-color': '#811303',
+            '--rdp-range_start-color': '#ffffff',
+            '--rdp-range_end-color': '#ffffff',
+            '--rdp-range_start-date-background-color': '#811303',
+            '--rdp-range_end-date-background-color': '#811303',
+          }}
           classNames={{
             months: "flex flex-col lg:flex-row lg:space-x-6 justify-center",
             month: "space-y-1 relative",

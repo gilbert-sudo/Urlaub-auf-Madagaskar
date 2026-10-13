@@ -21,6 +21,17 @@ export function ItineraryManager({ trip }) {
   const sidebarRef = useRef(null);
   const searchBoxRef = useRef(null);
 
+  // Lock body scroll when map is expanded
+  useEffect(() => {
+    if (isMapExpanded) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isMapExpanded]);
+
   const onPlaceChanged = () => {
     if (searchBoxRef.current) {
       const place = searchBoxRef.current.getPlace();
@@ -285,10 +296,12 @@ export function ItineraryManager({ trip }) {
                           placeholder="e.g. Morning safari, afternoon transfer..." 
                           className={`${SHARED_INPUT_CLASS} flex-1 resize-none py-3 leading-relaxed bg-white text-sm h-full w-full lg:w-1/2`}
                         />
-                        {isMapExpanded && <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[150]" onClick={() => setIsMapExpanded(false)}></div>}
-                        <div className={
+                        {isMapExpanded && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150]" onClick={() => setIsMapExpanded(false)} onWheel={(e) => e.stopPropagation()}></div>}
+                        <div 
+                          onWheel={(e) => isMapExpanded && e.stopPropagation()}
+                          className={
                           isMapExpanded 
-                          ? "fixed inset-4 md:inset-8 z-[200] bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2.5rem] p-4 md:p-6 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col transition-all duration-300" 
+                          ? "fixed inset-4 md:inset-8 z-[200] bg-white/95 backdrop-blur-xl border border-white/60 rounded-[2.5rem] p-4 md:p-6 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col transition-all duration-300" 
                           : "flex-1 h-64 lg:h-full rounded-2xl overflow-hidden border border-gray-200 shadow-inner relative group transition-all duration-300"
                         }>
                           {isMapExpanded && (
@@ -328,7 +341,13 @@ export function ItineraryManager({ trip }) {
                               mapContainerStyle={{ width: '100%', height: '100%', borderRadius: isMapExpanded ? '0' : '1rem' }}
                               center={activeDay.coordinates || { lat: -18.8792, lng: 47.5079 }}
                               zoom={7}
-                              options={{ disableDefaultUI: true, zoomControl: isMapExpanded, draggable: isMapExpanded }}
+                              options={{ 
+                                disableDefaultUI: true, 
+                                zoomControl: isMapExpanded, 
+                                draggable: isMapExpanded,
+                                scrollwheel: isMapExpanded,
+                                gestureHandling: isMapExpanded ? 'greedy' : 'cooperative'
+                              }}
                               onClick={(e) => {
                                 if (isMapExpanded) {
                                   handleItineraryChange(activeDayIndex, 'coordinates', {

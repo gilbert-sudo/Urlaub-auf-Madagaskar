@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTripById, shareTrip, updateTrip } from '../store/slices/tripsSlice';
@@ -139,6 +140,7 @@ export function TripDetailsPage() {
   
   // Scroll-Telling Map State
   const mapRef = useRef(null);
+  const expandedMapRef = useRef(null);
   const observerRef = useRef(null);
   const isAutoScrolling = useRef(false);
   const [activeStoryDay, setActiveStoryDay] = useState(0);
@@ -157,6 +159,21 @@ export function TripDetailsPage() {
     }, 1000); // Wait for smooth scroll animation to finish
   };
 
+  // Serialization signature of itinerary items to track coords or changes in real-time
+  const itinerarySignature = useMemo(() => {
+    if (!trip?.itinerary || !Array.isArray(trip.itinerary)) return '';
+    return JSON.stringify(
+      trip.itinerary.map((item, idx) => ({
+        id: item._id || idx,
+        day: item.dayNumber,
+        lat: item.coordinates?.lat,
+        lng: item.coordinates?.lng,
+        loc: item.locationDetails,
+        act: item.activities
+      }))
+    );
+  }, [trip?.itinerary]);
+
   useEffect(() => {
     if (!isLoaded || !trip || !trip.itinerary) return;
     
@@ -166,7 +183,13 @@ export function TripDetailsPage() {
     setDirectionsResponses([]);
     setFailedSegments([]);
     
-    const validPoints = trip.itinerary.filter(day => day.coordinates).map(day => day.coordinates);
+    const validPoints = trip.itinerary
+      .filter(day => day?.coordinates && !isNaN(Number(day.coordinates.lat)) && !isNaN(Number(day.coordinates.lng)))
+      .map(day => ({
+        lat: Number(day.coordinates.lat),
+        lng: Number(day.coordinates.lng)
+      }));
+
     if (validPoints.length < 2) return;
 
     const directionsService = new window.google.maps.DirectionsService();
@@ -244,7 +267,101 @@ export function TripDetailsPage() {
     return () => {
       ignore = true;
     };
-  }, [isLoaded, trip]);
+  }, [isLoaded, trip?._id, itinerarySignature]);
+
+  // Helper to fit map bounds to all trip coordinates and route tracks for the non-fullscreen overview map
+  const fitOverviewBounds = useCallback((mapInstance) => {
+    const targetMap = mapInstance || mapRef.current;
+    if (!targetMap || !window.google?.maps || !trip?.itinerary) return;
+
+    const bounds = new window.google.maps.LatLngBounds();
+    let hasPoints = false;
+
+    // 1. Extend all itinerary stop coordinates
+    trip.itinerary.forEach((item) => {
+      if (item?.coordinates) {
+        const lat = Number(item.coordinates.lat);
+        const lng = Number(item.coordinates.lng);
+        if (!isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng) && (lat !== 0 || lng !== 0)) {
+          bounds.extend({ lat, lng });
+          hasPoints = true;
+        }
+      }
+    });
+
+    // 2. Extend all route polyline coordinates (tracks)
+    if (Array.isArray(directionsResponses)) {
+      directionsResponses.forEach((path) => {
+        if (Array.isArray(path)) {
+          path.forEach((pt) => {
+            if (pt) {
+              const lat = Number(pt.lat);
+              const lng = Number(pt.lng);
+              if (!isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng)) {
+                bounds.extend({ lat, lng });
+                hasPoints = true;
+              }
+            }
+          });
+        }
+      });
+    }
+
+    // 3. Extend failed straight-line segments
+    if (Array.isArray(failedSegments)) {
+      failedSegments.forEach((segment) => {
+        if (Array.isArray(segment)) {
+          segment.forEach((pt) => {
+            if (pt) {
+              const lat = Number(pt.lat);
+              const lng = Number(pt.lng);
+              if (!isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng)) {
+                bounds.extend({ lat, lng });
+                hasPoints = true;
+              }
+            }
+          });
+        }
+      });
+    }
+
+    if (hasPoints) {
+      try {
+        window.google.maps.event.trigger(targetMap, 'resize');
+        targetMap.fitBounds(bounds, 35);
+
+        // Prevent over-zooming on a single point or close points
+        const listener = window.google.maps.event.addListenerOnce(targetMap, 'idle', () => {
+          if (targetMap.getZoom() > 14) {
+            targetMap.setZoom(12);
+          }
+        });
+      } catch (err) {
+        console.warn("Failed to fit overview bounds:", err);
+      }
+    }
+  }, [trip?.itinerary, directionsResponses, failedSegments]);
+
+  // Keep non-fullscreen overview map always fitted to all trip coords and route tracks
+  useEffect(() => {
+    if (!isMapExpanded && mapRef.current) {
+      const timer = setTimeout(() => {
+        fitOverviewBounds();
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [isMapExpanded, fitOverviewBounds, activeTab]);
+
+  // Re-fit overview bounds on window resize
+  useEffect(() => {
+    if (!isMapExpanded && mapRef.current) {
+      const handleResize = () => {
+        fitOverviewBounds();
+      };
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [isMapExpanded, fitOverviewBounds]);
 
   useEffect(() => {
     if (activeTab !== 'overview') return;
@@ -272,23 +389,57 @@ export function TripDetailsPage() {
     };
   }, [trip?.itinerary, activeTab, isMapExpanded]);
 
+  // Lock body scroll when map is expanded
   useEffect(() => {
-    if (mapRef.current && activeStoryDay !== null && trip?.itinerary && trip.itinerary[activeStoryDay]?.coordinates) {
-      if (isMapExpanded) {
-        mapRef.current.panTo(trip.itinerary[activeStoryDay].coordinates);
-        mapRef.current.setZoom(9);
-      } else {
+    if (isMapExpanded) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isMapExpanded]);
+
+  // Trigger resize and re-fit bounds when expanded map opens
+  useEffect(() => {
+    if (isMapExpanded && expandedMapRef.current && trip?.itinerary) {
+      const timer = setTimeout(() => {
+        window.google?.maps?.event?.trigger(expandedMapRef.current, 'resize');
         const bounds = new window.google.maps.LatLngBounds();
         let hasPoints = false;
         trip.itinerary.forEach(item => {
-          if (item.coordinates) {
-            bounds.extend(item.coordinates);
+          if (item?.coordinates && !isNaN(Number(item.coordinates.lat)) && !isNaN(Number(item.coordinates.lng))) {
+            bounds.extend({ lat: Number(item.coordinates.lat), lng: Number(item.coordinates.lng) });
             hasPoints = true;
           }
         });
-        if (hasPoints) {
-          mapRef.current.fitBounds(bounds);
+        if (Array.isArray(directionsResponses)) {
+          directionsResponses.forEach(path => {
+            if (Array.isArray(path)) {
+              path.forEach(pt => {
+                if (pt && !isNaN(Number(pt.lat)) && !isNaN(Number(pt.lng))) {
+                  bounds.extend({ lat: Number(pt.lat), lng: Number(pt.lng) });
+                  hasPoints = true;
+                }
+              });
+            }
+          });
         }
+        if (hasPoints) {
+          expandedMapRef.current.fitBounds(bounds, 50);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isMapExpanded, trip?.itinerary, directionsResponses]);
+
+  useEffect(() => {
+    if (activeStoryDay !== null && trip?.itinerary && trip.itinerary[activeStoryDay]?.coordinates) {
+      const targetCoords = trip.itinerary[activeStoryDay].coordinates;
+      // ONLY pan the camera when on fullscreen mode; non-fullscreen preview ALWAYS maintains complete trip overview
+      if (isMapExpanded && expandedMapRef.current) {
+        expandedMapRef.current.panTo(targetCoords);
+        expandedMapRef.current.setZoom(9);
       }
       setActiveMarker(activeStoryDay);
     }
@@ -842,15 +993,7 @@ export function TripDetailsPage() {
             </div>
           </div>
 
-          {/* Merged Section: Trip Itinerary & Map */}
-          {isMapExpanded && (
-            <div 
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150] transition-opacity duration-500" 
-              onClick={() => setIsMapExpanded(false)}
-            />
-          )}
-
-          <div className={`glass-panel rounded-3xl sm:rounded-4xl shadow-xl border border-slate-200/80 dark:border-slate-800 ${!isMapExpanded ? 'overflow-hidden' : ''} mb-8`}>
+          <div className="glass-panel rounded-3xl sm:rounded-4xl shadow-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden mb-8">
             {/* Section Header */}
             <div className="p-6 sm:p-7 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
@@ -879,267 +1022,339 @@ export function TripDetailsPage() {
             </div>
 
             {/* Split Content: Itinerary Days (Left) & Map (Right) */}
-            <div className={isMapExpanded ? "" : "flex flex-col lg:flex-row items-stretch lg:h-[580px]"}>
+            <div className="flex flex-col lg:flex-row items-stretch lg:h-[580px]">
               {/* Left Side: Compact Calendar */}
-              {!isMapExpanded && (
-                <div className="w-full lg:w-2/3 flex flex-col p-4 sm:p-5 bg-white dark:bg-slate-800 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-slate-700 overflow-hidden items-center justify-center">
-                  <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
-                    <TripDatesDisplayer 
-                      startDate={trip.startDate} 
-                      endDate={trip.endDate} 
-                      onDateChange={handleDateChange}
-                    />
-                  </div>
+              <div className="w-full lg:w-2/3 flex flex-col p-4 sm:p-5 bg-white dark:bg-slate-800 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-slate-700 overflow-hidden items-center justify-center">
+                <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+                  <TripDatesDisplayer 
+                    startDate={trip.startDate} 
+                    endDate={trip.endDate} 
+                    onDateChange={handleDateChange}
+                  />
                 </div>
-              )}
+              </div>
 
-              {/* Right Side: Map */}
-              <div className={
-                isMapExpanded 
-                ? "fixed inset-4 md:inset-8 z-[200] bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col overflow-hidden transition-all duration-500 animate-in zoom-in-95"
-                : "relative w-full lg:w-1/3 h-[400px] lg:h-full transition-all duration-500 overflow-hidden"
-              }
-              >
-                
-                {isMapExpanded && (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setIsMapExpanded(false); }}
-                    className="absolute top-6 right-6 z-[210] w-12 h-12 rounded-full bg-white text-gray-900 hover:bg-gray-100 shadow-xl flex items-center justify-center transition-colors"
-                  >
-                    <X size={24} strokeWidth={2.5} />
-                  </button>
-                )}
-
-              {/* The Base Map */}
-              {isLoaded ? (
-                <div className={!isMapExpanded ? "w-full h-full p-2 sm:p-4" : "w-full h-full"}>
-                  <div 
-                    className={`w-full h-full relative ${!isMapExpanded ? 'group rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 dark:border-slate-700 cursor-pointer' : ''}`}
-                    onClick={() => !isMapExpanded && setIsMapExpanded(true)}
-                  >
-                    {!isMapExpanded && (
-                      <div 
-                        className="absolute inset-0 z-[20] flex items-center justify-center bg-transparent group-hover:bg-black/5 transition-colors"
-                      >
-                        <button 
-                          className="w-16 h-16 rounded-full bg-white/90 backdrop-blur-sm text-gray-900 shadow-xl flex items-center justify-center transition-transform group-hover:scale-110 opacity-0 group-hover:opacity-100 pointer-events-none"
-                          title="Fullscreen Map"
-                        >
-                          <Maximize2 size={24} strokeWidth={2.5} />
-                        </button>
-                      </div>
-                    )}
-                    
+              {/* Right Side: Map Preview */}
+              <div className="relative w-full lg:w-1/3 h-[400px] lg:h-full overflow-hidden p-2 sm:p-4">
+                <div 
+                  className="w-full h-full relative group rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 dark:border-slate-700 cursor-pointer"
+                  onClick={() => setIsMapExpanded(true)}
+                >
+                  <div className="absolute inset-0 z-[20] flex items-center justify-center bg-transparent group-hover:bg-black/10 transition-colors">
+                    <button 
+                      type="button"
+                      className="px-4 py-2.5 rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm text-gray-900 dark:text-white shadow-xl flex items-center gap-2 text-xs font-bold transition-transform group-hover:scale-105 pointer-events-none border border-gray-100 dark:border-slate-700"
+                      title="Fullscreen Map"
+                    >
+                      <Maximize2 size={15} className="text-brand-primary" /> Fullscreen Map
+                    </button>
+                  </div>
+                  
+                  {isLoaded ? (
                     <GoogleMap
                       onLoad={(map) => { 
                         mapRef.current = map; 
-                        if (!isMapExpanded && trip?.itinerary) {
-                          const bounds = new window.google.maps.LatLngBounds();
-                          let hasPoints = false;
-                          trip.itinerary.forEach(item => {
-                            if (item.coordinates) {
-                              bounds.extend(item.coordinates);
-                              hasPoints = true;
-                            }
-                          });
-                          if (hasPoints) {
-                            map.fitBounds(bounds);
-                          }
-                        }
+                        fitOverviewBounds(map);
                       }}
                       mapContainerStyle={{ width: '100%', height: '100%' }}
-                      center={trip.itinerary?.find(i => i.coordinates)?.coordinates || { lat: -18.8792, lng: 47.5079 }}
+                      center={trip.itinerary?.find(i => i?.coordinates)?.coordinates || { lat: -18.8792, lng: 47.5079 }}
                       zoom={6}
                       options={{ 
-                        disableDefaultUI: !isMapExpanded, 
-                        zoomControl: isMapExpanded, 
+                        disableDefaultUI: true, 
+                        zoomControl: false, 
                         streetViewControl: false, 
                         mapTypeControl: false, 
                         fullscreenControl: false, 
-                        gestureHandling: isMapExpanded ? 'greedy' : 'none',
-                        keyboardShortcuts: isMapExpanded,
-                        minZoom: 5,
-                        maxZoom: 15,
-                        restriction: {
-                          latLngBounds: {
-                            north: -11.0,
-                            south: -26.0,
-                            west: 42.0,
-                            east: 51.5,
-                          },
-                          strictBounds: false,
-                        }
+                        gestureHandling: 'none',
+                        keyboardShortcuts: false,
+                        scrollwheel: false,
+                        minZoom: 4,
+                        maxZoom: 16
                       }}
                     >
-                  {directionsResponses.map((path, idx) => (
-                    <PolylineF 
-                      key={`osrm-${idx}`}
-                      path={path} 
-                      options={{ strokeColor: '#811303', strokeOpacity: 0.8, strokeWeight: 4, geodesic: true }} 
-                    />
-                  ))}
-                  {failedSegments.map((segment, idx) => (
-                    <PolylineF 
-                      key={`poly-${idx}`}
-                      path={segment} 
-                      options={{ strokeColor: '#811303', strokeOpacity: 0.6, strokeWeight: 3, geodesic: true }} 
-                    />
-                  ))}
-                  {trip.itinerary?.map((item, index) => (
-                    item.coordinates && (
-                      <React.Fragment key={index}>
-                        <OverlayViewF
-                          position={item.coordinates}
-                          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-                        >
-                          <div 
-                            onClick={(e) => {
-                               e.stopPropagation();
-                               handleScrollToDay(index);
-                            }}
-                            className={`relative flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 shadow-md ${
-                              activeStoryDay === index 
-                              ? 'scale-110 z-50 bg-[#811303] border-[3px] border-white text-white w-9 h-9 md:w-10 md:h-10 shadow-lg' 
-                              : 'hover:scale-105 z-10 bg-white border-[3px] border-[#811303] text-[#811303] w-7 h-7 md:w-8 md:h-8 hover:shadow-lg'
-                            } rounded-full`}
-                          >
-                            <span className="font-bold text-xs md:text-[13px] leading-none">D{item.dayNumber}</span>
-                          </div>
-                        </OverlayViewF>
-                        
-                        {isMapExpanded && activeMarker === index && (
-                          <InfoWindowF 
+                      {directionsResponses.map((path, idx) => (
+                        <PolylineF 
+                          key={`inline-osrm-${idx}-${path.length}`}
+                          path={path} 
+                          options={{ strokeColor: '#811303', strokeOpacity: 0.8, strokeWeight: 4, geodesic: true }} 
+                        />
+                      ))}
+                      {failedSegments.map((segment, idx) => (
+                        <PolylineF 
+                          key={`inline-poly-${idx}`}
+                          path={segment} 
+                          options={{ strokeColor: '#811303', strokeOpacity: 0.6, strokeWeight: 3, geodesic: true }} 
+                        />
+                      ))}
+                      {trip.itinerary?.map((item, index) => {
+                        if (!item?.coordinates || isNaN(Number(item.coordinates.lat)) || isNaN(Number(item.coordinates.lng))) return null;
+                        const isDayActive = activeStoryDay === index;
+                        return (
+                          <OverlayViewF
+                            key={`inline-marker-${item._id || index}-${item.coordinates.lat}-${item.coordinates.lng}`}
                             position={item.coordinates}
-                            onCloseClick={() => setActiveMarker(null)}
-                            options={{ 
-                              maxWidth: 320,
-                              pixelOffset: new window.google.maps.Size(0, -20)
-                            }}
+                            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                           >
-                            <div className="p-0 m-0 w-[280px] sm:w-[300px] bg-white rounded-xl overflow-hidden font-sans">
-                              {/* Image section */}
-                              {locationData[index] && locationData[index].image && (
-                                <div className="w-full h-32 relative overflow-hidden bg-gray-100 mb-3">
-                                   <img src={locationData[index].image} alt={locationData[index].title || item.activities} className="w-full h-full object-cover" />
-                                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                                   {locationData[index].title && (
-                                      <div className="absolute bottom-2.5 left-2.5 right-2.5 flex">
-                                        <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-full px-3.5 py-1.5 shadow-xl max-w-full">
-                                          <div className="text-white font-bold text-xs truncate drop-shadow-md">
-                                            {locationData[index].title}
-                                          </div>
-                                        </div>
-                                      </div>
-                                   )}
-                                </div>
-                              )}
-                              
-                              <div className="px-3 pb-3">
-                                <div className="flex justify-between items-start mb-1">
-                                  <div className="font-black text-brand-primary/80 text-[10px] uppercase tracking-widest">
-                                    {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                    <span className="ml-2 inline-block px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary rounded text-[9px]">D{item.dayNumber}</span>
-                                  </div>
-                                </div>
-                                <h3 className="font-black text-base mb-2 leading-tight text-gray-900">{item.activities}</h3>
-                                
-                                {/* Description section */}
-                                {locationData[index] && locationData[index].extract && (
-                                  <p className="text-xs text-gray-600 mb-3 line-clamp-3 leading-relaxed">
-                                    {locationData[index].extract}
-                                  </p>
-                                )}
-                                {/* loading state */}
-                                {locationData[index] === null && (
-                                  <div className="animate-pulse flex space-x-4 mb-3">
-                                    <div className="flex-1 space-y-2 py-1">
-                                      <div className="h-2 bg-gray-200 rounded"></div>
-                                      <div className="h-2 bg-gray-200 rounded w-5/6"></div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                  {item.hotel?.name && (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-stone-200/60 dark:border-slate-700 shadow-2xs">
-                                      <Bed size={12} /> <span className="line-clamp-1">{item.hotel.name}</span>
-                                    </span>
-                                  )}
-                                  {item.driver?.name && (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-stone-200/60 dark:border-slate-700 shadow-2xs">
-                                      <Car size={12} /> <span className="line-clamp-1">{item.driver.name}</span>
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                            <div 
+                              className={`relative flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 shadow-md ${
+                                isDayActive
+                                  ? 'scale-110 z-50 bg-[#811303] border-[3px] border-white text-white w-8 h-8 shadow-lg'
+                                  : 'z-10 bg-white border-[3px] border-[#811303] text-[#811303] w-7 h-7'
+                              } rounded-full`}
+                            >
+                              <span className="font-bold text-xs leading-none">D{item.dayNumber}</span>
                             </div>
-                          </InfoWindowF>
-                        )}
-                      </React.Fragment>
-                    )
-                  ))}
-                </GoogleMap>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center font-bold text-slate-400">Loading Map...</div>
-              )}
-
-              {/* The Floating Story Overlay */}
-              {isMapExpanded && (
-              <div 
-                id="story-scroll-container"
-                className="absolute md:inset-y-0 md:left-0 bottom-0 left-0 w-full md:w-[460px] h-[45%] md:h-full z-10 overflow-x-auto md:overflow-y-auto overflow-y-hidden no-scrollbar scroll-smooth pointer-events-auto px-4 md:px-8 pt-4 md:pt-8 pb-4 md:pb-[500px] transition-colors duration-500 md:bg-gradient-to-r md:from-white/95 md:via-white/80 md:to-transparent bg-gradient-to-t from-white/95 via-white/90 to-transparent flex md:block items-end md:items-stretch snap-x snap-mandatory"
-              >
-                <h2 className="hidden md:flex text-3xl font-black mb-8 items-center gap-3 text-slate-900 drop-shadow-sm sticky top-0 bg-white/40 backdrop-blur-md py-4 z-20 rounded-2xl px-4 -mx-4 border border-white/50">
-                  <MapPin className="text-brand-primary" /> 
-                  Itinerary Journey
-                </h2>
-                
-                <div className="flex md:block gap-4 md:gap-0 md:space-y-6 relative md:before:absolute md:before:inset-0 md:before:ml-[23px] md:before:h-full md:before:w-[3px] md:before:bg-brand-primary/20 py-2 w-max md:w-auto px-4 md:px-0">
-                  {trip.itinerary?.map((item, index) => (
-                    <div 
-                      key={index} 
-                      data-index={index}
-                      className={`story-day-card snap-center w-[300px] md:w-auto relative flex flex-col md:flex-row md:items-start gap-4 z-10 transition-all duration-500 cursor-pointer ${activeStoryDay === index ? 'opacity-100 md:translate-x-2' : 'opacity-60 hover:opacity-80'}`}
-                      onClick={() => handleScrollToDay(index)}
-                    >
-                      <div className={`hidden md:flex items-center justify-center w-12 h-12 rounded-full border-[3px] shadow-lg shrink-0 z-10 transition-colors duration-500 ${activeStoryDay === index ? 'bg-brand-primary border-brand-primary text-white shadow-brand-primary/30' : 'bg-white border-stone-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-brand-primary hover:text-brand-primary'}`}>
-                        <span className="font-black text-sm">D{item.dayNumber}</span>
-                      </div>
-                      
-                      <div className={`flex-1 p-4 md:p-5 rounded-[2rem] border shadow-xl backdrop-blur-xl transition-all duration-500 overflow-hidden ${activeStoryDay === index ? 'bg-white/95 dark:bg-slate-900/95 border-brand-primary/30 shadow-brand-primary/10 scale-[1.02]' : 'bg-white/70 dark:bg-slate-800/70 border-white/50 dark:border-slate-700/50 hover:bg-white/90'}`}>
-                        <div className="flex justify-between items-start mb-1.5 md:mb-2">
-                          <div className="font-black text-brand-primary/80 text-[10px] uppercase tracking-widest">
-                            {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                            <span className="md:hidden ml-2 inline-block px-2 py-0.5 bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-[9px] font-bold">D{item.dayNumber}</span>
-                          </div>
-                        </div>
-                        <h3 className={`font-black text-base md:text-lg mb-2.5 md:mb-3 leading-tight line-clamp-2 ${activeStoryDay === index ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>{item.activities}</h3>
-                        
-                        <div className="flex flex-wrap gap-2">
-                          {item.hotel?.name && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs font-bold border border-stone-200/60 dark:border-slate-700/60">
-                              <Bed size={13} /> <span className="line-clamp-1">{item.hotel.name}</span>
-                            </span>
-                          )}
-                          {item.driver?.name && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs font-bold border border-stone-200/60 dark:border-slate-700/60">
-                              <Car size={13} /> <span className="line-clamp-1">{item.driver.name}</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                          </OverlayViewF>
+                        );
+                      })}
+                    </GoogleMap>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-bold text-slate-400">Loading Map...</div>
+                  )}
                 </div>
               </div>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* Assigned Drivers Section */}
+          {/* Fullscreen Expanded Map Modal rendered directly on document.body */}
+          {isMapExpanded && createPortal(
+            <div 
+              className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-5 md:p-7"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              {/* Fullscreen Backdrop */}
+              <div 
+                className="fixed inset-0 bg-slate-950/75 backdrop-blur-md transition-opacity duration-300"
+                onClick={() => setIsMapExpanded(false)}
+              />
+
+              {/* Modal Window */}
+              <div className="relative w-full h-full max-w-[98vw] max-h-[96vh] z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-white/60 dark:border-slate-800 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                {/* Close Button */}
+                <button 
+                  onClick={() => setIsMapExpanded(false)}
+                  className="absolute top-5 right-5 z-[50] w-12 h-12 rounded-full bg-white dark:bg-slate-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-700 shadow-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 border border-gray-100 dark:border-slate-700"
+                  title="Close Fullscreen Map"
+                >
+                  <X size={22} strokeWidth={2.5} />
+                </button>
+
+                <div className="w-full h-full relative">
+                  {isLoaded ? (
+                    <GoogleMap
+                      onLoad={(map) => {
+                        expandedMapRef.current = map;
+                        setTimeout(() => {
+                          window.google?.maps?.event?.trigger(map, 'resize');
+                          if (trip?.itinerary) {
+                            const bounds = new window.google.maps.LatLngBounds();
+                            let hasPoints = false;
+                            trip.itinerary.forEach(item => {
+                              if (item?.coordinates && !isNaN(Number(item.coordinates.lat)) && !isNaN(Number(item.coordinates.lng))) {
+                                bounds.extend({ lat: Number(item.coordinates.lat), lng: Number(item.coordinates.lng) });
+                                hasPoints = true;
+                              }
+                            });
+                            if (Array.isArray(directionsResponses)) {
+                              directionsResponses.forEach(path => {
+                                if (Array.isArray(path)) {
+                                  path.forEach(pt => {
+                                    if (pt && !isNaN(Number(pt.lat)) && !isNaN(Number(pt.lng))) {
+                                      bounds.extend({ lat: Number(pt.lat), lng: Number(pt.lng) });
+                                      hasPoints = true;
+                                    }
+                                  });
+                                }
+                              });
+                            }
+                            if (hasPoints) {
+                              map.fitBounds(bounds, 50);
+                            }
+                          }
+                        }, 100);
+                      }}
+                      mapContainerStyle={{ width: '100%', height: '100%' }}
+                      center={trip.itinerary?.find(i => i?.coordinates)?.coordinates || { lat: -18.8792, lng: 47.5079 }}
+                      zoom={7}
+                      options={{ 
+                        disableDefaultUI: false, 
+                        zoomControl: true, 
+                        streetViewControl: false, 
+                        mapTypeControl: true, 
+                        fullscreenControl: false, 
+                        gestureHandling: 'greedy',
+                        scrollwheel: true,
+                        keyboardShortcuts: false,
+                        minZoom: 4,
+                        maxZoom: 18
+                      }}
+                    >
+                      {directionsResponses.map((path, idx) => (
+                        <PolylineF 
+                          key={`full-osrm-${idx}-${path.length}`}
+                          path={path} 
+                          options={{ strokeColor: '#811303', strokeOpacity: 0.8, strokeWeight: 4, geodesic: true }} 
+                        />
+                      ))}
+                      {failedSegments.map((segment, idx) => (
+                        <PolylineF 
+                          key={`full-poly-${idx}`}
+                          path={segment} 
+                          options={{ strokeColor: '#811303', strokeOpacity: 0.6, strokeWeight: 3, geodesic: true }} 
+                        />
+                      ))}
+                      {trip.itinerary?.map((item, index) => {
+                        if (!item?.coordinates || isNaN(Number(item.coordinates.lat)) || isNaN(Number(item.coordinates.lng))) return null;
+                        const isDayActive = activeStoryDay === index;
+                        return (
+                          <React.Fragment key={`full-marker-${item._id || index}-${item.coordinates.lat}-${item.coordinates.lng}`}>
+                            <OverlayViewF
+                              position={item.coordinates}
+                              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                            >
+                              <div 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleScrollToDay(index);
+                                }}
+                                className={`relative flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 shadow-md ${
+                                  isDayActive 
+                                  ? 'scale-110 z-50 bg-[#811303] border-[3px] border-white text-white w-9 h-9 md:w-10 md:h-10 shadow-lg' 
+                                  : 'hover:scale-105 z-10 bg-white border-[3px] border-[#811303] text-[#811303] w-7 h-7 md:w-8 md:h-8 hover:shadow-lg'
+                                } rounded-full`}
+                              >
+                                <span className="font-bold text-xs md:text-[13px] leading-none">D{item.dayNumber}</span>
+                              </div>
+                            </OverlayViewF>
+                            
+                            {activeMarker === index && (
+                              <InfoWindowF 
+                                position={item.coordinates}
+                                onCloseClick={() => setActiveMarker(null)}
+                                options={{ 
+                                  maxWidth: 320,
+                                  pixelOffset: new window.google.maps.Size(0, -20)
+                                }}
+                              >
+                                <div className="p-0 m-0 w-[280px] sm:w-[300px] bg-white rounded-xl overflow-hidden font-sans">
+                                  {locationData[index] && locationData[index].image && (
+                                    <div className="w-full h-32 relative overflow-hidden bg-gray-100 mb-3">
+                                      <img src={locationData[index].image} alt={locationData[index].title || item.activities} className="w-full h-full object-cover" />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                      {locationData[index].title && (
+                                        <div className="absolute bottom-2.5 left-2.5 right-2.5 flex">
+                                          <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-full px-3.5 py-1.5 shadow-xl max-w-full">
+                                            <div className="text-white font-bold text-xs truncate drop-shadow-md">
+                                              {locationData[index].title}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  <div className="px-3 pb-3">
+                                    <div className="flex justify-between items-start mb-1">
+                                      <div className="font-black text-brand-primary/80 text-[10px] uppercase tracking-widest">
+                                        {item.date ? new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : `Day ${item.dayNumber}`}
+                                        <span className="ml-2 inline-block px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary rounded text-[9px]">D{item.dayNumber}</span>
+                                      </div>
+                                    </div>
+                                    <h3 className="font-black text-base mb-2 leading-tight text-gray-900">{item.activities}</h3>
+                                    
+                                    {locationData[index] && locationData[index].extract && (
+                                      <p className="text-xs text-gray-600 mb-3 line-clamp-3 leading-relaxed">
+                                        {locationData[index].extract}
+                                      </p>
+                                    )}
+                                    {locationData[index] === null && (
+                                      <div className="animate-pulse flex space-x-4 mb-3">
+                                        <div className="flex-1 space-y-2 py-1">
+                                          <div className="h-2 bg-gray-200 rounded"></div>
+                                          <div className="h-2 bg-gray-200 rounded w-5/6"></div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                      {item.hotel?.name && (
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 text-slate-700 text-[10px] font-bold border border-stone-200 shadow-xs">
+                                          <Bed size={12} /> <span className="line-clamp-1">{item.hotel.name}</span>
+                                        </span>
+                                      )}
+                                      {item.driver?.name && (
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 text-slate-700 text-[10px] font-bold border border-stone-200 shadow-xs">
+                                          <Car size={12} /> <span className="line-clamp-1">{item.driver.name}</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </InfoWindowF>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </GoogleMap>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-bold text-slate-400">Loading Map...</div>
+                  )}
+
+                  {/* Floating Story Overlay */}
+                  <div 
+                    id="story-scroll-container"
+                    className="absolute md:inset-y-0 md:left-0 bottom-0 left-0 w-full md:w-[460px] h-[45%] md:h-full z-10 overflow-x-auto md:overflow-y-auto overflow-y-hidden no-scrollbar scroll-smooth pointer-events-auto px-4 md:px-8 pt-4 md:pt-8 pb-4 md:pb-[500px] transition-colors duration-500 md:bg-gradient-to-r md:from-white/95 md:via-white/80 md:to-transparent bg-gradient-to-t from-white/95 via-white/90 to-transparent flex md:block items-end md:items-stretch snap-x snap-mandatory"
+                  >
+                    <h2 className="hidden md:flex text-3xl font-black mb-8 items-center gap-3 text-slate-900 drop-shadow-sm sticky top-0 bg-white/40 backdrop-blur-md py-4 z-20 rounded-2xl px-4 -mx-4 border border-white/50">
+                      <MapPin className="text-brand-primary" /> 
+                      Itinerary Journey
+                    </h2>
+                    
+                    <div className="flex md:block gap-4 md:gap-0 md:space-y-6 relative md:before:absolute md:before:inset-0 md:before:ml-[23px] md:before:h-full md:before:w-[3px] md:before:bg-brand-primary/20 py-2 w-max md:w-auto px-4 md:px-0">
+                      {trip.itinerary?.map((item, index) => (
+                        <div 
+                          key={`story-${index}`} 
+                          data-index={index}
+                          className={`story-day-card snap-center w-[300px] md:w-auto relative flex flex-col md:flex-row md:items-start gap-4 z-10 transition-all duration-500 cursor-pointer ${activeStoryDay === index ? 'opacity-100 md:translate-x-2' : 'opacity-60 hover:opacity-80'}`}
+                          onClick={() => handleScrollToDay(index)}
+                        >
+                          <div className={`hidden md:flex items-center justify-center w-12 h-12 rounded-full border-[3px] shadow-lg shrink-0 z-10 transition-colors duration-500 ${activeStoryDay === index ? 'bg-brand-primary border-brand-primary text-white shadow-brand-primary/30' : 'bg-white border-stone-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-brand-primary hover:text-brand-primary'}`}>
+                            <span className="font-black text-sm">D{item.dayNumber}</span>
+                          </div>
+                          
+                          <div className={`flex-1 p-4 md:p-5 rounded-[2rem] border shadow-xl backdrop-blur-xl transition-all duration-500 overflow-hidden ${activeStoryDay === index ? 'bg-white/95 dark:bg-slate-900/95 border-brand-primary/30 shadow-brand-primary/10 scale-[1.02]' : 'bg-white/70 dark:bg-slate-800/70 border-white/50 dark:border-slate-700/50 hover:bg-white/90'}`}>
+                            <div className="flex justify-between items-start mb-1.5 md:mb-2">
+                              <div className="font-black text-brand-primary/80 text-[10px] uppercase tracking-widest">
+                                {item.date ? new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : `Day ${item.dayNumber}`}
+                                <span className="md:hidden ml-2 inline-block px-2 py-0.5 bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-[9px] font-bold">D{item.dayNumber}</span>
+                              </div>
+                            </div>
+                            <h3 className={`font-black text-base md:text-lg mb-2.5 md:mb-3 leading-tight line-clamp-2 ${activeStoryDay === index ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>{item.activities || 'Activities planned for this day'}</h3>
+                            
+                            <div className="flex flex-wrap gap-2">
+                              {item.hotel?.name && (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs font-bold border border-stone-200/60 dark:border-slate-700/60">
+                                  <Bed size={13} /> <span className="line-clamp-1">{item.hotel.name}</span>
+                                </span>
+                              )}
+                              {item.driver?.name && (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs font-bold border border-stone-200/60 dark:border-slate-700/60">
+                                  <Car size={13} /> <span className="line-clamp-1">{item.driver.name}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
+          {/* Assigned Drivers Section */}
         <AssignedDriversManager trip={trip} tripEvents={tripEvents} />
         
         {/* Editable Inclusions & Exclusions */}

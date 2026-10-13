@@ -71,3 +71,13 @@
   50% { transform: translateY(-10px); }
   100% { transform: translateY(0px); }
 }
+
+/* Google Places Autocomplete dropdown z-index fix */
+.pac-container {
+  z-index: 200000 !important;
+  border-radius: 1rem !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  font-family: inherit !important;
+  margin-top: 6px !important;
+}
