@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { format, differenceInDays, startOfDay, endOfDay } from 'date-fns';
@@ -83,6 +83,9 @@ const getStringHash = (str) => {
   return Math.abs(hash);
 };
 
+const CALENDAR_VIEWS = ['year', 'month', 'week', 'day', 'agenda'];
+const EMPTY_ARRAY = [];
+
 const getDriverColor = (id) => driverColors[getStringHash(String(id)) % driverColors.length];
 const getTourColor = (id) => tourColors[getStringHash(String(id)) % tourColors.length];
 
@@ -90,9 +93,9 @@ export function CalendarPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const trips = useSelector((state) => state.trips.items || []);
-  const driverEvents = useSelector((state) => state.driverEvents?.events || []);
-  const drivers = useSelector((state) => state.drivers.items || []);
+  const trips = useSelector((state) => state.trips.items || EMPTY_ARRAY);
+  const driverEvents = useSelector((state) => state.driverEvents?.events || EMPTY_ARRAY);
+  const drivers = useSelector((state) => state.drivers.items || EMPTY_ARRAY);
 
   const [filter, setFilter] = useState('all'); // 'all', 'trips', 'stops', 'driver_events'
   const [currentView, setCurrentView] = useState('year');
@@ -259,7 +262,7 @@ export function CalendarPage() {
   }, [scheduledTrips, stopEvents, driverEvents, drivers, filter]);
 
   // Event styling rules matching TripAgendaModal & Klaus design system
-  const eventStyleGetter = (event) => {
+  const eventStyleGetter = useCallback((event) => {
     // 1. Tour Master Schedule: Solid vibrant pill
     if (event.resource?.type === 'tour') {
       const color = event.color || '#811303';
@@ -328,11 +331,11 @@ export function CalendarPage() {
         cursor: 'pointer'
       }
     };
-  };
+  }, []);
 
-  const handleSelectEvent = (event) => {
+  const handleSelectEvent = useCallback((event) => {
     setSelectedEvent(event);
-  };
+  }, []);
 
   const currentYear = currentDate.getFullYear();
   const availableYears = useMemo(() => {
@@ -456,7 +459,7 @@ export function CalendarPage() {
         onView={setCurrentView}
         eventStyleGetter={eventStyleGetter}
         onSelectEvent={handleSelectEvent}
-        availableViews={['year', 'month', 'week', 'day', 'agenda']}
+        availableViews={CALENDAR_VIEWS}
         defaultView="year"
         headerActions={headerActions}
       />

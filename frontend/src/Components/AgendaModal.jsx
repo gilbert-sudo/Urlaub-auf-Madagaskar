@@ -801,6 +801,11 @@ YearView.navigate = (date, action) => {
   }
 };
 
+const DEFAULT_EVENTS = [];
+const DEFAULT_COMPONENTS = {};
+const DEFAULT_AVAILABLE_VIEWS = ['year', 'month', 'week', 'day', 'agenda'];
+const isValidDate = (d) => d instanceof Date && !isNaN(d.getTime());
+
 export function AgendaModal({
   isOpen = true,
   isModal = true,
@@ -808,8 +813,8 @@ export function AgendaModal({
   title,
   subtitle,
   icon: Icon,
-  events,
-  defaultDate = new Date(),
+  events = DEFAULT_EVENTS,
+  defaultDate = null,
   date: controlledDate,
   onNavigate: controlledOnNavigate,
   view: controlledView,
@@ -823,42 +828,71 @@ export function AgendaModal({
   sidebarContent,
   customMainContent,
   headerActions,
-  components = {},
-  availableViews = ['year', 'month', 'week', 'day', 'agenda'],
+  components = DEFAULT_COMPONENTS,
+  availableViews = DEFAULT_AVAILABLE_VIEWS,
   defaultView = 'year'
 }) {
   const [calendarView, setCalendarView] = useState(defaultView);
 
   // Always reset to defaultView (year mode) whenever a modal opens
+  const prevIsOpenViewRef = useRef(isOpen);
   useEffect(() => {
-    if (isModal && isOpen) {
+    if (controlledView !== undefined) return;
+    const justOpened = !prevIsOpenViewRef.current && isOpen;
+    prevIsOpenViewRef.current = isOpen;
+    if (isModal && justOpened) {
       setCalendarView(defaultView);
     }
-  }, [isModal, isOpen, defaultView]);
+  }, [isModal, isOpen, defaultView, controlledView]);
+
+  const availableViewsKey = useMemo(() => {
+    return Array.isArray(availableViews) ? availableViews.join(',') : '';
+  }, [availableViews]);
 
   const calendarViews = useMemo(() => {
     const views = {};
-    if (availableViews.includes('year')) views.year = YearView;
-    if (availableViews.includes('month')) views.month = true;
-    if (availableViews.includes('week')) views.week = true;
-    if (availableViews.includes('day')) views.day = true;
-    if (availableViews.includes('agenda')) views.agenda = true;
+    const viewsList = availableViewsKey ? availableViewsKey.split(',') : DEFAULT_AVAILABLE_VIEWS;
+    if (viewsList.includes('year')) views.year = YearView;
+    if (viewsList.includes('month')) views.month = true;
+    if (viewsList.includes('week')) views.week = true;
+    if (viewsList.includes('day')) views.day = true;
+    if (viewsList.includes('agenda')) views.agenda = true;
     return views;
-  }, [availableViews]);
+  }, [availableViewsKey]);
 
-  const isValidDate = (d) => d instanceof Date && !isNaN(d.getTime());
-  const initialDate = isValidDate(defaultDate) ? defaultDate : new Date();
-  const [currentDate, setCurrentDate] = useState(initialDate);
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (isValidDate(defaultDate)) return defaultDate;
+    if (isValidDate(controlledDate)) return controlledDate;
+    return new Date();
+  });
 
+  const prevIsOpenDateRef = useRef(isOpen);
+  const defaultDateTime = isValidDate(defaultDate) ? defaultDate.getTime() : null;
+  const prevDefaultDateTimeRef = useRef(defaultDateTime);
+
+  // Sync currentDate when modal opens or when defaultDate actually changes (uncontrolled mode only)
   useEffect(() => {
+    // In controlled mode, caller controls the date via `date` prop
+    if (controlledDate !== undefined) return;
+
+    const justOpened = !prevIsOpenDateRef.current && isOpen;
+    const dateChanged = defaultDateTime !== null && defaultDateTime !== prevDefaultDateTimeRef.current;
+
+    prevIsOpenDateRef.current = isOpen;
+    prevDefaultDateTimeRef.current = defaultDateTime;
+
     if (isOpen) {
-      if (isValidDate(defaultDate)) {
+      if (dateChanged && isValidDate(defaultDate)) {
         setCurrentDate(defaultDate);
-      } else {
-        setCurrentDate(new Date());
+      } else if (justOpened) {
+        if (isValidDate(defaultDate)) {
+          setCurrentDate(defaultDate);
+        } else {
+          setCurrentDate(new Date());
+        }
       }
     }
-  }, [isOpen, defaultDate]);
+  }, [isOpen, defaultDateTime, controlledDate, defaultDate]);
 
   const activeDate = controlledDate !== undefined ? controlledDate : currentDate;
   const activeView = controlledView !== undefined ? controlledView : calendarView;
