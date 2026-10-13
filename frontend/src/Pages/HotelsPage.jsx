@@ -30,34 +30,37 @@ export function HotelsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-50 dark:bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center">
-            <Building size={22} />
-          </div>
-          Hotels & Accommodations
-        </h1>
-      </div>
+      {/* Sticky Header & Tabs */}
+      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-4 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all space-y-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="w-10 h-10 bg-brand-50 dark:bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center">
+              <Building size={22} />
+            </div>
+            Hotels & Accommodations
+          </h1>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-6 border-b border-gray-100 dark:border-slate-800 pb-2">
-        <button 
-          onClick={() => setActiveTab('directory')}
-          className={`pb-3 font-extrabold text-[15px] transition-all duration-300 relative ${activeTab === 'directory' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 hover:text-gray-700 dark:hover:text-slate-300'}`}
-        >
-          Hotel Directory
-          {activeTab === 'directory' && <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-500 rounded-t-full" />}
-        </button>
-        <button 
-          onClick={() => setActiveTab('reservations')}
-          className={`pb-3 font-extrabold text-[15px] transition-all duration-300 relative flex items-center gap-2 ${activeTab === 'reservations' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 hover:text-gray-700 dark:hover:text-slate-300'}`}
-        >
-          Reservations
-          <span className="bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400 py-0.5 px-2 rounded-full text-xs font-black">
-            {dummyReservations.length}
-          </span>
-          {activeTab === 'reservations' && <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-500 rounded-t-full" />}
-        </button>
+        {/* Tabs */}
+        <div className="flex items-center gap-6 border-b border-gray-100 dark:border-slate-800 pb-1">
+          <button 
+            onClick={() => setActiveTab('directory')}
+            className={`pb-2 font-extrabold text-[15px] transition-all duration-300 relative ${activeTab === 'directory' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 hover:text-gray-700 dark:hover:text-slate-300'}`}
+          >
+            Hotel Directory
+            {activeTab === 'directory' && <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-500 rounded-t-full" />}
+          </button>
+          <button 
+            onClick={() => setActiveTab('reservations')}
+            className={`pb-2 font-extrabold text-[15px] transition-all duration-300 relative flex items-center gap-2 ${activeTab === 'reservations' ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 hover:text-gray-700 dark:hover:text-slate-300'}`}
+          >
+            Reservations
+            <span className="bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400 py-0.5 px-2 rounded-full text-xs font-black">
+              {dummyReservations.length}
+            </span>
+            {activeTab === 'reservations' && <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-500 rounded-t-full" />}
+          </button>
+        </div>
       </div>
 
       {activeTab === 'directory' && (

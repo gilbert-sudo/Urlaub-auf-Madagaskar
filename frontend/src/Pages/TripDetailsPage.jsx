@@ -7,7 +7,12 @@ import { fetchDrivers } from '../store/slices/driversSlice';
 import { toast } from 'sonner';
 import { Card } from '../Components/Card';
 import { Button } from '../Components/Button';
-import { ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle, Share2, Maximize2, X, CalendarCheck, Check } from 'lucide-react';
+import { 
+  ArrowLeft, Download, FileText, FileCheck, Bed, Map, Briefcase, Table, Edit2, 
+  Calendar, Users, MapPin, Car, Globe, CheckCircle2, XCircle, Share2, Maximize2, 
+  X, CalendarCheck, Check, Sparkles, Compass, Euro, Heart, Camera, Mountain, 
+  Palmtree, Clock, ArrowRight, Edit3 
+} from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { ClientItineraryDoc } from '../Components/Documents/ClientItineraryDoc';
@@ -27,6 +32,45 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 
 const libraries = ['places'];
+
+const STATUS_CONFIG = {
+  Inquiry: {
+    label: 'Inquiry',
+    badgeClass: 'from-amber-500/20 to-amber-500/5 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700/50',
+    dotClass: 'bg-amber-500'
+  },
+  Proposal: {
+    label: 'Proposal',
+    badgeClass: 'from-sky-500/20 to-sky-500/5 text-sky-700 dark:text-sky-400 border-sky-300 dark:border-sky-700/50',
+    dotClass: 'bg-sky-500'
+  },
+  Booked: {
+    label: 'Booked',
+    badgeClass: 'from-purple-500/20 to-purple-500/5 text-purple-700 dark:text-purple-400 border-purple-300 dark:border-purple-700/50',
+    dotClass: 'bg-purple-500'
+  },
+  Active: {
+    label: 'Active',
+    badgeClass: 'from-emerald-500/20 to-emerald-500/5 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/50',
+    dotClass: 'bg-emerald-500'
+  },
+  Completed: {
+    label: 'Completed',
+    badgeClass: 'from-slate-500/20 to-slate-500/5 text-slate-700 dark:text-slate-400 border-slate-300 dark:border-slate-700/50',
+    dotClass: 'bg-slate-500'
+  }
+};
+
+const getGuestTypeIcon = (type) => {
+  if (!type) return Palmtree;
+  const lower = type.toLowerCase();
+  if (lower.includes('honeymoon') || lower.includes('romance')) return Heart;
+  if (lower.includes('photo') || lower.includes('wildlife')) return Camera;
+  if (lower.includes('adventure') || lower.includes('trek')) return Mountain;
+  if (lower.includes('luxury') || lower.includes('safari') || lower.includes('vip')) return Sparkles;
+  if (lower.includes('family')) return Users;
+  return Palmtree;
+};
 
 export function TripDetailsPage() {
   const { id } = useParams();
@@ -569,71 +613,120 @@ export function TripDetailsPage() {
     }
   };
 
+  const statusInfo = STATUS_CONFIG[trip.status] || STATUS_CONFIG.Inquiry;
+  const GuestIcon = getGuestTypeIcon(trip.guestType);
+
   return (
-    <div className={`space-y-6 max-w-6xl mx-auto relative ${activeTab === 'client' ? 'pb-4' : 'pb-20'}`}>
-      <div className="sticky top-[73px] md:top-[88px] z-[100] bg-gradient-to-b from-slate-50 via-slate-50/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 pb-8 pt-2 -mt-2 transition-all duration-300 pointer-events-none">
-        <div className="flex flex-col xl:flex-row justify-between items-center gap-3 w-full pointer-events-auto px-2 sm:px-4">
-          <div className="flex items-center gap-4 shrink-0">
-            <button onClick={() => navigate('/trips')} className="p-2 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 rounded-full transition-colors shadow-sm text-gray-600 dark:text-slate-300 hover:text-brand-primary group">
-              <ArrowLeft size={18} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
-            </button>
-            <div className="flex flex-col gap-1">
-              <h1 className="text-xl sm:text-2xl font-black text-gray-800 dark:text-slate-100 tracking-tight leading-none">{trip.title}</h1>
+    <div className={`space-y-8 max-w-7xl mx-auto relative ${activeTab === 'client' ? 'pb-6' : 'pb-24'}`}>
+      {/* Top Sticky Header */}
+      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-4 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate('/trips')} 
+            className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-brand-primary hover:border-brand-primary/40 hover:bg-brand-50/30 transition-all duration-300 group shrink-0"
+            title="Return to Trips Portfolio"
+          >
+            <ArrowLeft size={18} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
+          </button>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+                <Sparkles size={11} className="text-brand-accent" />
+                Expedition Dossier
+              </span>
+              <span className="text-xs font-semibold text-slate-400">• Madagascar Bespoke</span>
               {activeTab === 'client' && (
-                <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary w-fit">
-                  <Map className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest">Itinerary Manager</span>
-                </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                  <Map size={11} />
+                  Itinerary Manager
+                </span>
               )}
             </div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-display tracking-tight leading-tight">
+              {trip.title}
+            </h1>
           </div>
-          
+        </div>
+
+        {/* Top Header Actions */}
+        <div className="flex items-center flex-wrap gap-2.5 self-end md:self-auto">
+          <div id="itinerary-manager-header-portal" className="empty:hidden flex items-center gap-2.5"></div>
+
+          {activeTab === 'overview' && (
+            <>
+              <button
+                onClick={() => navigate(`/trips/${trip._id}/edit`)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
+                title="Edit Core Voyage Parameters"
+              >
+                <Edit3 size={14} className="text-brand-primary" />
+                <span>Edit Parameters</span>
+              </button>
+
+              <button
+                onClick={handleShareTrip}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
+                title="Generate Client Web Share Link"
+              >
+                <Share2 size={14} className="text-brand-primary" />
+                <span>Share Link</span>
+              </button>
+
+              <button
+                onClick={() => setIsTourAgendaOpen(true)}
+                className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] shadow-lg shadow-brand-primary/25 transition-all"
+              >
+                <CalendarCheck size={14} />
+                <span>Tour Agenda</span>
+              </button>
+            </>
+          )}
+
           {activeTab !== 'overview' && (
-            <div className="flex items-center flex-wrap gap-3">
-              <div id="itinerary-manager-header-portal" className="empty:hidden flex items-center gap-3"></div>
-              
-              {activeTab === 'client' && !showPdfPreview && <div className="w-px h-6 bg-gray-200 dark:bg-slate-700 hidden sm:block"></div>}
-              
-              <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-stone-200/80 dark:border-slate-800 rounded-full p-1 shadow-xs">
-                {activeTab === 'client' && (
-                  <>
-                    <button 
-                      onClick={() => setShowPdfPreview(!showPdfPreview)} 
-                      className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold ${showPdfPreview ? 'bg-brand-primary hover:bg-brand-secondary text-white shadow-xs' : 'bg-stone-50 dark:bg-slate-800/50 hover:bg-stone-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-brand-primary border border-stone-200/80 dark:border-slate-700'}`}
-                    >
-                      {showPdfPreview ? <Edit2 size={14} /> : <FileText size={14} />} 
-                      {showPdfPreview ? 'Back to Editor' : 'Preview & Export'}
-                    </button>
-                    <div className="w-px h-5 bg-stone-200 dark:bg-slate-800 mx-1"></div>
-                  </>
-                )}
-                
-                {((activeTab === 'client' && showPdfPreview) || activeTab !== 'client') && (
-                  <>
-                    <button onClick={generatePDF} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as PDF">
-                      <Download size={14} /> <span className="hidden lg:inline">PDF</span>
-                    </button>
-                    <div className="w-px h-4 bg-stone-200 dark:bg-slate-800"></div>
-                    <button onClick={() => alert("DOCX export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as DOCX">
-                      <FileText size={14} /> <span className="hidden lg:inline">DOCX</span>
-                    </button>
-                    <div className="w-px h-4 bg-stone-200 dark:bg-slate-800"></div>
-                    <button onClick={() => alert("Excel export coming soon!")} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as Excel">
-                      <Table size={14} /> <span className="hidden lg:inline">Excel</span>
-                    </button>
-                    <div className="w-px h-5 bg-stone-200 dark:bg-slate-800 mx-1"></div>
-                    <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold shadow-xs ${isEditing ? 'bg-stone-800 hover:bg-stone-900 text-white dark:bg-stone-200 dark:text-slate-900' : 'bg-brand-primary hover:bg-brand-secondary text-white'}`}>
-                      <Edit2 size={14} /> {isEditing ? 'Done Editing' : 'Quick Edit'}
-                    </button>
-                  </>
-                )}
-              </div>
+            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full p-1 shadow-sm">
+              {activeTab === 'client' && (
+                <>
+                  <button 
+                    onClick={() => setShowPdfPreview(!showPdfPreview)} 
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold ${
+                      showPdfPreview 
+                        ? 'bg-brand-primary hover:bg-brand-secondary text-white shadow-sm' 
+                        : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {showPdfPreview ? <Edit2 size={13} /> : <FileText size={13} />} 
+                    {showPdfPreview ? 'Back to Editor' : 'Preview & Export'}
+                  </button>
+                  <div className="w-px h-5 bg-slate-200 dark:bg-slate-800 mx-1"></div>
+                </>
+              )}
+
+              {((activeTab === 'client' && showPdfPreview) || activeTab !== 'client') && (
+                <>
+                  <button onClick={generatePDF} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as PDF">
+                    <Download size={13} /> <span>PDF</span>
+                  </button>
+                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-800"></div>
+                  <button onClick={() => alert("DOCX export coming soon!")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as DOCX">
+                    <FileText size={13} /> <span>DOCX</span>
+                  </button>
+                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-800"></div>
+                  <button onClick={() => alert("Excel export coming soon!")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-primary text-slate-600 dark:text-slate-300 transition-colors text-xs font-bold" title="Export as Excel">
+                    <Table size={13} /> <span>Excel</span>
+                  </button>
+                  <div className="w-px h-5 bg-slate-200 dark:bg-slate-800 mx-1"></div>
+                  <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all text-xs font-bold shadow-sm ${isEditing ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900' : 'bg-brand-primary hover:bg-brand-secondary text-white'}`}>
+                    <Edit2 size={13} /> {isEditing ? 'Done' : 'Quick Edit'}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
       </div>
-      {/* Floating Navigation Bar */}
-      <div className="fixed left-0 right-0 bottom-0 md:left-auto md:right-4 md:top-1/2 md:-translate-y-1/2 flex flex-row md:flex-col z-50 bg-white/90 md:bg-white/80 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl border-t md:border border-gray-100 rounded-t-[2rem] md:rounded-[2.5rem] py-3 md:py-5 px-4 md:px-2 w-full md:w-[90px] gap-2 sm:gap-6 justify-around overflow-x-auto no-scrollbar">
+
+      {/* Floating Navigation Dock (Luxury Glass Dock) */}
+      <div className="fixed left-0 right-0 bottom-0 md:left-auto md:right-5 md:top-1/2 md:-translate-y-1/2 flex flex-row md:flex-col z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.12)] md:shadow-2xl border-t md:border border-slate-200/80 dark:border-slate-800 rounded-t-3xl md:rounded-3xl py-3 md:py-6 px-4 md:px-3 w-full md:w-[94px] gap-2 sm:gap-6 justify-around overflow-x-auto no-scrollbar transition-all">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -644,25 +737,25 @@ export function TripDetailsPage() {
               className="relative flex flex-col items-center justify-center cursor-pointer group flex-shrink-0 min-w-[60px] md:min-w-0"
             >
               {/* Icon Container */}
-              <div className={`relative flex flex-col items-center transition-all duration-500 ${
+              <div className={`relative flex flex-col items-center transition-all duration-300 ${
                 isActive 
-                  ? 'text-brand-primary -translate-y-0.5' 
-                  : 'text-gray-400 group-hover:text-gray-600 group-hover:-translate-y-1'
+                  ? 'text-brand-primary scale-110 -translate-y-0.5' 
+                  : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 group-hover:-translate-y-0.5'
               }`}>
-                <Icon size={26} className={isActive ? 'stroke-[2.5px]' : 'stroke-2'} />
+                <Icon size={24} className={isActive ? 'stroke-[2.5px]' : 'stroke-2'} />
                 
                 {/* Advanced Minimalist Dot Indicator */}
-                <div className={`absolute -bottom-2.5 w-1.5 h-1.5 rounded-full bg-brand-primary transition-all duration-300 ${
-                  isActive ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
+                <div className={`absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-brand-primary transition-all duration-300 ${
+                  isActive ? 'scale-100 opacity-100 shadow-sm shadow-brand-primary' : 'scale-0 opacity-0'
                 }`} />
               </div>
               
               {/* Text */}
-              <div className="flex flex-col items-center mt-3.5">
-                <h3 className={`font-black text-[10px] text-center leading-[1.15] transition-colors duration-300 ${isActive ? 'text-brand-primary' : 'text-gray-500 group-hover:text-gray-700'}`}>
+              <div className="flex flex-col items-center mt-3">
+                <h3 className={`font-black text-[10px] text-center leading-[1.15] transition-colors duration-300 ${isActive ? 'text-brand-primary font-bold' : 'text-slate-500 group-hover:text-slate-800 dark:text-slate-400 dark:group-hover:text-slate-200'}`}>
                   {tab.label}
                 </h3>
-                <p className={`text-[8px] font-bold text-center mt-0.5 transition-colors duration-300 ${isActive ? 'text-brand-primary/70' : 'text-gray-400 group-hover:text-gray-500'}`}>
+                <p className={`text-[8px] font-bold text-center mt-0.5 transition-colors duration-300 ${isActive ? 'text-brand-primary/70' : 'text-slate-400 group-hover:text-slate-500'}`}>
                   {tab.desc}
                 </p>
               </div>
@@ -673,55 +766,82 @@ export function TripDetailsPage() {
 
       {activeTab === 'overview' ? (
         <div className="space-y-8 animate-in fade-in duration-500">
-          {/* Hero Section */}
-          <div className="relative w-full h-[400px] rounded-[2.5rem] overflow-hidden shadow-2xl">
+          {/* Luxury Hero Banner */}
+          <div className="relative w-full h-[420px] rounded-3xl sm:rounded-4xl overflow-hidden shadow-2xl border border-slate-200/60 dark:border-slate-800 group">
             <div className="absolute inset-0">
-              <img src="/hero.jpg" alt="Madagascar Landscape" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+              <img src="/hero.jpg" alt="Madagascar Landscape" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20" />
             </div>
-            <div className="absolute bottom-0 left-0 w-full p-8 text-white flex justify-between items-end">
-              <div>
-                <span className="inline-block px-3.5 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-black mb-3 uppercase tracking-wider">{trip.status}</span>
-                <h2 className="text-4xl md:text-5xl font-black mb-2">{trip.title}</h2>
-                <div className="flex items-center gap-4 text-sm md:text-base font-semibold text-white/90">
-                  <span className="flex items-center gap-1"><Map size={18}/> Madagascar</span>
-                  <span className="flex items-center gap-1"><Calendar size={18}/> {trip.duration} Tage</span>
-                  <span className="flex items-center gap-1">
-                    <Users size={18}/> {
+
+            <div className="absolute top-6 left-6 right-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md border ${statusInfo.badgeClass} bg-black/40 text-white`}>
+                  <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass} animate-pulse`} />
+                  {statusInfo.label}
+                </span>
+
+                {trip.guestType && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-white bg-black/40 backdrop-blur-md border border-white/20">
+                    <GuestIcon size={13} className="text-brand-accent" />
+                    <span>{trip.guestType}</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsTourAgendaOpen(true)}
+                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-full transition-all font-bold text-xs shadow-sm border border-white/25 text-white"
+                >
+                  <CalendarCheck size={14} /> <span>Tour Agenda</span>
+                </button>
+                <button
+                  onClick={handleShareTrip}
+                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-full transition-all font-bold text-xs shadow-sm border border-white/25 text-white"
+                >
+                  <Share2 size={14} /> <span>Share</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 left-0 w-full p-6 sm:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-display tracking-tight text-white leading-tight drop-shadow-md">
+                  {trip.title}
+                </h2>
+                
+                <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-semibold text-white/90 pt-1">
+                  <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/10">
+                    <Map size={15} className="text-brand-accent" /> Madagascar
+                  </span>
+                  <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/10">
+                    <Calendar size={15} className="text-brand-accent" /> {trip.duration} Days Expedition
+                  </span>
+                  <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/10">
+                    <Users size={15} className="text-brand-accent" /> {
                       trip.client 
-                        ? `${(trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0)} ${(trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0) === 1 ? 'Person' : 'Personen'}`
-                        : (trip.guestType || 'Standard')
+                        ? `${trip.client?.name} (${(trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0)} Pax)`
+                        : 'No Client Assigned'
                     }
                   </span>
                 </div>
               </div>
-              <div className="hidden md:flex flex-col items-end text-right">
-                <div className="text-sm font-bold text-white/80 mb-1">Total Price</div>
+
+              <div className="flex flex-col items-start md:items-end text-left md:text-right bg-black/40 backdrop-blur-md p-4 px-6 rounded-3xl border border-white/15">
+                <span className="text-[11px] font-black uppercase tracking-wider text-amber-300/90 mb-0.5">Estimated Investment</span>
                 <div 
                   onClick={openPriceModal}
-                  className="text-3xl font-black mb-3 cursor-pointer hover:text-stone-200 transition-colors flex items-center gap-2 group"
+                  className="text-2xl sm:text-3xl font-black text-white cursor-pointer hover:text-amber-300 transition-colors flex items-center gap-2 group/price"
                   title="Click to edit total price"
                 >
-                  <span>€{trip.totalPrice}</span>
-                  <Edit2 size={16} className="opacity-0 group-hover:opacity-100 transition-opacity text-stone-200" />
+                  <span>{trip.totalPrice ? `€ ${Number(trip.totalPrice).toLocaleString()}` : 'Quote on Request'}</span>
+                  <Edit2 size={15} className="opacity-60 group-hover/price:opacity-100 transition-opacity text-amber-300" />
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <button 
-                    onClick={() => setIsTourAgendaOpen(true)}
-                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-5 py-2.5 rounded-full transition-all font-bold text-sm shadow-sm border border-white/25 text-white hover:-translate-y-0.5 active:translate-y-0"
-                  >
-                    <CalendarCheck size={16} className="text-white" /> Tour Agenda
-                  </button>
-                  <button 
-                    onClick={handleShareTrip}
-                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-md px-5 py-2.5 rounded-full transition-all font-bold text-sm shadow-sm border border-white/25 text-white hover:-translate-y-0.5 active:translate-y-0"
-                  >
-                    <Share2 size={16} /> Share Itinerary
-                  </button>
-                </div>
+                <p className="text-[10px] text-white/60 mt-0.5">Click amount to update package value</p>
               </div>
             </div>
           </div>
+
           {/* Merged Section: Trip Itinerary & Map */}
           {isMapExpanded && (
             <div 
@@ -730,24 +850,30 @@ export function TripDetailsPage() {
             />
           )}
 
-          <div className={`bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-stone-200/80 dark:border-slate-800 ${!isMapExpanded ? 'overflow-hidden' : ''} mb-8`}>
+          <div className={`glass-panel rounded-3xl sm:rounded-4xl shadow-xl border border-slate-200/80 dark:border-slate-800 ${!isMapExpanded ? 'overflow-hidden' : ''} mb-8`}>
             {/* Section Header */}
-            <div className="p-6 sm:p-7 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 dark:border-slate-800">
-              <div className="flex flex-col gap-1">
-                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
-                  <Map size={24} className="text-brand-primary" /> Trip Itinerary
-                </h3>
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  {trip.duration} Days • {trip.itinerary?.length || 0} Destinations
-                </p>
+            <div className="p-6 sm:p-7 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-secondary text-white flex items-center justify-center shadow-md shadow-brand-primary/20">
+                  <Compass size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-display flex items-center gap-2">
+                    Expedition Route & Timeline
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    {trip.duration} Days • {trip.itinerary?.length || 0} Journey Destinations
+                  </p>
+                </div>
               </div>
+
               <div className="flex items-center gap-2.5">
                 <button 
                   onClick={() => setIsAgendaOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-stone-100 hover:bg-stone-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 border border-stone-200/60 dark:border-slate-700 font-bold text-xs rounded-full transition-all shadow-xs active:scale-95"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700 font-bold text-xs rounded-full transition-all shadow-sm active:scale-95"
                   title="Adjust Tour Start & End Dates"
                 >
-                  <Edit2 size={13} /> Edit Dates
+                  <Edit2 size={13} /> Edit Dates & Agenda
                 </button>
               </div>
             </div>
@@ -1060,23 +1186,25 @@ export function TripDetailsPage() {
         tripEvents={tripEvents}
         drivers={drivers}
       />
-      {/* Quick Price Modal */}
+      {/* Quick Price Modal (Luxury Glass Modal) */}
       {isPriceModalOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setIsPriceModalOpen(false)}
         >
           <div 
-            className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-stone-200/80 dark:border-slate-800 p-6 sm:p-7 max-w-md w-full animate-in zoom-in-95 duration-200"
+            className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-4xl shadow-2xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 space-y-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-stone-100 dark:border-slate-800 mb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-primary/10 text-brand-primary dark:bg-brand-primary/20 dark:text-brand-300 flex items-center justify-center font-black text-lg">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center font-black text-xl shadow-md shadow-amber-500/20">
                   €
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white">Edit Total Price</h3>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white font-display">
+                    Adjust Voyage Investment
+                  </h3>
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     {trip.title} • {trip.duration} Days
                   </p>
@@ -1084,7 +1212,7 @@ export function TripDetailsPage() {
               </div>
               <button
                 onClick={() => setIsPriceModalOpen(false)}
-                className="p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -1093,16 +1221,16 @@ export function TripDetailsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">
-                  Total Price (EUR)
+                  Total Package Investment (EUR)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 dark:text-slate-500 font-bold text-lg">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-xl">
                     €
                   </span>
                   <input
                     type="number"
                     min="0"
-                    step="10"
+                    step="50"
                     value={priceDraft}
                     onChange={(e) => setPriceDraft(e.target.value)}
                     onKeyDown={(e) => {
@@ -1110,7 +1238,7 @@ export function TripDetailsPage() {
                       if (e.key === 'Escape') setIsPriceModalOpen(false);
                     }}
                     autoFocus
-                    className="w-full pl-11 pr-5 py-3.5 bg-stone-50 dark:bg-slate-800/80 border border-stone-200 dark:border-slate-700 rounded-full font-black text-2xl text-slate-900 dark:text-white outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all"
+                    className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-100 dark:border-slate-700 rounded-2xl font-black text-2xl text-slate-900 dark:text-white outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -1118,8 +1246,8 @@ export function TripDetailsPage() {
 
               {/* Quick Presets */}
               <div>
-                <div className="text-[11px] font-bold text-stone-400 dark:text-slate-500 uppercase tracking-wider mb-2 ml-1">
-                  Quick Adjustments
+                <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 ml-1">
+                  Quick Step Adjustments
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {[50, 100, 250, 500].map((amt) => (
@@ -1127,7 +1255,7 @@ export function TripDetailsPage() {
                       key={amt}
                       type="button"
                       onClick={() => setPriceDraft(String(Math.max(0, (Number(priceDraft) || 0) + amt)))}
-                      className="py-1.5 px-2 bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-stone-200/80 dark:border-slate-700 rounded-full text-xs font-bold transition-all text-center cursor-pointer active:scale-95"
+                      className="py-2 px-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 rounded-xl text-xs font-bold transition-all text-center cursor-pointer active:scale-95"
                     >
                       +{amt} €
                     </button>
@@ -1136,15 +1264,15 @@ export function TripDetailsPage() {
               </div>
 
               {/* Breakdown Stats */}
-              <div className="p-4 bg-stone-50/80 dark:bg-slate-800/50 rounded-2xl border border-stone-200/60 dark:border-slate-700/60 grid grid-cols-2 gap-3 text-xs">
+              <div className="p-4 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <span className="text-stone-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Day</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Daily Average</span>
                   <span className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">
                     €{Math.round((Number(priceDraft) || 0) / (trip.duration || 1)).toLocaleString()} / day
                   </span>
                 </div>
                 <div>
-                  <span className="text-stone-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Person</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-semibold block text-[10px] uppercase">Per Traveler</span>
                   <span className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">
                     {((trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0)) > 0
                       ? `€${Math.round((Number(priceDraft) || 0) / ((trip.client?.paxAdults || 0) + (trip.client?.paxChildren || 0))).toLocaleString()} / pax`
@@ -1154,11 +1282,11 @@ export function TripDetailsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-stone-100 dark:border-slate-800">
+            <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setIsPriceModalOpen(false)}
-                className="flex-1 py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm rounded-full transition-colors cursor-pointer active:scale-95"
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-full transition-colors cursor-pointer active:scale-95"
               >
                 Cancel
               </button>
@@ -1166,9 +1294,9 @@ export function TripDetailsPage() {
                 type="button"
                 onClick={() => handleSavePrice()}
                 disabled={isSavingPrice}
-                className="flex-1 py-2.5 bg-brand-primary hover:bg-brand-secondary text-white font-black text-sm rounded-full shadow-md shadow-brand-primary/20 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+                className="flex-1 py-3 bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] text-white font-bold text-xs rounded-full shadow-lg shadow-brand-primary/25 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
               >
-                <Check size={16} strokeWidth={3} /> {isSavingPrice ? 'Saving...' : 'Save Price'}
+                <Check size={15} strokeWidth={3} /> {isSavingPrice ? 'Saving...' : 'Save Package Value'}
               </button>
             </div>
           </div>

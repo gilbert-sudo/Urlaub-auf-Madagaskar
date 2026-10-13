@@ -2,45 +2,63 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createTrip, updateTrip, fetchTripById } from '../store/slices/tripsSlice';
-import { setItinerary, addDay, updateDay, removeDay, resetItinerary } from '../store/slices/itinerarySlice';
-import { fetchClients } from '../store/slices/clientsSlice';
-import { fetchHotels } from '../store/slices/hotelsSlice';
-import { fetchDrivers } from '../store/slices/driversSlice';
-import { Card } from '../Components/Card';
-import { Button } from '../Components/Button';
-import { ClientSelect } from '../Components/ClientSelect';
-import { DriverSelect } from '../Components/DriverSelect';
-import { HotelSelect } from '../Components/HotelSelect';
-import { DateTimePicker } from '../Components/DateTimePicker';
-import { DatePicker } from '../Components/DatePicker';
-import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Calendar, Coffee, Utensils, Bed, Car, UserCheck, Ticket, Fuel, Plane, Receipt, FileText, Shield, CreditCard, Coins, Wine, Map } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { 
+  createTrip, 
+  updateTrip, 
+  fetchTripById 
+} from '../store/slices/tripsSlice';
+import { fetchClients } from '../store/slices/clientsSlice';
+import { ClientSelect } from '../Components/ClientSelect';
+import { DatePicker } from '../Components/DatePicker';
+import { 
+  ArrowLeft, 
+  Sparkles, 
+  Compass, 
+  Calendar, 
+  Euro, 
+  Users, 
+  MapPin, 
+  Check, 
+  ArrowRight, 
+  ShieldCheck, 
+  Heart, 
+  Camera, 
+  Mountain, 
+  Palmtree, 
+  Clock, 
+  Plus, 
+  Minus,
+  Briefcase,
+  Layers,
+  ChevronRight
+} from 'lucide-react';
 
-const PREDEFINED_FEATURES = [
-  { id: 'accommodation', label: 'Accommodation', icon: Bed },
-  { id: 'breakfast', label: 'Breakfast', icon: Coffee },
-  { id: 'lunch', label: 'Lunch', icon: Utensils },
-  { id: 'half_board', label: 'Half Board (Breakfast & Dinner)', icon: Utensils },
-  { id: 'full_board', label: 'Full Board (All Meals)', icon: Utensils },
-  { id: 'drinks', label: 'Drinks & Alcohol', icon: Wine },
-  { id: 'airport_transfer', label: 'Airport Transfers', icon: Car },
-  { id: 'local_flights', label: 'Local Flights', icon: Plane },
-  { id: 'intl_flights', label: 'International Flights', icon: Plane },
-  { id: 'vehicle', label: '4x4 Vehicle & Driver', icon: Car },
-  { id: 'fuel', label: 'Fuel', icon: Fuel },
-  { id: 'guide', label: 'English Speaking Guide', icon: UserCheck },
-  { id: 'park_fees', label: 'Park Entrance Fees', icon: Ticket },
-  { id: 'optional_activities', label: 'Optional Activities', icon: Map },
-  { id: 'taxes', label: 'Taxes & Fees', icon: Receipt },
-  { id: 'visa', label: 'Visa Fees', icon: FileText },
-  { id: 'insurance', label: 'Travel Insurance', icon: Shield },
-  { id: 'personal', label: 'Personal Expenses', icon: CreditCard },
-  { id: 'tips', label: 'Tips & Gratuities', icon: Coins },
+const GUEST_TYPES = [
+  { id: 'Honeymoon', label: 'Honeymoon & Romance', icon: Heart, desc: 'Luxury lodges & intimate experiences' },
+  { id: 'Family', label: 'Family Discovery', icon: Users, desc: 'Accessible routes & child-friendly activities' },
+  { id: 'Wildlife & Photography', label: 'Wildlife & Photography', icon: Camera, desc: 'Night walks, lemurs & pristine reserves' },
+  { id: 'Luxury Safari', label: 'Ultra-Luxury Safari', icon: Sparkles, desc: 'Private transfers, top villas & premium service' },
+  { id: 'Adventure & Trekking', label: 'Adventure & Trekking', icon: Mountain, desc: 'Tsingy climbs, hiking & raw nature' },
+  { id: 'Classic Explorer', label: 'Classic Explorer', icon: Palmtree, desc: 'Highlands, RN7 highlights & coastal relaxation' }
 ];
 
-const SHARED_INPUT_CLASS = "w-full px-5 py-3 rounded-full border-2 border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-brand-primary/40 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-semibold text-sm text-gray-800 placeholder:text-gray-400";
-const SHARED_LABEL_CLASS = "text-[11px] font-extrabold text-gray-500 uppercase tracking-wider ml-2 mb-1.5 block";
+const STATUS_OPTIONS = [
+  { id: 'Inquiry', label: 'Inquiry', color: 'from-amber-500/20 to-amber-500/5 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700/50', dot: 'bg-amber-500' },
+  { id: 'Proposal', label: 'Proposal', color: 'from-sky-500/20 to-sky-500/5 text-sky-700 dark:text-sky-400 border-sky-300 dark:border-sky-700/50', dot: 'bg-sky-500' },
+  { id: 'Booked', label: 'Booked', color: 'from-purple-500/20 to-purple-500/5 text-purple-700 dark:text-purple-400 border-purple-300 dark:border-purple-700/50', dot: 'bg-purple-500' },
+  { id: 'Active', label: 'Active', color: 'from-emerald-500/20 to-emerald-500/5 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/50', dot: 'bg-emerald-500' },
+  { id: 'Completed', label: 'Completed', color: 'from-slate-500/20 to-slate-500/5 text-slate-700 dark:text-slate-400 border-slate-300 dark:border-slate-700/50', dot: 'bg-slate-500' },
+];
+
+const SUGGESTED_TITLES = [
+  'Royal Baobabs & Tsingy Odyssey',
+  'Northern Wildlife & Emerald Sea',
+  'Grand RN7 Highland Expedition',
+  'Vanilla Coast Rainforest Retreat',
+  'Isalo Canyons & Ifaty Sands'
+];
 
 export function CreateTripPage() {
   const dispatch = useDispatch();
@@ -49,63 +67,9 @@ export function CreateTripPage() {
   const isEditing = !!id;
 
   const { items: clients } = useSelector(state => state.clients);
-  const { items: hotels } = useSelector(state => state.hotels);
-  const { items: drivers } = useSelector(state => state.drivers);
-  const { days: itinerary } = useSelector(state => state.itinerary);
 
-  useEffect(() => {
-    dispatch(fetchClients());
-    dispatch(fetchHotels());
-    dispatch(fetchDrivers());
-
-    if (!isEditing) {
-      dispatch(setItinerary([{ dayNumber: 1, date: '', activities: '', hotel: '', driver: '', locationDetails: '', coordinates: { lat: -18.8792, lng: 47.5079 } }]));
-    }
-    
-    if (isEditing) {
-      dispatch(fetchTripById(id)).unwrap().then((trip) => {
-        setTripData({
-          title: trip.title || '',
-          client: trip.client?._id || trip.client || '',
-          duration: trip.duration || 1,
-          startDate: trip.startDate ? new Date(trip.startDate).toISOString().split('T')[0] : '',
-          endDate: trip.endDate ? new Date(trip.endDate).toISOString().split('T')[0] : '',
-          guestType: trip.guestType || 'Standard',
-          totalPrice: trip.totalPrice || 0,
-          status: trip.status || 'Inquiry',
-          inclusions: trip.inclusions?.length ? trip.inclusions : [''],
-          exclusions: trip.exclusions?.length ? trip.exclusions : [''],
-          flights: {
-            arrival: {
-              date: trip.flights?.arrival?.date ? new Date(trip.flights.arrival.date).toISOString() : '',
-              flightNumber: trip.flights?.arrival?.flightNumber || '',
-              details: trip.flights?.arrival?.details || ''
-            },
-            departure: {
-              date: trip.flights?.departure?.date ? new Date(trip.flights.departure.date).toISOString() : '',
-              flightNumber: trip.flights?.departure?.flightNumber || '',
-              details: trip.flights?.departure?.details || ''
-            }
-          }
-        });
-        
-        if (trip.itinerary && trip.itinerary.length > 0) {
-          dispatch(setItinerary(trip.itinerary.map(day => ({
-            dayNumber: day.dayNumber,
-            date: day.date ? new Date(day.date).toISOString().split('T')[0] : '',
-            activities: day.activities || '',
-            hotel: day.hotel?._id || day.hotel || '',
-            driver: day.driver?._id || day.driver || '',
-            locationDetails: day.locationDetails || '',
-            coordinates: day.coordinates || { lat: -18.8792, lng: 47.5079 }
-          }))));
-        }
-      });
-    }
-  }, [dispatch, id, isEditing]);
-
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = isEditing ? 4 : 1;
+  const [isLoadingTrip, setIsLoadingTrip] = useState(isEditing);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [tripData, setTripData] = useState({
     title: '',
@@ -113,534 +77,618 @@ export function CreateTripPage() {
     duration: 1,
     startDate: '',
     endDate: '',
-    guestType: 'Standard',
-    totalPrice: 0,
-    status: 'Inquiry',
-    inclusions: [''],
-    exclusions: [''],
-    flights: {
-      arrival: { date: '', flightNumber: '', details: '' },
-      departure: { date: '', flightNumber: '', details: '' }
-    }
+    guestType: 'Classic Explorer',
+    totalPrice: '',
+    status: 'Inquiry'
   });
 
+  useEffect(() => {
+    dispatch(fetchClients());
 
-  const handleTripDataChange = (e) => {
-    const { name, value } = e.target;
-    
+    if (isEditing) {
+      setIsLoadingTrip(true);
+      dispatch(fetchTripById(id))
+        .unwrap()
+        .then((trip) => {
+          setTripData({
+            title: trip.title || '',
+            client: trip.client?._id || trip.client || '',
+            duration: trip.duration || 1,
+            startDate: trip.startDate ? new Date(trip.startDate).toISOString().split('T')[0] : '',
+            endDate: trip.endDate ? new Date(trip.endDate).toISOString().split('T')[0] : '',
+            guestType: trip.guestType || 'Classic Explorer',
+            totalPrice: trip.totalPrice !== undefined && trip.totalPrice !== null ? trip.totalPrice : '',
+            status: trip.status || 'Inquiry'
+          });
+        })
+        .catch((err) => {
+          toast.error('Failed to load trip: ' + err.message);
+        })
+        .finally(() => {
+          setIsLoadingTrip(false);
+        });
+    }
+  }, [dispatch, id, isEditing]);
+
+  const selectedClient = clients.find(c => c._id === tripData.client);
+
+  const handleFieldChange = (name, value) => {
+    setTripData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateChange = (name, value) => {
     setTripData(prev => {
-      const newData = { ...prev, [name]: value };
-      
-      // Auto-calculate duration if start or end date changes
-      if (name === 'startDate' || name === 'endDate') {
-        const start = name === 'startDate' ? value : prev.startDate;
-        const end = name === 'endDate' ? value : prev.endDate;
-        
-        if (start && end) {
-          const startDateObj = new Date(start);
-          const endDateObj = new Date(end);
-          if (endDateObj >= startDateObj) {
-            const diffTime = Math.abs(endDateObj - startDateObj);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
-            newData.duration = diffDays;
-          }
+      const updated = { ...prev, [name]: value };
+      const start = name === 'startDate' ? value : prev.startDate;
+      const end = name === 'endDate' ? value : prev.endDate;
+
+      if (start && end) {
+        const s = new Date(start);
+        const e = new Date(end);
+        if (e >= s) {
+          const diffDays = Math.ceil(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1;
+          updated.duration = diffDays;
         }
       }
-      return newData;
+      return updated;
     });
   };
 
-  const handleFlightChange = (type, field, value) => {
-    setTripData(prev => ({
-      ...prev,
-      flights: {
-        ...prev.flights,
-        [type]: { ...prev.flights[type], [field]: value }
+  const handleDurationDelta = (delta) => {
+    setTripData(prev => {
+      const newDuration = Math.max(1, (Number(prev.duration) || 1) + delta);
+      let newEndDate = prev.endDate;
+
+      if (prev.startDate) {
+        const s = new Date(prev.startDate);
+        s.setDate(s.getDate() + newDuration - 1);
+        newEndDate = format(s, 'yyyy-MM-dd');
       }
-    }));
-  };
 
-  const handleArrayChange = (type, index, value) => {
-    const newArray = [...tripData[type]];
-    newArray[index] = value;
-    setTripData(prev => ({ ...prev, [type]: newArray }));
-  };
-
-  const addArrayItem = (type) => {
-    setTripData(prev => ({ ...prev, [type]: [...prev[type], ''] }));
-  };
-
-  const removeArrayItem = (type, index) => {
-    const newArray = tripData[type].filter((_, i) => i !== index);
-    setTripData(prev => ({ ...prev, [type]: newArray }));
-  };
-
-  const handleItineraryChange = (index, field, value) => {
-    dispatch(updateDay({ index, data: { [field]: value } }));
-  };
-
-  const addItineraryDay = () => {
-    dispatch(addDay({ 
-      dayNumber: itinerary.length + 1, 
-      date: '', 
-      activities: '', 
-      hotel: '', 
-      driver: '', 
-      locationDetails: '',
-      coordinates: { lat: -18.8792, lng: 47.5079 }
-    }));
-  };
-
-  const removeItineraryDay = (index) => {
-    dispatch(removeDay(index));
+      return { ...prev, duration: newDuration, endDate: newEndDate };
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (currentStep < totalSteps) {
-      setCurrentStep(prev => prev + 1);
+
+    if (!tripData.title.trim()) {
+      toast.error('Please enter a trip title');
       return;
     }
 
-    const cleanFlights = { ...tripData.flights };
-    if (cleanFlights?.arrival) {
-      cleanFlights.arrival = {
-        ...cleanFlights.arrival,
-        date: cleanFlights.arrival.date || undefined
-      };
-    }
-    if (cleanFlights?.departure) {
-      cleanFlights.departure = {
-        ...cleanFlights.departure,
-        date: cleanFlights.departure.date || undefined
-      };
-    }
-
-    const formattedTrip = {
-      ...tripData,
-      startDate: tripData.startDate || undefined,
-      endDate: tripData.endDate || undefined,
-      totalPrice: tripData.totalPrice ? Number(tripData.totalPrice) : undefined,
-      client: tripData.client || undefined,
-      flights: cleanFlights,
-      itinerary: isEditing 
-        ? itinerary.map(day => ({
-            ...day,
-            date: day.date || undefined,
-            hotel: day.hotel || undefined,
-            driver: day.driver || undefined
-          }))
-        : []
-    };
+    setIsSubmitting(true);
     try {
+      const payload = {
+        title: tripData.title.trim(),
+        client: tripData.client || undefined,
+        guestType: tripData.guestType || 'Standard',
+        status: tripData.status || 'Inquiry',
+        duration: Number(tripData.duration) || 1,
+        startDate: tripData.startDate || undefined,
+        endDate: tripData.endDate || undefined,
+        totalPrice: tripData.totalPrice !== '' && !isNaN(tripData.totalPrice) ? Number(tripData.totalPrice) : undefined
+      };
+
       if (isEditing) {
-        await dispatch(updateTrip({ id, data: formattedTrip })).unwrap();
+        await dispatch(updateTrip({ id, data: payload })).unwrap();
         toast.success('Trip updated successfully!');
-        navigate('/trips');
+        navigate(`/trips/${id}`);
       } else {
-        const newTrip = await dispatch(createTrip(formattedTrip)).unwrap();
-        toast.success('Trip created successfully!');
+        const newTrip = await dispatch(createTrip(payload)).unwrap();
+        toast.success('Expedition created successfully!');
         navigate(`/trips/${newTrip._id}`);
       }
     } catch (err) {
-      toast.error(`Failed to ${isEditing ? 'update' : 'create'} trip: ` + err.message);
+      toast.error(`Failed to ${isEditing ? 'update' : 'create'} trip: ` + (err.message || 'Unknown error'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(prev => prev - 1);
-  };
+  if (isLoadingTrip) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-8">
+        <div className="w-14 h-14 rounded-full border-4 border-brand-primary/20 border-t-brand-primary animate-spin mb-4" />
+        <h3 className="text-lg font-bold text-slate-800 dark:text-white">Loading Expedition Details...</h3>
+        <p className="text-sm text-slate-500">Preparing bespoke voyage parameters</p>
+      </div>
+    );
+  }
 
-  const stepLabels = ['Core Information', 'Flight Information', 'Daily Itinerary', 'Inclusions & Exclusions'];
+  const currentStatusObj = STATUS_OPTIONS.find(s => s.id === tripData.status) || STATUS_OPTIONS[0];
 
   return (
-    <div className="pb-40">
-      <div className="flex flex-col md:flex-row md:items-center sticky top-[73px] z-20 bg-[#f8fafc]/90 backdrop-blur-xl py-4 -mx-8 px-8 xl:-mx-12 xl:px-12 border-b border-gray-200/50 shadow-sm min-h-[85px] gap-6 md:gap-0">
-        <div className="flex items-center gap-4 z-10 w-full md:w-auto">
-          <button type="button" onClick={() => navigate(-1)} className="p-2.5 hover:bg-gray-100 rounded-full transition-colors bg-white shadow-sm border border-gray-100">
-            <ArrowLeft size={18} className="text-gray-700" />
+    <div className="max-w-7xl mx-auto pb-16 pt-2">
+      {/* Top Header & Navigation (Sticky) */}
+      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-4 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-brand-primary hover:border-brand-primary/40 hover:bg-brand-50/30 transition-all duration-300 group"
+            title="Return to previous screen"
+          >
+            <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
           <div>
-            <h1 className="text-xl font-black text-gray-800">{isEditing ? 'Edit Trip' : 'Create New Trip'}</h1>
-            {isEditing && <p className="text-xs font-bold text-brand-primary mt-0.5">Step {currentStep} of {totalSteps}: {stepLabels[currentStep-1]}</p>}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+                <Sparkles size={11} className="text-brand-accent" />
+                {isEditing ? 'Expedition Management' : 'Expedition Atelier'}
+              </span>
+              <span className="text-xs font-semibold text-slate-400">• Madagascar Bespoke</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white font-display tracking-tight">
+              {isEditing ? 'Edit Expedition Parameters' : 'Craft New Expedition'}
+            </h1>
           </div>
         </div>
 
-        {/* Progress Bar - Only show when editing */}
-        {isEditing && (
-          <div className="relative md:absolute md:left-0 md:right-0 flex justify-center pointer-events-none w-full">
-            <div className="w-full md:max-w-3xl relative flex items-center justify-between pointer-events-auto">
-              <div className="absolute top-5 md:top-1/2 left-0 w-full h-1 bg-gray-200 rounded-full md:-translate-y-1/2"></div>
-              <div className="absolute top-5 md:top-1/2 left-0 h-1 bg-brand-primary rounded-full md:-translate-y-1/2 transition-all duration-500 ease-out" style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}></div>
-            
-            {stepLabels.map((label, index) => {
-              const stepNumber = index + 1;
-              const isCompleted = currentStep > stepNumber;
-              const isCurrent = currentStep === stepNumber;
-              
-              return (
-                <div key={label} className="relative z-10 flex flex-col items-center group cursor-pointer" onClick={() => setCurrentStep(stepNumber)}>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all duration-300 ${
-                    isCompleted ? 'bg-brand-primary text-white shadow-md' :
-                    isCurrent ? 'bg-white border-[3px] border-brand-primary text-brand-primary shadow-lg scale-110' :
-                    'bg-white border-2 border-gray-200 text-gray-400 bg-gray-50'
-                  }`}>
-                    {isCompleted ? <Check size={18} strokeWidth={4} /> : stepNumber}
-                  </div>
-                  <span className={`absolute top-12 text-[10px] md:text-[11px] font-extrabold uppercase tracking-widest whitespace-nowrap transition-colors ${
-                    isCurrent ? 'text-brand-primary' : 'text-gray-400 group-hover:text-gray-600'
-                  }`}>
-                    {label}
-                  </span>
-                </div>
-              );
-            })}
-            </div>
-          </div>
-        )}
+        {/* Quick Header Action Controls */}
+        <div className="flex items-center gap-3 self-end md:self-auto">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="px-5 py-2.5 rounded-full text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-7 py-2.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] shadow-lg shadow-brand-primary/25 hover:shadow-brand-primary/40 transition-all duration-300 flex items-center gap-2 group disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                <span>{isEditing ? 'Saving...' : 'Creating...'}</span>
+              </>
+            ) : (
+              <>
+                <span>{isEditing ? 'Save Changes' : 'Create Expedition'}</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      <div className="max-w-5xl mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-8 mt-12 relative min-h-[400px]">
-        {/* Step 1: Core Details */}
-        <div className={`transition-all duration-500 ${currentStep === 1 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 translate-x-8'}`}>
-          <Card className="!p-6 space-y-6">
-            <h2 className="text-lg font-extrabold flex items-center gap-2 text-brand-primary">
-              Core Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="relative">
-                <label className={SHARED_LABEL_CLASS}>Trip Title</label>
-                <input required={currentStep === 1} name="title" value={tripData.title} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS} placeholder="e.g. Honeymoon Madagascar" />
-              </div>
-              <ClientSelect 
-                required={currentStep === 1} 
-                value={tripData.client} 
-                onChange={handleTripDataChange} 
-              />
-              <div className="relative">
-                <label className={SHARED_LABEL_CLASS}>Guest Type</label>
-                <input name="guestType" value={tripData.guestType} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS} placeholder="e.g. Honeymoon, Family" />
-              </div>
-              <div className="relative">
-                <label className={SHARED_LABEL_CLASS}>Status</label>
-                <select name="status" value={tripData.status} onChange={handleTripDataChange} className={SHARED_INPUT_CLASS}>
-                  <option value="Inquiry">Inquiry</option>
-                  <option value="Proposal">Proposal</option>
-                  <option value="Booked">Booked</option>
-                  <option value="Active">Active</option>
-                  <option value="Completed">Completed</option>
-                </select>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Step 2: Flights */}
-        <div className={`transition-all duration-500 ${currentStep === 2 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 translate-x-8'}`}>
-          <Card className="!p-6 space-y-6">
-            <h2 className="text-lg font-extrabold flex items-center gap-2 text-brand-primary">
-              Flight Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
-                <h3 className="font-extrabold text-sm text-gray-700 border-b border-gray-200 pb-2">Arrival Flight</h3>
-                <DateTimePicker
-                  label="Arrival Date & Time"
-                  value={tripData.flights.arrival.date}
-                  onChange={(val) => handleFlightChange('arrival', 'date', val)}
-                />
-                <div className="relative">
-                  <label className={SHARED_LABEL_CLASS}>Flight Number</label>
-                  <input value={tripData.flights.arrival.flightNumber} onChange={(e) => handleFlightChange('arrival', 'flightNumber', e.target.value)} className={SHARED_INPUT_CLASS} />
-                </div>
-                <div className="relative">
-                  <label className={SHARED_LABEL_CLASS}>Details</label>
-                  <input placeholder="e.g. Paris CDG - Antananarivo" value={tripData.flights.arrival.details} onChange={(e) => handleFlightChange('arrival', 'details', e.target.value)} className={SHARED_INPUT_CLASS} />
-                </div>
-              </div>
-              <div className="space-y-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
-                <h3 className="font-extrabold text-sm text-gray-700 border-b border-gray-200 pb-2">Departure Flight</h3>
-                <DateTimePicker
-                  label="Departure Date & Time"
-                  value={tripData.flights.departure.date}
-                  onChange={(val) => handleFlightChange('departure', 'date', val)}
-                />
-                <div className="relative">
-                  <label className={SHARED_LABEL_CLASS}>Flight Number</label>
-                  <input value={tripData.flights.departure.flightNumber} onChange={(e) => handleFlightChange('departure', 'flightNumber', e.target.value)} className={SHARED_INPUT_CLASS} />
-                </div>
-                <div className="relative">
-                  <label className={SHARED_LABEL_CLASS}>Details</label>
-                  <input placeholder="e.g. Antananarivo - Paris CDG" value={tripData.flights.departure.details} onChange={(e) => handleFlightChange('departure', 'details', e.target.value)} className={SHARED_INPUT_CLASS} />
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Step 3: Itinerary */}
-        <div className={`transition-all duration-500 ${currentStep === 3 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 translate-x-8'}`}>
-          <Card className="!p-6 space-y-6 bg-brand-primary/5 border-brand-primary/10">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-extrabold flex items-center gap-2 text-brand-primary">
-                Daily Itinerary
-              </h2>
-              <Button type="button" variant="primary" onClick={addItineraryDay} className="text-xs py-1.5"><Plus size={16}/> Add Day</Button>
-            </div>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Form Column (8 Cols) */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-8">
             
-            <div className="space-y-4">
-              {itinerary.map((day, index) => (
-                <div key={index} className="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm space-y-4 relative group">
-                  <button type="button" onClick={() => removeItineraryDay(index)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={18} /></button>
-                  <div className="font-extrabold text-brand-primary text-sm uppercase tracking-widest">Day {day.dayNumber}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="lg:col-span-1">
-                      <DatePicker
-                        label="Date"
-                        value={day.date}
-                        onChange={(val) => handleItineraryChange(index, 'date', val)}
-                      />
-                    </div>
-                    <div className="relative lg:col-span-3">
-                      <label className={SHARED_LABEL_CLASS}>Activities</label>
-                      <input value={day.activities} onChange={(e) => handleItineraryChange(index, 'activities', e.target.value)} placeholder="e.g. Visit Lemur Park, transfer to Antsirabe" className={SHARED_INPUT_CLASS} />
-                    </div>
-                    <div className="lg:col-span-2">
-                      <HotelSelect
-                        label="Hotel"
-                        value={day.hotel} 
-                        onChange={(val) => handleItineraryChange(index, 'hotel', val)} 
-                      />
-                    </div>
-                    <div className="lg:col-span-1">
-                      <DriverSelect
-                        label="Driver"
-                        value={day.driver} 
-                        onChange={(val) => handleItineraryChange(index, 'driver', val)} 
-                      />
-                    </div>
-                    <div className="relative lg:col-span-1">
-                      <label className={SHARED_LABEL_CLASS}>Location Logistics</label>
-                      <input value={day.locationDetails} onChange={(e) => handleItineraryChange(index, 'locationDetails', e.target.value)} placeholder="e.g. Drop at RN7" className={SHARED_INPUT_CLASS} />
-                    </div>
+            {/* Card 1: Essential Identity */}
+            <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-black/20 space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-brand-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+              
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-secondary text-white flex items-center justify-center shadow-md shadow-brand-primary/20">
+                    <Compass size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800 dark:text-white font-display">Voyage Identification</h2>
+                    <p className="text-xs text-slate-500 font-medium">Core title and assigned client portfolio</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        {/* Step 4: Inclusions & Exclusions */}
-        <div className={`transition-all duration-500 ${currentStep === 4 ? 'block opacity-100 translate-x-0' : 'hidden opacity-0 translate-x-8'}`}>
-          <div className="space-y-8">
-            
-            {/* Inclusions */}
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-black text-gray-800">What's included in this trip?</h2>
-                <p className="text-gray-500 text-sm font-medium mt-1">Select all the features and services included in the total price.</p>
-              </div>
-              
-              <div className="flex flex-wrap gap-3">
-                {PREDEFINED_FEATURES.map(item => {
-                  const isSelected = tripData.inclusions.includes(item.label);
-                  const isExcluded = tripData.exclusions.includes(item.label);
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      disabled={isExcluded}
-                      onClick={() => {
-                        if (isSelected) {
-                          setTripData(prev => ({ ...prev, inclusions: prev.inclusions.filter(i => i !== item.label) }));
-                        } else {
-                          setTripData(prev => ({ ...prev, inclusions: [...prev.inclusions.filter(i => i !== ''), item.label] }));
-                        }
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-full border-2 transition-all duration-200 ${
-                        isExcluded
-                          ? 'opacity-40 cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
-                          : isSelected
-                            ? 'border-brand-primary bg-brand-primary/5 text-brand-primary shadow-sm scale-[0.98]'
-                            : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600 hover:bg-gray-50 hover:shadow-sm'
-                      }`}
-                    >
-                      <item.icon size={18} className={`transition-colors ${isExcluded ? 'text-gray-400' : isSelected ? 'text-brand-primary' : 'text-gray-500'}`} strokeWidth={2} />
-                      <span className={`font-bold text-sm transition-colors ${isExcluded ? 'text-gray-400' : isSelected ? 'text-brand-primary' : 'text-gray-700'}`}>{item.label}</span>
-                    </button>
-                  )
-                })}
+                <span className="text-[11px] font-black uppercase tracking-widest text-brand-primary/60 dark:text-brand-primary/80">01 / Required</span>
               </div>
 
-              {/* Custom inclusions */}
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <h3 className="text-sm font-extrabold text-gray-700 mb-3">Other Inclusions</h3>
-                <div className="space-y-4">
-                  <div className="flex flex-wrap gap-3">
-                    {tripData.inclusions.filter(inc => inc !== '' && !PREDEFINED_FEATURES.find(p => p.label === inc)).map((inc, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm group hover:border-brand-primary/30 transition-colors">
-                          <div className="w-5 h-5 rounded-full bg-brand-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Check size={12} className="text-brand-primary" />
-                          </div>
-                          <span className="font-bold text-sm text-gray-700 max-w-[200px] sm:max-w-xs truncate">{inc}</span>
-                          <button type="button" onClick={() => {
-                            setTripData(prev => ({ ...prev, inclusions: prev.inclusions.filter(i => i !== inc) }));
-                          }} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors ml-1"><Trash2 size={14}/></button>
-                      </div>
+              {/* Title Input */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 ml-1 flex items-center gap-1.5">
+                    Expedition Title <span className="text-brand-primary">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">Descriptive voyage moniker</span>
+                </div>
+                <div className="relative group">
+                  <input
+                    required
+                    type="text"
+                    value={tripData.title}
+                    onChange={(e) => handleFieldChange('title', e.target.value)}
+                    placeholder="e.g. Royal Baobabs & Tsingy Odyssey"
+                    className="w-full px-5 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-900 focus:bg-white dark:focus:bg-slate-900 focus:border-brand-primary/60 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-bold text-base text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:font-normal"
+                  />
+                </div>
+
+                {/* Quick Inspiration Pills */}
+                <div className="pt-2">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-2 ml-1">
+                    <Sparkles size={12} className="text-amber-500" />
+                    <span>Quick title suggestions:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {SUGGESTED_TITLES.map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => handleFieldChange('title', st)}
+                        className={`text-xs px-3 py-1.5 rounded-full border transition-all duration-200 font-medium ${
+                          tripData.title === st
+                            ? 'bg-brand-primary text-white border-brand-primary shadow-sm'
+                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-brand-primary/40 hover:text-brand-primary'
+                        }`}
+                      >
+                        {st}
+                      </button>
                     ))}
                   </div>
-                  <div className="flex gap-2">
-                    <input 
-                      id="custom-inclusion"
-                      className={SHARED_INPUT_CLASS} 
-                      placeholder="e.g. Complimentary massage"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = e.target.value.trim();
-                          if (val) {
-                            if (tripData.exclusions.includes(val)) {
-                              toast.error(`"${val}" is already listed in Exclusions.`);
-                            } else if (!tripData.inclusions.includes(val)) {
-                              setTripData(prev => ({ ...prev, inclusions: [...prev.inclusions.filter(i => i !== ''), val] }));
-                              e.target.value = '';
-                            }
-                          }
-                        }
-                      }}
-                    />
-                    <Button type="button" variant="secondary" onClick={() => {
-                      const input = document.getElementById('custom-inclusion');
-                      const val = input.value.trim();
-                      if (val) {
-                        if (tripData.exclusions.includes(val)) {
-                          toast.error(`"${val}" is already listed in Exclusions.`);
-                        } else if (!tripData.inclusions.includes(val)) {
-                          setTripData(prev => ({ ...prev, inclusions: [...prev.inclusions.filter(i => i !== ''), val] }));
-                          input.value = '';
-                        }
-                      }
-                    }} className="px-6 rounded-full">Add</Button>
-                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Exclusions */}
-            <div className="space-y-6 pt-10 border-t border-gray-200">
-              <div>
-                <h2 className="text-xl font-black text-gray-800">What's excluded?</h2>
-                <p className="text-gray-500 text-sm font-medium mt-1">Select the items that are not covered in the trip cost.</p>
-              </div>
-              
-              <div className="flex flex-wrap gap-3">
-                {PREDEFINED_FEATURES.map(item => {
-                  const isSelected = tripData.exclusions.includes(item.label);
-                  const isIncluded = tripData.inclusions.includes(item.label);
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      disabled={isIncluded}
-                      onClick={() => {
-                        if (isSelected) {
-                          setTripData(prev => ({ ...prev, exclusions: prev.exclusions.filter(i => i !== item.label) }));
-                        } else {
-                          setTripData(prev => ({ ...prev, exclusions: [...prev.exclusions.filter(i => i !== ''), item.label] }));
-                        }
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-full border-2 transition-all duration-200 ${
-                        isIncluded
-                          ? 'opacity-40 cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
-                          : isSelected
-                            ? 'border-brand-primary bg-brand-primary/5 text-brand-primary shadow-sm scale-[0.98]'
-                            : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600 hover:bg-gray-50 hover:shadow-sm'
-                      }`}
-                    >
-                      <item.icon size={18} className={`transition-colors ${isIncluded ? 'text-gray-400' : isSelected ? 'text-brand-primary' : 'text-gray-500'}`} strokeWidth={2} />
-                      <span className={`font-bold text-sm transition-colors ${isIncluded ? 'text-gray-400' : isSelected ? 'text-brand-primary' : 'text-gray-700'}`}>{item.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
+              {/* Client Selector */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 ml-1 flex items-center gap-1.5">
+                    Assigned Client <span className="text-brand-primary">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">Link to existing traveler profile</span>
+                </div>
+                
+                <ClientSelect
+                  required
+                  value={tripData.client}
+                  onChange={(e) => handleFieldChange('client', e.target.value)}
+                  label=""
+                />
 
-              {/* Custom exclusions */}
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <h3 className="text-sm font-extrabold text-gray-700 mb-3">Other Exclusions</h3>
-                <div className="space-y-4">
-                  <div className="flex flex-wrap gap-3">
-                    {tripData.exclusions.filter(exc => exc !== '' && !PREDEFINED_FEATURES.find(p => p.label === exc)).map((exc, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm group hover:border-brand-primary/30 transition-colors">
-                          <div className="w-5 h-5 rounded-full bg-brand-primary/10 flex items-center justify-center flex-shrink-0">
-                            <div className="w-1.5 h-1.5 bg-brand-primary rounded-full" />
-                          </div>
-                          <span className="font-bold text-sm text-gray-700 max-w-[200px] sm:max-w-xs truncate">{exc}</span>
-                          <button type="button" onClick={() => {
-                            setTripData(prev => ({ ...prev, exclusions: prev.exclusions.filter(i => i !== exc) }));
-                          }} className="p-1 text-gray-400 hover:text-brand-primary hover:bg-brand-50 rounded-full transition-colors ml-1"><Trash2 size={14}/></button>
+                {/* Client Profile Pill if selected */}
+                {selectedClient && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-2xl bg-gradient-to-r from-brand-primary/5 via-amber-500/5 to-transparent border border-brand-primary/15 dark:border-brand-primary/30 flex items-center justify-between gap-4 mt-3"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-secondary text-white font-black text-sm flex items-center justify-center shadow-md">
+                        {selectedClient.name.charAt(0).toUpperCase()}
                       </div>
-                    ))}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-slate-900 dark:text-white">{selectedClient.name}</span>
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-primary/10 text-brand-primary">
+                            Assigned
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {selectedClient.email || 'No email registered'} {selectedClient.phone ? `• ${selectedClient.phone}` : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right flex-shrink-0">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        {(selectedClient.paxAdults || 0) + (selectedClient.paxChildren || 0)} Travelers
+                      </span>
+                      <p className="text-[10px] text-slate-400">
+                        {selectedClient.paxAdults || 0} Adults, {selectedClient.paxChildren || 0} Children
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </div>
+
+            {/* Card 2: Travel Style & Status */}
+            <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-black/20 space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                    <Sparkles size={20} />
                   </div>
-                  <div className="flex gap-2">
-                    <input 
-                      id="custom-exclusion"
-                      className={SHARED_INPUT_CLASS.replace("focus:border-brand-primary/40 focus:ring-brand-primary/10", "focus:border-red-500/40 focus:ring-red-500/10")} 
-                      placeholder="e.g. Photography permits"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = e.target.value.trim();
-                          if (val) {
-                            if (tripData.inclusions.includes(val)) {
-                              toast.error(`"${val}" is already listed in Inclusions.`);
-                            } else if (!tripData.exclusions.includes(val)) {
-                              setTripData(prev => ({ ...prev, exclusions: [...prev.exclusions.filter(i => i !== ''), val] }));
-                              e.target.value = '';
-                            }
-                          }
-                        }
-                      }}
-                    />
-                    <Button type="button" variant="secondary" onClick={() => {
-                      const input = document.getElementById('custom-exclusion');
-                      const val = input.value.trim();
-                      if (val) {
-                        if (tripData.inclusions.includes(val)) {
-                          toast.error(`"${val}" is already listed in Inclusions.`);
-                        } else if (!tripData.exclusions.includes(val)) {
-                          setTripData(prev => ({ ...prev, exclusions: [...prev.exclusions.filter(i => i !== ''), val] }));
-                          input.value = '';
-                        }
-                      }
-                    }} className="px-6 rounded-full">Add</Button>
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800 dark:text-white font-display">Voyage Persona & Pipeline</h2>
+                    <p className="text-xs text-slate-500 font-medium">Categorize experience style and booking state</p>
                   </div>
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">02 / Style</span>
+              </div>
+
+              {/* Guest Style Selection Grid */}
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 ml-1 block">
+                  Experience Style / Guest Type
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {GUEST_TYPES.map((gt) => {
+                    const isSelected = tripData.guestType === gt.id || tripData.guestType === gt.label;
+                    const Icon = gt.icon;
+                    return (
+                      <button
+                        key={gt.id}
+                        type="button"
+                        onClick={() => handleFieldChange('guestType', gt.id)}
+                        className={`p-3.5 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col justify-between gap-2 group ${
+                          isSelected
+                            ? 'border-brand-primary bg-brand-primary/5 dark:bg-brand-primary/10 shadow-sm'
+                            : 'border-slate-100 dark:border-slate-800/80 bg-white/60 dark:bg-slate-900/40 hover:border-slate-200 dark:hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                            isSelected ? 'bg-brand-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:text-brand-primary'
+                          }`}>
+                            <Icon size={16} />
+                          </div>
+                          {isSelected && (
+                            <div className="w-5 h-5 rounded-full bg-brand-primary text-white flex items-center justify-center">
+                              <Check size={12} strokeWidth={3} />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p className={`font-bold text-xs ${isSelected ? 'text-brand-primary' : 'text-slate-800 dark:text-slate-200'}`}>
+                            {gt.label}
+                          </p>
+                          <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{gt.desc}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Status Selector */}
+              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 ml-1 block">
+                  Workflow Status
+                </label>
+                <div className="flex flex-wrap gap-2.5">
+                  {STATUS_OPTIONS.map((st) => {
+                    const isSelected = tripData.status === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => handleFieldChange('status', st.id)}
+                        className={`px-4 py-2.5 rounded-full border text-xs font-bold transition-all duration-200 flex items-center gap-2 ${
+                          isSelected
+                            ? `${st.color} bg-gradient-to-r shadow-sm scale-105 border-2`
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${st.dot} ${isSelected ? 'animate-pulse' : ''}`} />
+                        <span>{st.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
+
+            {/* Card 3: Timeline & Pricing */}
+            <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-black/20 space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+                    <Calendar size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800 dark:text-white font-display">Timeline & Investment</h2>
+                    <p className="text-xs text-slate-500 font-medium">Estimated dates and indicative traveler investment</p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">03 / Parameters</span>
+              </div>
+
+              {/* Dates & Duration Flex / Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
+                <div className="md:col-span-5">
+                  <DatePicker
+                    label="Departure Date"
+                    value={tripData.startDate}
+                    onChange={(val) => handleDateChange('startDate', val)}
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex flex-col items-center justify-center pb-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Length</span>
+                  <div className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => handleDurationDelta(-1)}
+                      className="w-5 h-5 rounded-full hover:bg-white dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition-colors"
+                      title="Decrease by 1 day"
+                    >
+                      <Minus size={12} />
+                    </button>
+                    <span className="text-xs font-black text-slate-800 dark:text-white px-1">
+                      {tripData.duration}d
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDurationDelta(1)}
+                      className="w-5 h-5 rounded-full hover:bg-white dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition-colors"
+                      title="Increase by 1 day"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="md:col-span-5">
+                  <DatePicker
+                    label="Return Date"
+                    value={tripData.endDate}
+                    onChange={(val) => handleDateChange('endDate', val)}
+                  />
+                </div>
+              </div>
+
+              {/* Budget / Price */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 ml-1 flex items-center gap-1.5">
+                    Estimated Voyage Investment (€)
+                  </label>
+                  <span className="text-[11px] text-slate-400">Total estimated client quote</span>
+                </div>
+                <div className="relative group max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 font-extrabold text-sm">
+                    €
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    step="50"
+                    name="totalPrice"
+                    value={tripData.totalPrice}
+                    onChange={(e) => handleFieldChange('totalPrice', e.target.value)}
+                    placeholder="e.g. 4850"
+                    className="w-full pl-10 pr-5 py-3.5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-900 focus:bg-white dark:focus:bg-slate-900 focus:border-brand-primary/60 focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all font-bold text-sm text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:font-normal"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 ml-1">
+                  You can fine-tune price calculations and individual hotel line items anytime in the itinerary manager.
+                </p>
+              </div>
+            </div>
+
           </div>
-        </div>
 
-        {/* Wizard Navigation Controls (Floating Bottom) */}
-        <div className="fixed bottom-8 left-0 lg:left-72 right-0 z-50 flex justify-center pointer-events-none">
-          <div className="flex items-center justify-between gap-4 bg-white/90 backdrop-blur-md px-6 py-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/60 w-[90%] max-w-2xl pointer-events-auto">
-            <Button 
-              type="button" 
-              variant="secondary" 
-              onClick={prevStep}
-              className={`px-6 py-2.5 rounded-full ${currentStep === 1 ? 'opacity-0 pointer-events-none' : ''}`}
-            >
-              <ArrowLeft size={18} className="mr-2" /> Previous Step
-            </Button>
+          {/* Right Column (4-5 Cols): Live Expedition Dossier Preview */}
+          <div className="lg:col-span-5 xl:col-span-4 sticky top-24 space-y-6">
             
-            <Button type="submit" variant="primary" className="px-8 py-2.5 rounded-full shadow-lg shadow-brand-primary/30 group">
-              {isEditing && currentStep === totalSteps ? 'Complete & Save Trip' : !isEditing ? 'Create Trip' : 'Next Step'}
-              {isEditing && currentStep < totalSteps && <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />}
-            </Button>
+            {/* Luxury Passport / Dossier Preview Card */}
+            <div className="rounded-3xl overflow-hidden glass-panel border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-slate-300/40 dark:shadow-black/40 relative group">
+              {/* Card Header: Brand Gradient with Gold Line */}
+              <div className="bg-gradient-to-br from-brand-secondary via-brand-primary to-[#2A0A05] p-6 text-white relative overflow-hidden">
+                <div className="absolute -right-8 -bottom-8 w-36 h-36 bg-brand-accent/15 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 border border-white/15">
+                    Live Preview
+                  </span>
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-white/70">
+                    <span className={`w-2 h-2 rounded-full ${currentStatusObj.dot}`} />
+                    <span>{tripData.status}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-[11px] uppercase tracking-widest text-white/60 font-black">Madagascar Itinerary</p>
+                  <h3 className="text-xl font-black font-display tracking-tight text-white line-clamp-2">
+                    {tripData.title || 'Untitled Madagascar Expedition'}
+                  </h3>
+                </div>
+
+                {/* Subtle Gold Accent Separator */}
+                <div className="mt-5 h-0.5 w-full bg-gradient-to-r from-brand-accent via-amber-300/80 to-transparent" />
+              </div>
+
+              {/* Dossier Body */}
+              <div className="p-6 space-y-5 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md">
+                
+                {/* Key Attributes Grid */}
+                <div className="space-y-3.5 text-xs">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+                      <Users size={14} className="text-brand-primary" /> Primary Traveler
+                    </span>
+                    <span className="font-bold text-slate-800 dark:text-white max-w-[170px] truncate text-right">
+                      {selectedClient ? selectedClient.name : 'Unassigned'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+                      <Calendar size={14} className="text-brand-primary" /> Schedule
+                    </span>
+                    <span className="font-bold text-slate-800 dark:text-white text-right">
+                      {tripData.startDate
+                        ? `${format(new Date(tripData.startDate), 'MMM d, yyyy')}`
+                        : 'Dates Pending'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+                      <Clock size={14} className="text-brand-primary" /> Duration
+                    </span>
+                    <span className="font-bold text-slate-800 dark:text-white">
+                      {tripData.duration} Days / {Math.max(1, tripData.duration - 1)} Nights
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-brand-primary" /> Travel Style
+                    </span>
+                    <span className="font-bold text-slate-800 dark:text-white max-w-[170px] truncate">
+                      {tripData.guestType}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+                      <Euro size={14} className="text-brand-primary" /> Projected Value
+                    </span>
+                    <span className="font-black text-sm text-brand-primary">
+                      {tripData.totalPrice ? `€ ${Number(tripData.totalPrice).toLocaleString()}` : 'Quote on request'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Next Step Info Banner */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <ShieldCheck size={16} className="text-emerald-500 flex-shrink-0" />
+                    <span>What happens after creation?</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                    You will be redirected straight to the interactive trip workspace to craft daily routes, assign drivers, select hotels, and export luxury client vouchers.
+                  </p>
+                </div>
+
+                {/* Primary Action Buttons (In-Card, no floating bottom bar!) */}
+                <div className="pt-2 space-y-3">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-4 px-6 rounded-full font-bold text-sm text-white bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] shadow-xl shadow-brand-primary/30 hover:shadow-brand-primary/50 transition-all duration-300 flex items-center justify-center gap-2.5 group disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                        <span>Processing Expedition...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{isEditing ? 'Save Expedition Changes' : 'Initialize Expedition'}</span>
+                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="w-full py-3 px-6 rounded-full font-bold text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    Discard & Return
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Micro Guarantees Badge */}
+            <div className="flex items-center justify-center gap-6 text-[11px] font-semibold text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <Check size={13} className="text-emerald-500" /> Auto-saved data
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check size={13} className="text-emerald-500" /> Shareable token ready
+              </span>
+            </div>
+
           </div>
         </div>
       </form>
-      </div>
     </div>
   );
 }

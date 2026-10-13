@@ -84,8 +84,8 @@ export function DocumentsPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">
-      {/* File Manager Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+      {/* File Manager Header & Breadcrumbs (Sticky) */}
+      <div className="sticky top-[70px] md:top-[76px] z-30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm transition-all">
         <div className="flex items-center gap-2 overflow-x-auto w-full no-scrollbar">
           <button 
             onClick={() => { setCurrentPath(null); setSelectedFile(null); }}

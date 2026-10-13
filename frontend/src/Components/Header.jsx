@@ -55,7 +55,7 @@ export function Header({ onMenuClick }) {
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 px-4 md:px-8 xl:px-12 py-4 md:py-6 flex justify-between items-center transition-colors duration-500">
+    <header className="sticky top-0 z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-4 md:px-8 xl:px-12 py-3.5 md:py-4 min-h-[70px] md:min-h-[76px] flex justify-between items-center transition-colors duration-500">
       
       <div className="flex items-center flex-1 min-w-0">
         {/* Mobile Menu Button */}
