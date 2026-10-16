@@ -157,19 +157,19 @@ export function TripsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-16 pt-2">
       {/* Top Header Section (Sticky) */}
-      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-4 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="sticky top-[64px] sm:top-[70px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-3.5 sm:py-4 -mx-4 px-4 sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6 2xl:-mx-10 2xl:px-10 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
               <Sparkles size={11} className="text-brand-accent" />
               Voyage Portfolio
             </span>
             <span className="text-xs font-semibold text-slate-400">• Madagascar Bespoke</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white font-display tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white font-display tracking-tight">
             Expeditions & Itineraries
           </h1>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Oversee bespoke traveler dossiers, safari schedules, and live pipeline valuations.
           </p>
         </div>
@@ -178,7 +178,7 @@ export function TripsPage() {
         <div className="flex items-center gap-3 self-start md:self-auto">
           <button 
             onClick={() => navigate('/trips/new')}
-            className="px-6 py-3 bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] text-white text-xs md:text-sm font-bold rounded-full transition-all duration-300 shadow-xl shadow-brand-primary/25 hover:shadow-brand-primary/45 flex items-center gap-2.5 group"
+            className="px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] text-white text-xs md:text-sm font-bold rounded-full transition-all duration-300 shadow-xl shadow-brand-primary/25 hover:shadow-brand-primary/45 flex items-center gap-2.5 group"
           >
             <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
               <Plus size={14} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -189,15 +189,15 @@ export function TripsPage() {
       </div>
 
       {/* KPI Overview Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Metric 1 */}
-        <div className="glass-panel rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-slate-200/30 dark:shadow-black/20 flex items-center gap-4 relative overflow-hidden group">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-secondary text-white flex items-center justify-center shadow-md shadow-brand-primary/20 flex-shrink-0">
-            <Compass size={22} />
+        <div className="glass-panel rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-slate-200/30 dark:shadow-black/20 flex items-center gap-3.5 sm:gap-4 relative overflow-hidden group">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-secondary text-white flex items-center justify-center shadow-md shadow-brand-primary/20 flex-shrink-0">
+            <Compass size={20} className="sm:w-[22px] sm:h-[22px]" />
           </div>
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Expeditions</p>
-            <h4 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white font-display mt-0.5">
+            <h4 className="text-lg sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white font-display mt-0.5">
               {metrics.total}
             </h4>
             <p className="text-[10px] text-slate-500 truncate mt-0.5">All island itineraries</p>
@@ -319,8 +319,8 @@ export function TripsPage() {
         </div>
       </div>
 
-      {/* Grid Container */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grid Container - 2 columns on 13" laptops to ensure rich card readability, 3 on large screens */}
+      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">
         {loading && Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="glass-panel rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 h-[280px] animate-pulse flex flex-col justify-between">
             <div className="space-y-3">

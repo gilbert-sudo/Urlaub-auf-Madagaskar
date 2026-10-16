@@ -160,10 +160,10 @@ export function ItineraryManager({ trip }) {
       {portalTarget ? createPortal(headerContent, portalTarget) : headerContent}
       
       {/* Master-Detail Split Layout */}
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full">
+      <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 xl:gap-8 items-start w-full">
         
         {/* Sidebar Overview (Master) - Timeline Style */}
-        <div className="w-full lg:w-[380px] shrink-0 bg-white border border-gray-100 rounded-3xl shadow-sm flex flex-col h-[50dvh] lg:h-[70dvh] min-h-[400px] lg:min-h-[550px] overflow-hidden">
+        <div className="w-full lg:w-72 xl:w-80 2xl:w-[360px] shrink-0 bg-white border border-gray-100 rounded-3xl shadow-sm flex flex-col h-[50dvh] lg:h-[calc(100vh-230px)] min-h-[420px] lg:min-h-[480px] max-h-[820px] overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center z-10 bg-white shrink-0">
              <h3 className="font-extrabold text-gray-900 text-base flex items-center gap-2">
                <Navigation className="w-5 h-5 text-brand-primary"/> Itinerary
@@ -235,7 +235,7 @@ export function ItineraryManager({ trip }) {
         </div>
 
         {/* Detail View (Active Day Form) */}
-        <div className="flex-1 w-full min-w-0 flex flex-col h-[70dvh] lg:h-[70dvh] min-h-[550px] lg:min-h-[550px]">
+        <div className="flex-1 w-full min-w-0 flex flex-col h-[70dvh] lg:h-[calc(100vh-230px)] min-h-[420px] lg:min-h-[480px] max-h-[820px]">
           {itinerary.length > 0 && activeDay ? (
             <div key={`detail-${activeDayIndex}`} className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden animate-in fade-in zoom-in-[0.98] duration-300 flex flex-col h-full">
               
@@ -321,12 +321,12 @@ export function ItineraryManager({ trip }) {
                         <h4 className="font-extrabold text-sm text-gray-800 uppercase tracking-wider">Activities & Route Location</h4>
                      </div>
                      
-                     <div className="p-3 md:p-4 rounded-[1.25rem] bg-gray-50/50 border border-gray-100 flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
+                     <div className="p-3 md:p-4 rounded-[1.25rem] bg-gray-50/50 border border-gray-100 flex-1 flex flex-col xl:flex-row gap-4 min-h-0">
                         <textarea 
                           value={activeDay.activities} 
                           onChange={(e) => handleItineraryChange(activeDayIndex, 'activities', e.target.value)} 
                           placeholder="e.g. Morning safari, afternoon transfer..." 
-                          className={`${SHARED_INPUT_CLASS} flex-1 resize-none py-3 leading-relaxed bg-white text-sm h-full w-full lg:w-1/2`}
+                          className={`${SHARED_INPUT_CLASS} flex-1 resize-none py-3 leading-relaxed bg-white text-sm h-36 xl:h-full w-full xl:w-1/2`}
                         />
                         {isMapExpanded && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150]" onClick={() => setIsMapExpanded(false)} onWheel={(e) => e.stopPropagation()}></div>}
                         <div 
@@ -334,7 +334,7 @@ export function ItineraryManager({ trip }) {
                           className={
                           isMapExpanded 
                           ? "fixed inset-4 md:inset-8 z-[200] bg-white/95 backdrop-blur-xl border border-white/60 rounded-[2.5rem] p-4 md:p-6 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col transition-all duration-300" 
-                          : "flex-1 h-64 lg:h-full rounded-2xl overflow-hidden border border-gray-200 shadow-inner relative group transition-all duration-300"
+                          : "flex-1 h-44 xl:h-full min-h-[180px] rounded-2xl overflow-hidden border border-gray-200 shadow-inner relative group transition-all duration-300"
                         }>
                           {isMapExpanded && (
                             <div className="flex justify-between items-center mb-4 px-2 shrink-0">

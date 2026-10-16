@@ -201,7 +201,7 @@ export function CreateTripPage() {
   return (
     <div className="max-w-7xl mx-auto pb-16 pt-2">
       {/* Top Header & Navigation (Sticky) */}
-      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-4 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="sticky top-[64px] sm:top-[70px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-3.5 sm:py-4 -mx-4 px-4 sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6 2xl:-mx-10 2xl:px-10 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -256,12 +256,12 @@ export function CreateTripPage() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8 items-start">
           {/* Main Form Column (8 Cols) */}
-          <div className="lg:col-span-7 xl:col-span-8 space-y-8">
+          <div className="lg:col-span-7 xl:col-span-8 space-y-6 sm:space-y-8">
             
             {/* Card 1: Essential Identity */}
-            <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-black/20 space-y-6 relative overflow-hidden">
+            <div className="glass-panel rounded-3xl p-5 sm:p-7 xl:p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-black/20 space-y-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-80 h-80 bg-brand-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
               
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5">
@@ -394,7 +394,7 @@ export function CreateTripPage() {
                 <label className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 ml-1 block">
                   Experience Style / Guest Type
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
                   {GUEST_TYPES.map((gt) => {
                     const isSelected = tripData.guestType === gt.id || tripData.guestType === gt.label;
                     const Icon = gt.icon;

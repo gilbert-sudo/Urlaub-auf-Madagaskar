@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateDriverEvent, deleteDriverEvent, addDriverEvent, fetchDriverEventsByTrip } from '../store/slices/driverEventsSlice';
 import { updateTrip, fetchTripById } from '../store/slices/tripsSlice';
@@ -227,13 +228,16 @@ export function TourAgendaModal({
     }
   };
 
-  // Lock body scroll when expanded map mode is active to prevent background scrolling
+  // Lock body and html scroll when expanded map mode is active to prevent background scrolling
   useEffect(() => {
     if (expandedMapMode) {
-      const originalOverflow = document.body.style.overflow;
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
       return () => {
-        document.body.style.overflow = originalOverflow;
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
       };
     }
   }, [expandedMapMode]);
@@ -1550,8 +1554,8 @@ export function TourAgendaModal({
       />
 
       {/* Selected Event Details Drawer / Slide-Over */}
-      {selectedEvent && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white dark:bg-slate-900 shadow-2xl z-[100000] border-l border-gray-200 dark:border-slate-800 p-6 flex flex-col justify-between animate-in slide-in-from-right duration-200 overflow-y-auto overscroll-contain">
+      {selectedEvent && createPortal(
+        <div className="fixed inset-y-0 right-0 w-full sm:w-[380px] lg:w-[420px] bg-white dark:bg-slate-900 shadow-2xl z-[100050] border-l border-gray-200 dark:border-slate-800 p-5 sm:p-6 flex flex-col justify-between animate-in slide-in-from-right duration-200 overflow-y-auto overscroll-contain">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-6">
               <h3 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
@@ -1766,7 +1770,7 @@ export function TourAgendaModal({
                       });
                     }}
                     label=""
-                    modalZIndex="z-[100010]"
+                    modalZIndex="z-[100080]"
                   />
                 </div>
 
@@ -1857,7 +1861,7 @@ export function TourAgendaModal({
                     value={driverForm.driverId}
                     onChange={(id) => setDriverForm({ ...driverForm, driverId: id })}
                     label=""
-                    modalZIndex="z-[100010]"
+                    modalZIndex="z-[100080]"
                   />
                 </div>
 
@@ -1978,13 +1982,20 @@ export function TourAgendaModal({
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Assign Driver Dialog */}
-      {isAssignModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100001] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+      {isAssignModalOpen && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100060] flex items-center justify-center p-4"
+          onClick={() => setIsAssignModalOpen(false)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                 <Car size={22} className="text-brand-primary" /> Assign Driver to Tour
@@ -2014,7 +2025,7 @@ export function TourAgendaModal({
                   value={assignForm.driverId}
                   onChange={(id) => setAssignForm({ ...assignForm, driverId: id })}
                   label=""
-                  modalZIndex="z-[100010]"
+                  modalZIndex="z-[100080]"
                 />
               </div>
 
@@ -2081,13 +2092,23 @@ export function TourAgendaModal({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Add Itinerary Stop Dialog */}
-      {isAddStopModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100001] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 max-w-lg w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200 max-h-[92vh] flex flex-col">
+      {isAddStopModalOpen && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100060] flex items-center justify-center p-4"
+          onClick={() => {
+            setIsAddStopModalOpen(false);
+            setExpandedMapMode(null);
+          }}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 max-w-lg w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200 max-h-[92vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-5 shrink-0">
               <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                 <MapPin size={22} className="text-amber-500" /> Add Itinerary Stop
@@ -2178,7 +2199,7 @@ export function TourAgendaModal({
                     });
                   }}
                   label=""
-                  modalZIndex="z-[100010]"
+                  modalZIndex="z-[100080]"
                 />
               </div>
 
@@ -2250,19 +2271,20 @@ export function TourAgendaModal({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Expanded Interactive Map Modal (for Add or Edit Itinerary Stop) */}
-      {expandedMapMode && (
-        <>
+      {expandedMapMode && createPortal(
+        <div className="fixed inset-0 z-[100070] flex items-center justify-center">
           <div 
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[100050]" 
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md" 
             onClick={() => setExpandedMapMode(null)} 
             onWheel={(e) => e.stopPropagation()}
           />
           <div 
-            className="fixed inset-4 md:inset-8 z-[100060] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-4 md:p-6 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200"
+            className="fixed inset-4 md:inset-8 z-10 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-4 md:p-6 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200"
             onWheel={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4 px-2 shrink-0">
@@ -2347,13 +2369,20 @@ export function TourAgendaModal({
               </div>
             </div>
           </div>
-        </>
+        </div>,
+        document.body
       )}
 
       {/* Slot Click Quick Chooser Modal */}
-      {slotActionModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-[100001] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 max-w-sm w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150">
+      {slotActionModal && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100060] flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setSlotActionModal(null)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 max-w-sm w-full shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-black text-base text-gray-900 dark:text-white">
@@ -2413,7 +2442,8 @@ export function TourAgendaModal({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

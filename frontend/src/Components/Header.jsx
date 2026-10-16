@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateProfile, logout } from '../store/slices/authSlice';
 import { toast } from 'sonner';
 
-export function Header({ onMenuClick }) {
+export function Header({ onMenuClick, isCollapsed, onToggleCollapse }) {
   const { theme, toggleTheme } = useTheme();
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
@@ -55,30 +55,32 @@ export function Header({ onMenuClick }) {
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-4 md:px-8 xl:px-12 py-3.5 md:py-4 min-h-[70px] md:min-h-[76px] flex justify-between items-center transition-colors duration-500">
+    <header className="sticky top-0 z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-4 sm:px-5 lg:px-6 2xl:px-10 py-3 sm:py-3.5 min-h-[64px] sm:min-h-[70px] flex justify-between items-center transition-colors duration-500">
       
-      <div className="flex items-center flex-1 min-w-0">
-        {/* Mobile Menu Button */}
+      <div className="flex items-center flex-1 min-w-0 mr-3">
+        {/* Mobile/Tablet Menu Button */}
         <button 
           onClick={onMenuClick}
-          className="lg:hidden mr-3 md:mr-4 shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors"
+          className="lg:hidden mr-3 shrink-0 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-500 hover:text-brand-primary bg-white dark:bg-slate-800 shadow-xs border border-gray-100 dark:border-slate-800 transition-colors"
+          title="Open menu"
         >
-          <Menu size={20} />
+          <Menu size={18} />
         </button>
 
-        {/* Search Bar */}
-        <div className="hidden md:flex items-center gap-3 px-5 py-2.5 bg-white dark:bg-slate-800 rounded-full w-full max-w-md shadow-sm border border-gray-100 dark:border-slate-800 text-slate-500 dark:text-slate-300 focus-within:ring-2 focus-within:ring-brand-primary/20 transition-all">
-          <Search size={18} />
+        {/* Search Bar - flexible & responsive for 13" laptops */}
+        <div className="hidden md:flex items-center gap-2.5 px-4 py-2 bg-white dark:bg-slate-800 rounded-full w-full max-w-xs lg:max-w-sm 2xl:max-w-md shadow-xs border border-gray-100 dark:border-slate-800 text-slate-500 dark:text-slate-300 focus-within:ring-2 focus-within:ring-brand-primary/20 transition-all">
+          <Search size={16} className="shrink-0 text-slate-400" />
           <input 
             type="text" 
-            placeholder="Search task" 
-            className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700 dark:text-slate-200 placeholder:text-gray-400"
+            placeholder="Search expedition, traveler, hotel..." 
+            className="bg-transparent border-none outline-none flex-1 text-xs sm:text-sm text-slate-700 dark:text-slate-200 placeholder:text-gray-400 min-w-0"
           />
-          <div className="flex items-center justify-center px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-[10px] font-bold text-gray-400 dark:text-slate-300">
+          <div className="hidden sm:flex items-center justify-center px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-[9px] font-bold text-gray-400 dark:text-slate-300 shrink-0">
             ⌘F
           </div>
         </div>
       </div>
+
       
       <div className="flex items-center gap-4">
         <motion.button 

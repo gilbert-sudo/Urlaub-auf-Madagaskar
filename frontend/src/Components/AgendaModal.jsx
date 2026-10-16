@@ -719,7 +719,7 @@ function YearView({ date, events, localizer, eventPropGetter, onSelectEvent, onS
         }).length;
 
         return (
-          <div key={idx} className="year-month-card flex flex-col h-[88vh] min-h-[680px] mb-8"> 
+          <div key={idx} className="year-month-card flex flex-col h-[calc(100vh-140px)] min-h-[460px] max-h-[720px] mb-8"> 
             <div className="flex items-center justify-between mb-3 pl-4 border-l-4 border-brand-primary">
               <h3 className="text-xl font-black text-slate-800 dark:text-white">
                 {localizer.format(monthDate, 'MMMM yyyy')}
@@ -901,11 +901,16 @@ export function AgendaModal({
   useEffect(() => {
     if (!isModal || !isOpen) {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
       return;
     }
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, [isModal, isOpen]);
 
@@ -1013,7 +1018,7 @@ export function AgendaModal({
   if (isModal && !isOpen) return null;
 
   const modalContent = (
-    <div className={isModal ? "fixed inset-0 bg-white dark:bg-slate-900 z-[9999] flex flex-col animate-in fade-in zoom-in duration-300 overscroll-contain" : "flex-1 flex flex-col h-full w-full bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden relative overscroll-contain"}>
+    <div className={isModal ? "fixed inset-0 bg-white dark:bg-slate-900 z-[9999] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 overscroll-contain" : "flex-1 flex flex-col h-full w-full bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden relative overscroll-contain"}>
       <div className="flex flex-wrap items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm z-10 gap-3">
         <div className="flex items-center gap-4">
           {Icon && (

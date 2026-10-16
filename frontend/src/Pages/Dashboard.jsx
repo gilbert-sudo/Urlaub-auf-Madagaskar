@@ -60,10 +60,10 @@ export function Dashboard() {
     <div className="space-y-4 pb-8">
       
       {/* Header Section (Sticky) */}
-      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-3.5 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-1 shrink-0">
+      <div className="sticky top-[64px] sm:top-[70px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-3.5 -mx-4 px-4 sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6 2xl:-mx-10 2xl:px-10 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-1 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
-          <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5">Manage your trips and clients with ease.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
+          <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 mt-0.5">Manage your trips and clients with ease.</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => window.location.href = '/trips/new'} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#811303] to-[#c42107] hover:from-[#c42107] hover:to-[#811303] text-white text-xs font-bold rounded-full transition-all duration-300 shadow-lg shadow-brand-primary/30">
@@ -73,7 +73,7 @@ export function Dashboard() {
       </div>
 
       {/* Top Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 shrink-0">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <div className="bg-gradient-to-br from-[#811303] via-[#a61a05] to-[#c42107] rounded-3xl p-5 text-white relative overflow-hidden shadow-xl shadow-brand-primary/30">
             <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
@@ -344,7 +344,7 @@ export function Dashboard() {
         </div>
 
         {/* Right Side (Live Fleet Map) */}
-        <div className="w-full xl:w-1/3 flex flex-col min-h-[400px]">
+        <div className="w-full xl:w-1/3 flex flex-col min-h-[320px] lg:min-h-[360px] xl:min-h-0 h-80 xl:h-auto">
           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col flex-1 relative z-0 overflow-hidden">
             <div className="flex-1 w-full relative z-0 bg-[#e5e7eb]">
               {isLoaded ? (

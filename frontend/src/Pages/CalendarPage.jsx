@@ -445,7 +445,7 @@ export function CalendarPage() {
   );
 
   return (
-    <div className="h-[calc(100vh-125px)] min-h-[700px] flex flex-col pb-4 relative">
+    <div className="h-[calc(100vh-100px)] min-h-[500px] lg:min-h-[540px] flex flex-col pb-2 relative">
       <AgendaModal
         isOpen={true}
         isModal={false}

@@ -85,7 +85,7 @@ export function DocumentsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">
       {/* File Manager Header & Breadcrumbs (Sticky) */}
-      <div className="sticky top-[70px] md:top-[76px] z-30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm transition-all">
+      <div className="sticky top-[64px] sm:top-[70px] z-30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm transition-all">
         <div className="flex items-center gap-2 overflow-x-auto w-full no-scrollbar">
           <button 
             onClick={() => { setCurrentPath(null); setSelectedFile(null); }}
@@ -159,7 +159,7 @@ export function DocumentsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4" : "flex flex-col gap-2"}
+            className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5 sm:gap-4" : "flex flex-col gap-2"}
           >
             {loading ? (
               Array.from({ length: 10 }).map((_, i) => (
@@ -201,7 +201,7 @@ export function DocumentsPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className={viewMode === 'grid' ? "grid grid-cols-2 lg:grid-cols-4 gap-4" : "flex flex-col gap-2"}
+            className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" : "flex flex-col gap-2"}
           >
             {documentTypes.filter(doc => doc.label.toLowerCase().includes(searchTerm.toLowerCase())).map((doc) => {
               const Icon = doc.icon;
@@ -246,7 +246,7 @@ export function DocumentsPage() {
               </Button>
             </div>
             
-            <div className="relative flex justify-center overflow-x-auto w-full pb-8">
+            <div className="relative flex justify-center overflow-x-auto custom-scrollbar w-full pb-8">
               <div 
                 ref={documentRef}
                 className="bg-white shadow-2xl transition-all w-full max-w-[850px] shrink-0"

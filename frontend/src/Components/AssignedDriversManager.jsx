@@ -232,7 +232,7 @@ export function AssignedDriversManager({ trip, tripEvents = [] }) {
       {tripEvents.length > 0 ? (
         viewMode === 'cards' ? (
           /* Cards Grid View */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {tripEvents.map(event => {
               const driverObj = (typeof event.driverId === 'object' && event.driverId)
                 ? event.driverId 

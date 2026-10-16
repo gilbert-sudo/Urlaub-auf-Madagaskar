@@ -228,7 +228,7 @@ export function DriversPage() {
       {/* ========================================================= */}
       {/* 1. STICKY PAGE HEADER (design.md Section 5 Standard)      */}
       {/* ========================================================= */}
-      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-4 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="sticky top-[64px] sm:top-[70px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-3.5 sm:py-4 -mx-4 px-4 sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6 2xl:-mx-10 2xl:px-10 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-primary via-[#9b1908] to-brand-secondary text-white flex items-center justify-center shadow-lg shadow-brand-primary/25 shrink-0">
             <Car size={22} />
@@ -277,10 +277,10 @@ export function DriversPage() {
         <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-brand-primary/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Cockpit Content: 3 Connected Interactive Functional Zones */}
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-5 lg:gap-6 items-stretch">
           
-          {/* ZONE 1 (Left 4 cols): Tachometer Dispatch Chronograph Gauge */}
-          <div className="lg:col-span-4 flex flex-col justify-between pr-0 lg:pr-6 border-b lg:border-b-0 lg:border-r border-white/10 pb-6 lg:pb-0">
+          {/* ZONE 1: Tachometer Dispatch Chronograph Gauge */}
+          <div className="sm:col-span-1 xl:col-span-4 flex flex-col justify-between pr-0 sm:pr-4 xl:pr-6 border-b sm:border-b-0 sm:border-r border-white/10 pb-5 sm:pb-0">
             <div className="flex items-center justify-between gap-2 mb-4">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 <Radio size={12} className="animate-pulse text-emerald-400" />
@@ -367,10 +367,8 @@ export function DriversPage() {
               <span className="text-slate-400">Total Chauffeur Force:</span>
               <span className="font-bold text-emerald-300">{metrics.total} Registered</span>
             </div>
-          </div>
-
-          {/* ZONE 2 (Center 5 cols): Interactive Live Chauffeur Roster Ribbon */}
-          <div className="lg:col-span-5 flex flex-col justify-between pr-0 lg:pr-6 border-b lg:border-b-0 lg:border-r border-white/10 pb-6 lg:pb-0">
+          </div>          {/* ZONE 2: Interactive Live Chauffeur Roster Ribbon */}
+          <div className="sm:col-span-1 xl:col-span-5 flex flex-col justify-between pr-0 xl:pr-6 border-b xl:border-b-0 xl:border-r border-white/10 pb-5 xl:pb-0">
             <div>
               <div className="flex items-center justify-between gap-2 mb-3">
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -388,7 +386,7 @@ export function DriversPage() {
 
                   return (
                     <div 
-                      key={driver._id}
+                      key={driver._id} 
                       onClick={() => setViewAgendaDriver(driver)}
                       className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/40 rounded-2xl p-2.5 px-3 flex items-center justify-between gap-3 transition-all cursor-pointer group"
                     >
@@ -450,8 +448,8 @@ export function DriversPage() {
             </div>
           </div>
 
-          {/* ZONE 3 (Right 3 cols): Vehicle Fleet Breakdown & Language Matrix */}
-          <div className="lg:col-span-3 flex flex-col justify-between">
+          {/* ZONE 3: Vehicle Fleet Breakdown & Language Matrix */}
+          <div className="sm:col-span-2 xl:col-span-3 flex flex-col justify-between pt-2 sm:pt-0">
             <div className="space-y-4">
               {/* Vehicle Types Breakdown */}
               <div>
@@ -663,8 +661,8 @@ export function DriversPage() {
       {/* 4A. TABLE VIEW (DEFAULT LIST MODE) */}
       {!loading && filteredDrivers.length > 0 && viewMode === 'table' && (
         <div className="glass-panel rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/30 dark:shadow-black/20 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[720px]">
               <thead>
                 <tr className="bg-slate-50/90 dark:bg-slate-800/90 border-b border-slate-200/80 dark:border-slate-700/80">
                   <th className="py-4 px-6 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-300">
@@ -807,7 +805,7 @@ export function DriversPage() {
 
       {/* 4B. GRID VIEW */}
       {!loading && filteredDrivers.length > 0 && viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">
           {filteredDrivers.map((driver) => {
             const statusInfo = STATUS_CONFIG[driver.status] || STATUS_CONFIG.Available;
             

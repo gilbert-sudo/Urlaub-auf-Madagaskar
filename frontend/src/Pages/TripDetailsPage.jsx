@@ -768,19 +768,19 @@ export function TripDetailsPage() {
   const GuestIcon = getGuestTypeIcon(trip.guestType);
 
   return (
-    <div className={`space-y-8 max-w-7xl mx-auto relative ${activeTab === 'client' ? 'pb-6' : 'pb-24'}`}>
+    <div className={`space-y-6 lg:space-y-8 max-w-7xl mx-auto relative md:pr-24 lg:pr-28 ${activeTab === 'client' ? 'pb-6' : 'pb-24'}`}>
       {/* Top Sticky Header */}
-      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-4 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="sticky top-[64px] sm:top-[70px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-3.5 sm:py-4 -mx-4 px-4 sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6 2xl:-mx-10 2xl:px-10 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button 
             onClick={() => navigate('/trips')} 
-            className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-brand-primary hover:border-brand-primary/40 hover:bg-brand-50/30 transition-all duration-300 group shrink-0"
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-brand-primary hover:border-brand-primary/40 hover:bg-brand-50/30 transition-all duration-300 group shrink-0"
             title="Return to Trips Portfolio"
           >
             <ArrowLeft size={18} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
               <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
                 <Sparkles size={11} className="text-brand-accent" />
                 Expedition Dossier
@@ -793,39 +793,39 @@ export function TripDetailsPage() {
                 </span>
               )}
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-display tracking-tight leading-tight">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white font-display tracking-tight leading-tight">
               {trip.title}
             </h1>
           </div>
         </div>
 
         {/* Top Header Actions */}
-        <div className="flex items-center flex-wrap gap-2.5 self-end md:self-auto">
-          <div id="itinerary-manager-header-portal" className="empty:hidden flex items-center gap-2.5"></div>
+        <div className="flex items-center flex-wrap gap-2 sm:gap-2.5 self-end md:self-auto">
+          <div id="itinerary-manager-header-portal" className="empty:hidden flex items-center gap-2 sm:gap-2.5"></div>
 
           {activeTab === 'overview' && (
             <>
               <button
                 onClick={() => navigate(`/trips/${trip._id}/edit`)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
+                className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
                 title="Edit Core Voyage Parameters"
               >
-                <Edit3 size={14} className="text-brand-primary" />
+                <Edit3 size={13} className="text-brand-primary" />
                 <span>Edit Parameters</span>
               </button>
 
               <button
                 onClick={handleShareTrip}
-                className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
+                className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
                 title="Generate Client Web Share Link"
               >
-                <Share2 size={14} className="text-brand-primary" />
+                <Share2 size={13} className="text-brand-primary" />
                 <span>Share Link</span>
               </button>
 
               <button
                 onClick={() => setIsTourAgendaOpen(true)}
-                className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] shadow-lg shadow-brand-primary/25 transition-all"
+                className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] shadow-lg shadow-brand-primary/25 transition-all"
               >
                 <CalendarCheck size={14} />
                 <span>Tour Agenda</span>
@@ -876,8 +876,8 @@ export function TripDetailsPage() {
         </div>
       </div>
 
-      {/* Floating Navigation Dock (Luxury Glass Dock) */}
-      <div className="fixed left-0 right-0 bottom-0 md:left-auto md:right-5 md:top-1/2 md:-translate-y-1/2 flex flex-row md:flex-col z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.12)] md:shadow-2xl border-t md:border border-slate-200/80 dark:border-slate-800 rounded-t-3xl md:rounded-3xl py-3 md:py-6 px-4 md:px-3 w-full md:w-[94px] gap-2 sm:gap-6 justify-around overflow-x-auto no-scrollbar transition-all">
+      {/* Floating Navigation Dock (Luxury Glass Dock) - positioned without overlap on 13" laptops */}
+      <div className="fixed left-0 right-0 bottom-0 md:left-auto md:right-4 lg:right-6 md:top-1/2 md:-translate-y-1/2 flex flex-row md:flex-col z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.12)] md:shadow-2xl border-t md:border border-slate-200/80 dark:border-slate-800 rounded-t-3xl md:rounded-3xl py-2.5 md:py-5 px-3 md:px-2.5 w-full md:w-20 lg:w-[86px] gap-2 md:gap-5 justify-around overflow-x-auto no-scrollbar transition-all">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -885,28 +885,28 @@ export function TripDetailsPage() {
             <div 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="relative flex flex-col items-center justify-center cursor-pointer group flex-shrink-0 min-w-[60px] md:min-w-0"
+              className="relative flex flex-col items-center justify-center cursor-pointer group flex-shrink-0 min-w-[54px] md:min-w-0"
             >
               {/* Icon Container */}
               <div className={`relative flex flex-col items-center transition-all duration-300 ${
                 isActive 
-                  ? 'text-brand-primary scale-110 -translate-y-0.5' 
+                  ? 'text-brand-primary scale-105 -translate-y-0.5' 
                   : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 group-hover:-translate-y-0.5'
               }`}>
-                <Icon size={24} className={isActive ? 'stroke-[2.5px]' : 'stroke-2'} />
+                <Icon size={20} className={`sm:size-[22px] ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
                 
                 {/* Advanced Minimalist Dot Indicator */}
-                <div className={`absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-brand-primary transition-all duration-300 ${
+                <div className={`absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-brand-primary transition-all duration-300 ${
                   isActive ? 'scale-100 opacity-100 shadow-sm shadow-brand-primary' : 'scale-0 opacity-0'
                 }`} />
               </div>
               
               {/* Text */}
-              <div className="flex flex-col items-center mt-3">
-                <h3 className={`font-black text-[10px] text-center leading-[1.15] transition-colors duration-300 ${isActive ? 'text-brand-primary font-bold' : 'text-slate-500 group-hover:text-slate-800 dark:text-slate-400 dark:group-hover:text-slate-200'}`}>
+              <div className="flex flex-col items-center mt-2">
+                <h3 className={`font-black text-[9px] text-center leading-[1.15] transition-colors duration-300 ${isActive ? 'text-brand-primary font-bold' : 'text-slate-500 group-hover:text-slate-800 dark:text-slate-400 dark:group-hover:text-slate-200'}`}>
                   {tab.label}
                 </h3>
-                <p className={`text-[8px] font-bold text-center mt-0.5 transition-colors duration-300 ${isActive ? 'text-brand-primary/70' : 'text-slate-400 group-hover:text-slate-500'}`}>
+                <p className={`text-[7.5px] font-bold text-center mt-0.5 transition-colors duration-300 ${isActive ? 'text-brand-primary/70' : 'text-slate-400 group-hover:text-slate-500'}`}>
                   {tab.desc}
                 </p>
               </div>
@@ -916,9 +916,9 @@ export function TripDetailsPage() {
       </div>
 
       {activeTab === 'overview' ? (
-        <div className="space-y-8 animate-in fade-in duration-500">
-          {/* Luxury Hero Banner */}
-          <div className="relative w-full h-[420px] rounded-3xl sm:rounded-4xl overflow-hidden shadow-2xl border border-slate-200/60 dark:border-slate-800 group">
+        <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+          {/* Luxury Hero Banner - responsive height for 13" laptop screens */}
+          <div className="relative w-full h-64 sm:h-72 lg:h-80 xl:h-96 rounded-3xl sm:rounded-4xl overflow-hidden shadow-2xl border border-slate-200/60 dark:border-slate-800 group">
             <div className="absolute inset-0">
               <img src="/hero.jpg" alt="Madagascar Landscape" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20" />
@@ -1021,10 +1021,10 @@ export function TripDetailsPage() {
               </div>
             </div>
 
-            {/* Split Content: Itinerary Days (Left) & Map (Right) */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:h-[580px]">
+            {/* Split Content: Itinerary Days (Left) & Map (Right) - responsive height for 13" laptops */}
+            <div className="flex flex-col lg:flex-row items-stretch lg:h-[460px] xl:h-[500px]">
               {/* Left Side: Compact Calendar */}
-              <div className="w-full lg:w-2/3 flex flex-col p-4 sm:p-5 bg-white dark:bg-slate-800 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-slate-700 overflow-hidden items-center justify-center">
+              <div className="w-full lg:w-7/12 xl:w-2/3 flex flex-col p-3 sm:p-5 bg-white dark:bg-slate-800 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-slate-700 overflow-hidden items-center justify-center">
                 <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
                   <TripDatesDisplayer 
                     startDate={trip.startDate} 
@@ -1035,7 +1035,7 @@ export function TripDetailsPage() {
               </div>
 
               {/* Right Side: Map Preview */}
-              <div className="relative w-full lg:w-1/3 h-[400px] lg:h-full overflow-hidden p-2 sm:p-4">
+              <div className="relative w-full lg:w-5/12 xl:w-1/3 h-[320px] lg:h-full overflow-hidden p-2 sm:p-4">
                 <div 
                   className="w-full h-full relative group rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 dark:border-slate-700 cursor-pointer"
                   onClick={() => setIsMapExpanded(true)}

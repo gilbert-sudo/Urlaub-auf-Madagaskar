@@ -203,20 +203,20 @@ export function ClientsPage() {
       {/* ========================================================= */}
       {/* 1. STICKY PAGE HEADER (design.md Section 5 Standard)      */}
       {/* ========================================================= */}
-      <div className="sticky top-[70px] md:top-[76px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-4 -mx-4 px-4 md:-mx-8 md:px-8 xl:-mx-12 xl:px-12 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-primary via-[#9b1908] to-brand-secondary text-white flex items-center justify-center shadow-lg shadow-brand-primary/25 shrink-0">
-            <Users size={22} />
+      <div className="sticky top-[64px] sm:top-[70px] z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xl py-3.5 sm:py-4 -mx-4 px-4 sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6 2xl:-mx-10 2xl:px-10 border-b border-slate-200/60 dark:border-slate-800/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-primary via-[#9b1908] to-brand-secondary text-white flex items-center justify-center shadow-lg shadow-brand-primary/25 shrink-0">
+            <Users size={20} className="sm:size-[22px]" />
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
               <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
                 <Sparkles size={11} className="text-brand-accent" />
                 Traveler Dossiers
               </span>
               <span className="text-xs font-semibold text-slate-400">• Madagascar Bespoke</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white font-display tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white font-display tracking-tight">
               Travelers & Clients Atelier
             </h1>
             <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -229,7 +229,7 @@ export function ClientsPage() {
         <div className="flex items-center gap-3 self-start md:self-auto">
           <button 
             onClick={() => handleOpenModal()}
-            className="px-6 py-3 bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] text-white text-xs md:text-sm font-bold rounded-full transition-all duration-300 shadow-xl shadow-brand-primary/25 hover:shadow-brand-primary/45 flex items-center gap-2.5 group"
+            className="px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-brand-primary via-[#9b1908] to-brand-secondary hover:from-brand-secondary hover:to-[#2A0A05] text-white text-xs md:text-sm font-bold rounded-full transition-all duration-300 shadow-xl shadow-brand-primary/25 hover:shadow-brand-primary/45 flex items-center gap-2.5 group"
           >
             <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
               <Plus size={14} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -241,12 +241,11 @@ export function ClientsPage() {
 
       {/* ========================================================= */}
       {/* 2. BESPOKE TRAVELER INTELLIGENCE & DEMOGRAPHICS DECK      */}
-      {/*    (Elevated, asymmetrical & non-generic)                 */}
       {/* ========================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-4 sm:gap-5">
         
-        {/* HERO CARD (7 Cols on desktop): The Traveler Census & Pax Distribution Hub */}
-        <div className="lg:col-span-7 bg-gradient-to-br from-slate-950 via-[#1a0a08] to-[#2b0e08] text-white rounded-3xl sm:rounded-4xl p-6 sm:p-7 border border-brand-primary/30 shadow-2xl relative overflow-hidden flex flex-col justify-between group">
+        {/* HERO CARD: The Traveler Census & Pax Distribution Hub */}
+        <div className="sm:col-span-2 xl:col-span-7 bg-gradient-to-br from-slate-950 via-[#1a0a08] to-[#2b0e08] text-white rounded-3xl sm:rounded-4xl p-5 sm:p-7 border border-brand-primary/30 shadow-2xl relative overflow-hidden flex flex-col justify-between group">
           {/* Subtle Ambient Brand Glow */}
           <div className="absolute -top-12 -right-12 w-56 h-56 bg-brand-primary/25 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-brand-accent/10 rounded-full blur-3xl pointer-events-none" />
@@ -337,12 +336,12 @@ export function ClientsPage() {
           </div>
         </div>
 
-        {/* RIGHT CARD 1 (3 Cols on desktop): Active Expedition Pipeline */}
-        <div className="lg:col-span-3 glass-panel rounded-3xl sm:rounded-4xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col justify-between relative overflow-hidden group hover:border-purple-500/40 transition-all">
+        {/* RIGHT CARD 1: Active Expedition Pipeline */}
+        <div className="sm:col-span-1 xl:col-span-3 glass-panel rounded-3xl sm:rounded-4xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col justify-between relative overflow-hidden group hover:border-purple-500/40 transition-all">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 text-white flex items-center justify-center shadow-md shadow-purple-600/25 shrink-0">
-                <CalendarCheck size={22} />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 text-white flex items-center justify-center shadow-md shadow-purple-600/25 shrink-0">
+                <CalendarCheck size={20} className="sm:size-[22px]" />
               </div>
               <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
                 Pipeline
@@ -353,7 +352,7 @@ export function ClientsPage() {
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                 Expedition Bookings
               </p>
-              <h4 className="text-3xl font-black text-slate-900 dark:text-white font-display mt-1">
+              <h4 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-display mt-1">
                 {metrics.activeClientsCount}
               </h4>
               <p className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-1">
@@ -370,12 +369,12 @@ export function ClientsPage() {
           </div>
         </div>
 
-        {/* RIGHT CARD 2 (2 Cols on desktop): Bespoke Care & Special Wishes */}
-        <div className="lg:col-span-2 glass-panel rounded-3xl sm:rounded-4xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col justify-between relative overflow-hidden group hover:border-amber-500/40 transition-all">
+        {/* RIGHT CARD 2: Bespoke Care & Special Wishes */}
+        <div className="sm:col-span-1 xl:col-span-2 glass-panel rounded-3xl sm:rounded-4xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col justify-between relative overflow-hidden group hover:border-amber-500/40 transition-all">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center shadow-md shadow-amber-500/25 shrink-0">
-                <HeartHandshake size={22} />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center shadow-md shadow-amber-500/25 shrink-0">
+                <HeartHandshake size={20} className="sm:size-[22px]" />
               </div>
               {metrics.withNotesCount > 0 && (
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
@@ -386,7 +385,7 @@ export function ClientsPage() {
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                 VIP & Dietary
               </p>
-              <h4 className="text-3xl font-black text-slate-900 dark:text-white font-display mt-1">
+              <h4 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-display mt-1">
                 {metrics.withNotesCount}
               </h4>
               <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-1">
@@ -543,8 +542,8 @@ export function ClientsPage() {
       {/* 4A. TABLE VIEW (DEFAULT LIST MODE) */}
       {!loading && filteredClients.length > 0 && viewMode === 'table' && (
         <div className="glass-panel rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/30 dark:shadow-black/20 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[680px]">
               <thead>
                 <tr className="bg-slate-50/90 dark:bg-slate-800/90 border-b border-slate-200/80 dark:border-slate-700/80">
                   <th className="py-4 px-6 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-300">
@@ -690,7 +689,7 @@ export function ClientsPage() {
 
       {/* 4B. GRID VIEW */}
       {!loading && filteredClients.length > 0 && viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">
           {filteredClients.map((client) => {
             const totalPax = (client.paxAdults || 0) + (client.paxChildren || 0);
             const clientTrips = clientTripsMap[client._id] || [];
